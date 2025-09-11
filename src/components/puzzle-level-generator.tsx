@@ -12,6 +12,7 @@ import {
   Sparkles,
   Gamepad2,
   Zap,
+  Target,
   Palette,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";
@@ -19,13 +20,25 @@ import { ConfigurationPanel } from "./configuration-panel";
 import { ExportPanel } from "./export-panel";
 import { DEFAULT_CONFIG } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
-import type { LevelConfig } from "@/config/game-types";
+import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 
 export function PuzzleLevelGenerator() {
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState("config");
+  const [isApiKeyExpanded, setIsApiKeyExpanded] = useState(false);
 
-  const { generatedLevel, isGenerating, generateLevel } = useLevelGenerator();
+  const {
+    generatedLevel,
+    isGenerating,
+    generateLevel,
+    apiKey,
+    setApiKey,
+    setGeneratedLevel,
+  } = useLevelGenerator();
+
+  const handleLevelUpdate = (updatedLevel: GeneratedLevel) => {
+    setGeneratedLevel(updatedLevel);
+  };
 
   const handleGenerateLevel = async () => {
     try {
@@ -61,10 +74,17 @@ export function PuzzleLevelGenerator() {
                   Puzzle Level Generator
                 </h1>
                 <p className="text-xl text-white/90 font-medium">
-                  Tạo level puzzle thông minh
+                  Tạo level puzzle thông minh với Google Gemini AI - Nhanh, đẹp,
+                  và thú vị!
                 </p>
               </div>
               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
+                  <Target className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    AI tự động cân bằng
+                  </span>
+                </div>
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
                   <Palette className="w-4 h-4" />
                   <span className="text-sm font-medium">12 màu sắc</span>
@@ -123,7 +143,7 @@ export function PuzzleLevelGenerator() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8 bg-card rounded-2xl border border-orange-200 shadow-lg">
+        <TabsList className="grid w-full grid-cols-3 mb-8 bg-cardrounded-2xl border border-orange-200 shadow-lg">
           <TabsTrigger
             value="config"
             className="flex items-center gap-2 rounded-xl font-bold text-card-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300"
@@ -153,7 +173,10 @@ export function PuzzleLevelGenerator() {
 
         <TabsContent value="preview" className="space-y-6">
           {generatedLevel ? (
-            <LevelPreview level={generatedLevel} />
+            <LevelPreview
+              level={generatedLevel}
+              onLevelUpdate={handleLevelUpdate}
+            />
           ) : (
             <Card className="border-2 border-dashed border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl shadow-xl overflow-hidden">
               <CardContent className="flex flex-col items-center justify-center py-20">

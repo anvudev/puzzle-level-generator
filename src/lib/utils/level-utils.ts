@@ -59,8 +59,7 @@ export function getDifficultyColor(difficulty: string): string {
 
 export function getElementIcon(elementType: string): string {
   const icons: Record<string, string> = {
-    Block: "⬜",
-    Barrel: "🛢️",
+    Barrel: "📦",
     IceBlock: "🧊",
     Pipe: "🔧",
     BlockLock: "🔒",

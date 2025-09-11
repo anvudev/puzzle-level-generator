@@ -48,8 +48,7 @@ export function ElementsSection({
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">
-                    {elementKey === "block" && "🧱"}
-                    {elementKey === "barrel" && "🛢️"}
+                    {elementKey === "barrel" && "📦i"}
                     {elementKey === "ice_block" && "🧊"}
                     {elementKey === "pipe" && "🔧"}
                     {elementKey === "block_lock" && "🔒"}

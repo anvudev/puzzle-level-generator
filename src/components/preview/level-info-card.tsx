@@ -11,23 +11,28 @@ interface LevelInfoCardProps {
 }
 
 export function LevelInfoCard({ level }: LevelInfoCardProps) {
+  // Calculate actual blocks on board (excluding pipe contents)
+  const pipeCount = level.config.elements.Pipe || 0;
+  const blockLockCount =
+    level.config.elements["BlockLock"] ||
+    level.config.elements["Block Lock"] ||
+    0;
+
+  const pipeBlocks = pipeCount * 8; // Each pipe contains 8 blocks
+  const lockBlocks = blockLockCount * 2; // Each Block Lock requires 2 blocks (1 Lock + 1 Key)
+  const boardBlocks = level.config.blockCount - pipeBlocks - lockBlocks;
+
+  console.log(
+    `[DEBUG UI] Pipe count: ${pipeCount}, Pipe blocks: ${pipeBlocks}, Board blocks: ${boardBlocks}`
+  );
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Thông tin Level</CardTitle>
           <div className="flex items-center gap-2">
-            {level.solvable ? (
-              <Badge variant="default" className="bg-green-500">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Có thể giải
-              </Badge>
-            ) : (
-              <Badge variant="destructive">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Không thể giải
-              </Badge>
-            )}
+            {/*   */}
             <Badge variant="outline">ID: {level.id}</Badge>
           </div>
         </div>
@@ -41,10 +46,24 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
             <p className="text-sm text-muted-foreground">Kích thước</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-primary">
-              {level.config.blockCount}
-            </p>
-            <p className="text-sm text-muted-foreground">Số block</p>
+            <div className="space-y-1">
+              <p className="text-2xl font-bold text-primary">{boardBlocks}</p>
+              {(pipeBlocks > 0 || lockBlocks > 0) && (
+                <div className="space-y-0.5">
+                  {pipeBlocks > 0 && (
+                    <p className="text-xs text-blue-600">
+                      +{pipeBlocks} trong pipe
+                    </p>
+                  )}
+                  {lockBlocks > 0 && (
+                    <p className="text-xs text-yellow-600">
+                      +{lockBlocks} trong lock
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">Block trên board</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">
@@ -60,11 +79,17 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
-          <span className="text-sm font-medium">Độ khó:</span>
-          <Badge className={getDifficultyColor(level.config.difficulty)}>
-            {level.config.difficulty}
-          </Badge>
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Tổng blocks:</span>
+            <Badge variant="outline">{level.config.blockCount}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Độ khó:</span>
+            <Badge className={getDifficultyColor(level.config.difficulty)}>
+              {level.config.difficulty}
+            </Badge>
+          </div>
         </div>
       </CardContent>
     </Card>

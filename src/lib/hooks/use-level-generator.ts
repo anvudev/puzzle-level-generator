@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
-import { GeminiLevelGenerator } from "../generators/gemini-level-generator";
+import { GeminiLevelGenerator } from "@/lib/generators/gemini-level-generator";
 
 export function useLevelGenerator() {
   const [generatedLevel, setGeneratedLevel] = useState<GeneratedLevel | null>(
@@ -23,6 +23,7 @@ export function useLevelGenerator() {
           GeminiLevelGenerator.setApiKey(apiKey);
         }
         const level = await GeminiLevelGenerator.generateLevel(config);
+        console.log("level", level);
         setGeneratedLevel(level);
         return level;
       } catch (error) {
@@ -45,6 +46,7 @@ export function useLevelGenerator() {
 
   return {
     generatedLevel,
+    setGeneratedLevel,
     isGenerating,
     generateLevel,
     clearLevel,
