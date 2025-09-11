@@ -17,6 +17,8 @@ export interface BoardCell {
   pipeContents?: string[];
   // For pipe element: direction (up, down, left, right)
   pipeDirection?: "up" | "down" | "left" | "right";
+  // For pipe element: size (number of blocks inside)
+  pipeSize?: number;
   // For Block Lock system: lock ID and key ID
   lockId?: string; // For Lock elements
   keyId?: string; // For Key elements (matches with lockId)

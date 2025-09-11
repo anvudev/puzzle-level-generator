@@ -100,26 +100,34 @@ export class FallbackLevelGenerator {
 
     const totalBlocks = Math.max(1, boardBlocks); // Ensure at least 1 block on board
 
+    // Create initial color distribution for board blocks only
     const baseBlocksPerColor = Math.floor(totalBlocks / colors.length);
     const remainder = totalBlocks % colors.length;
 
-    const colorDistribution: string[] = [];
+    const boardColorDistribution: string[] = [];
     colors.forEach((color, index) => {
       const blocksForThisColor =
         baseBlocksPerColor + (index < remainder ? 1 : 0);
       for (let i = 0; i < blocksForThisColor; i++) {
-        colorDistribution.push(color);
+        boardColorDistribution.push(color);
       }
     });
 
-    // Shuffle the color distribution
-    for (let i = colorDistribution.length - 1; i > 0; i--) {
+    // Shuffle the board color distribution
+    for (let i = boardColorDistribution.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [colorDistribution[i], colorDistribution[j]] = [
-        colorDistribution[j],
-        colorDistribution[i],
+      [boardColorDistribution[i], boardColorDistribution[j]] = [
+        boardColorDistribution[j],
+        boardColorDistribution[i],
       ];
     }
+
+    console.log(
+      `[DEBUG] Board color distribution: ${boardColorDistribution.length} blocks`
+    );
+
+    // Initialize empty pipe color pool (will be calculated after pipes are placed)
+    (this as any).pipeColorPool = [];
 
     // CONNECTED PLACEMENT ALGORITHM
     let placedBlocks = 0;
@@ -129,7 +137,7 @@ export class FallbackLevelGenerator {
     const startY = Math.floor(config.height / 2);
     board[startY][startX] = {
       type: "block",
-      color: colorDistribution[placedBlocks],
+      color: boardColorDistribution[placedBlocks],
       element: null,
     };
     placedBlocks++;
@@ -160,14 +168,17 @@ export class FallbackLevelGenerator {
       const pos = connectedPositions[0];
       board[pos.y][pos.x] = {
         type: "block",
-        color: colorDistribution[placedBlocks],
+        color: boardColorDistribution[placedBlocks],
         element: null,
       };
       placedBlocks++;
     }
 
-    // Place special elements
+    // Place special elements (without pipe contents first)
     this.placeSpecialElements(board, config);
+
+    // Calculate and assign balanced pipe contents after all pipes are placed
+    this.assignBalancedPipeContents(board, config);
 
     // Final connectivity check and validation
     const isConnectedBoard = LevelGeneratorUtils.isConnected(board);
@@ -180,6 +191,9 @@ export class FallbackLevelGenerator {
         "Generated random board is not connected, this should not happen!"
       );
     }
+
+    // Validate color balance
+    this.validateColorBalance(board, config);
 
     return board;
   }
@@ -227,26 +241,34 @@ export class FallbackLevelGenerator {
 
     const totalBlocks = Math.max(1, boardBlocks); // Ensure at least 1 block on board
 
+    // Create initial color distribution for board blocks only (same as random board)
     const baseBlocksPerColor = Math.floor(totalBlocks / colors.length);
     const remainder = totalBlocks % colors.length;
 
-    const colorDistribution: string[] = [];
+    const boardColorDistribution: string[] = [];
     colors.forEach((color, index) => {
       const blocksForThisColor =
         baseBlocksPerColor + (index < remainder ? 1 : 0);
       for (let i = 0; i < blocksForThisColor; i++) {
-        colorDistribution.push(color);
+        boardColorDistribution.push(color);
       }
     });
 
     // Shuffle colors for variety
-    for (let i = colorDistribution.length - 1; i > 0; i--) {
+    for (let i = boardColorDistribution.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [colorDistribution[i], colorDistribution[j]] = [
-        colorDistribution[j],
-        colorDistribution[i],
+      [boardColorDistribution[i], boardColorDistribution[j]] = [
+        boardColorDistribution[j],
+        boardColorDistribution[i],
       ];
     }
+
+    console.log(
+      `[DEBUG Symmetric] Board color distribution: ${boardColorDistribution.length} blocks`
+    );
+
+    // Initialize empty pipe color pool (will be calculated after pipes are placed)
+    (this as any).pipeColorPool = [];
 
     let placedBlocks = 0;
     let colorIndex = 0;
@@ -257,7 +279,10 @@ export class FallbackLevelGenerator {
       y: number,
       forcePlace: boolean = false
     ) => {
-      if (placedBlocks >= totalBlocks || colorIndex >= colorDistribution.length)
+      if (
+        placedBlocks >= totalBlocks ||
+        colorIndex >= boardColorDistribution.length
+      )
         return false;
       if (x < 0 || x >= config.width || y < 0 || y >= config.height)
         return false;
@@ -279,7 +304,7 @@ export class FallbackLevelGenerator {
 
       board[y][x] = {
         type: "block",
-        color: colorDistribution[colorIndex],
+        color: boardColorDistribution[colorIndex],
         element: null,
       };
       placedBlocks++;
@@ -290,14 +315,14 @@ export class FallbackLevelGenerator {
       if (
         mirrorX !== x &&
         placedBlocks < totalBlocks &&
-        colorIndex < colorDistribution.length &&
+        colorIndex < boardColorDistribution.length &&
         board[y][mirrorX].type === "empty"
       ) {
         // Check connectivity for mirror block too (except when forcing)
         if (forcePlace || placedBlocks === 1) {
           board[y][mirrorX] = {
             type: "block",
-            color: colorDistribution[colorIndex],
+            color: boardColorDistribution[colorIndex],
             element: null,
           };
           placedBlocks++;
@@ -315,7 +340,7 @@ export class FallbackLevelGenerator {
           if (mirrorHasBlockNeighbor) {
             board[y][mirrorX] = {
               type: "block",
-              color: colorDistribution[colorIndex],
+              color: boardColorDistribution[colorIndex],
               element: null,
             };
             placedBlocks++;
@@ -392,7 +417,7 @@ export class FallbackLevelGenerator {
     // Fill remaining blocks using connected positions only
     while (
       placedBlocks < totalBlocks &&
-      colorIndex < colorDistribution.length
+      colorIndex < boardColorDistribution.length
     ) {
       const connectedPositions = [];
 
@@ -440,8 +465,11 @@ export class FallbackLevelGenerator {
       }
     }
 
-    // Place special elements symmetrically
+    // Place special elements symmetrically (without pipe contents first)
     this.placeSpecialElementsSymmetrically(board, config, centerX);
+
+    // Calculate and assign balanced pipe contents after all pipes are placed
+    this.assignBalancedPipeContents(board, config);
 
     // Final connectivity check and validation
     const isConnectedBoard = LevelGeneratorUtils.isConnected(board);
@@ -454,6 +482,9 @@ export class FallbackLevelGenerator {
         "Generated symmetric board is not connected, this should not happen!"
       );
     }
+
+    // Validate color balance
+    this.validateColorBalance(board, config);
 
     return board;
   }
@@ -645,22 +676,17 @@ export class FallbackLevelGenerator {
         board[pos.y][pos.x].pipeDirection =
           validDirections[Math.floor(Math.random() * validDirections.length)];
 
-        // Generate pipe contents based on difficulty
+        // Store pipe size for later content assignment
         const pipeSize = LevelGeneratorUtils.generatePipeSize(
           config.difficulty
         );
-        const pipeContents = [];
-        for (let j = 0; j < pipeSize; j++) {
-          const randomColor = colors[Math.floor(Math.random() * colors.length)];
-          pipeContents.push(randomColor);
-        }
-        board[pos.y][pos.x].pipeContents = pipeContents;
+        board[pos.y][pos.x].pipeSize = pipeSize;
         console.log(
           `[DEBUG] Created pipe block (no color) at (${pos.x}, ${
             pos.y
           }) with direction ${
             board[pos.y][pos.x].pipeDirection
-          } and ${pipeSize} blocks`
+          } and ${pipeSize} blocks (contents will be assigned later)`
         );
         return true;
       } else {
@@ -765,5 +791,167 @@ export class FallbackLevelGenerator {
     _containers: Container[]
   ): boolean {
     return true; // Simplified for fallback
+  }
+
+  /**
+   * Assign balanced pipe contents after all pipes are placed
+   */
+  private static assignBalancedPipeContents(
+    board: BoardCell[][],
+    config: LevelConfig
+  ): void {
+    const colors = config.selectedColors;
+
+    // Count board colors first
+    const boardColorCounts = new Map<string, number>();
+    let totalPipeBlocks = 0;
+
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+        if (cell.type === "block" && cell.color) {
+          boardColorCounts.set(
+            cell.color,
+            (boardColorCounts.get(cell.color) || 0) + 1
+          );
+        }
+        if (cell.element === "Pipe" && cell.pipeSize) {
+          totalPipeBlocks += cell.pipeSize;
+        }
+      }
+    }
+
+    console.log(
+      `[DEBUG] Board color counts:`,
+      Object.fromEntries(boardColorCounts)
+    );
+    console.log(`[DEBUG] Total pipe blocks needed: ${totalPipeBlocks}`);
+
+    // Calculate how many blocks each color needs to be divisible by 3
+    const targetColorCounts = new Map<string, number>();
+    colors.forEach((color) => {
+      const boardCount = boardColorCounts.get(color) || 0;
+      const targetCount = Math.ceil(boardCount / 3) * 3;
+      targetColorCounts.set(color, targetCount);
+    });
+
+    // Create pipe color pool from the difference
+    const pipeColorPool: string[] = [];
+    colors.forEach((color) => {
+      const boardCount = boardColorCounts.get(color) || 0;
+      const targetCount = targetColorCounts.get(color) || 0;
+      const pipeNeeded = targetCount - boardCount;
+
+      console.log(
+        `[DEBUG] Color ${color}: board=${boardCount}, target=${targetCount}, pipe_needed=${pipeNeeded}`
+      );
+
+      for (let i = 0; i < pipeNeeded; i++) {
+        pipeColorPool.push(color);
+      }
+    });
+
+    // If we don't have enough colors, add more to reach total pipe blocks needed
+    while (pipeColorPool.length < totalPipeBlocks) {
+      // Add 3 blocks of each color to maintain balance
+      colors.forEach((color) => {
+        for (let i = 0; i < 3 && pipeColorPool.length < totalPipeBlocks; i++) {
+          pipeColorPool.push(color);
+          targetColorCounts.set(color, (targetColorCounts.get(color) || 0) + 1);
+        }
+      });
+    }
+
+    // Shuffle pipe color pool
+    for (let i = pipeColorPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pipeColorPool[i], pipeColorPool[j]] = [
+        pipeColorPool[j],
+        pipeColorPool[i],
+      ];
+    }
+
+    console.log(`[DEBUG] Pipe color pool: ${pipeColorPool.length} blocks`);
+    console.log(
+      `[DEBUG] Target color counts:`,
+      Object.fromEntries(targetColorCounts)
+    );
+
+    // Assign colors to pipes
+    let poolIndex = 0;
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+        if (cell.element === "Pipe" && cell.pipeSize) {
+          const pipeContents = [];
+          for (let i = 0; i < cell.pipeSize; i++) {
+            if (poolIndex < pipeColorPool.length) {
+              pipeContents.push(pipeColorPool[poolIndex]);
+              poolIndex++;
+            } else {
+              // Fallback
+              const randomColor =
+                colors[Math.floor(Math.random() * colors.length)];
+              pipeContents.push(randomColor);
+              console.warn(
+                `[DEBUG] Pipe color pool exhausted, using fallback: ${randomColor}`
+              );
+            }
+          }
+          cell.pipeContents = pipeContents;
+          console.log(
+            `[DEBUG] Assigned ${
+              pipeContents.length
+            } colors to pipe at (${x}, ${y}): [${pipeContents.join(", ")}]`
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate that all colors have blocks divisible by 3
+   */
+  private static validateColorBalance(
+    board: BoardCell[][],
+    config: LevelConfig
+  ): void {
+    const colorCounts = new Map<string, number>();
+
+    // Count colors on board
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+        if (cell.type === "block" && cell.color) {
+          colorCounts.set(cell.color, (colorCounts.get(cell.color) || 0) + 1);
+        }
+
+        // Count colors in pipe contents
+        if (cell.element === "Pipe" && cell.pipeContents) {
+          for (const pipeColor of cell.pipeContents) {
+            colorCounts.set(pipeColor, (colorCounts.get(pipeColor) || 0) + 1);
+          }
+        }
+      }
+    }
+
+    console.log(`[VALIDATION] Color balance check:`);
+    let allBalanced = true;
+
+    for (const [color, count] of colorCounts) {
+      const isDivisibleBy3 = count % 3 === 0;
+      console.log(
+        `[VALIDATION] ${color}: ${count} blocks (divisible by 3: ${isDivisibleBy3})`
+      );
+      if (!isDivisibleBy3) {
+        allBalanced = false;
+      }
+    }
+
+    if (allBalanced) {
+      console.log(`[VALIDATION] ✅ All colors are balanced (divisible by 3)`);
+    } else {
+      console.warn(`[VALIDATION] ❌ Some colors are not balanced!`);
+    }
   }
 }
