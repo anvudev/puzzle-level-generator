@@ -127,7 +127,7 @@ export class FallbackLevelGenerator {
     );
 
     // Initialize empty pipe color pool (will be calculated after pipes are placed)
-    (this as any).pipeColorPool = [];
+    // pipeColorPool will be calculated in generatePipeColors method
 
     // CONNECTED PLACEMENT ALGORITHM
     let placedBlocks = 0;
@@ -268,7 +268,7 @@ export class FallbackLevelGenerator {
     );
 
     // Initialize empty pipe color pool (will be calculated after pipes are placed)
-    (this as any).pipeColorPool = [];
+    // pipeColorPool will be calculated in generatePipeColors method
 
     let placedBlocks = 0;
     let colorIndex = 0;
@@ -790,6 +790,7 @@ export class FallbackLevelGenerator {
     _board: BoardCell[][],
     _containers: Container[]
   ): boolean {
+    console.log("checkSolvability", _board, _containers);
     return true; // Simplified for fallback
   }
 

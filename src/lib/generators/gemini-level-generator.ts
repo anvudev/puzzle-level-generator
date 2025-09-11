@@ -1,11 +1,6 @@
 "use client";
 
-import type {
-  LevelConfig,
-  BoardCell,
-  Container,
-  GeneratedLevel,
-} from "@/config/game-types";
+import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 import { AILevelGenerator } from "./ai-level-generator";
 import { FallbackLevelGenerator } from "./fallback-level-generator";
 

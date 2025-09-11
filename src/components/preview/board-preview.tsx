@@ -18,12 +18,16 @@ interface BoardPreviewProps {
 export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
   const [isDragMode, setIsDragMode] = useState(false);
   const [draggedCell, setDraggedCell] = useState<{
-    cell: any;
+    cell: BoardCell;
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const handleDragStart = (e: React.DragEvent, cell: any, index: number) => {
+  const handleDragStart = (
+    e: React.DragEvent,
+    cell: BoardCell,
+    index: number
+  ) => {
     if (!isDragMode || cell.type === "empty") return;
     setDraggedCell({ cell, index });
     e.dataTransfer.effectAllowed = "move";

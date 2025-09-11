@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertCircle } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 import { getDifficultyColor } from "@/lib/utils/level-utils";
 

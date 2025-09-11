@@ -25,16 +25,9 @@ import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 export function PuzzleLevelGenerator() {
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState("config");
-  const [isApiKeyExpanded, setIsApiKeyExpanded] = useState(false);
 
-  const {
-    generatedLevel,
-    isGenerating,
-    generateLevel,
-    apiKey,
-    setApiKey,
-    setGeneratedLevel,
-  } = useLevelGenerator();
+  const { generatedLevel, isGenerating, generateLevel, setGeneratedLevel } =
+    useLevelGenerator();
 
   const handleLevelUpdate = (updatedLevel: GeneratedLevel) => {
     setGeneratedLevel(updatedLevel);
