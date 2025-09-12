@@ -84,26 +84,79 @@ export class FallbackLevelGenerator {
     const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
     const lockBlocks = blockLockCount * 2;
 
-    // Ensure total blocks divisible by 3 for each color
-    const targetPerColor =
+    // Create varied color distribution while maintaining balance
+    const baseBlocksPerColor =
       Math.floor(config.blockCount / colors.length / 3) * 3;
-    config.blockCount = targetPerColor * colors.length;
+    const totalBaseBlocks = baseBlocksPerColor * colors.length;
+    let availableExtra = config.blockCount - totalBaseBlocks;
+
+    // Ensure extra blocks are divisible by 3 for balance
+    availableExtra = Math.floor(availableExtra / 3) * 3;
+    config.blockCount = totalBaseBlocks + availableExtra;
+
+    // Create variation: some colors get more, some get less (but always multiples of 3)
+    const finalTargetPerColor: number[] = [];
+    const variationRange = Math.min(
+      2,
+      Math.floor(availableExtra / colors.length / 3)
+    ); // Max 2 extra sets of 3
+
+    for (let i = 0; i < colors.length; i++) {
+      // Random variation: -1, 0, +1, or +2 sets of 3 blocks
+      const variation = Math.floor(Math.random() * (variationRange + 2)) - 1;
+      const adjustedBlocks = Math.max(3, baseBlocksPerColor + variation * 3); // Minimum 3 blocks per color
+      finalTargetPerColor.push(adjustedBlocks);
+    }
+
+    // Adjust total to match available blocks
+    const currentTotal = finalTargetPerColor.reduce(
+      (sum, target) => sum + target,
+      0
+    );
+    const difference = config.blockCount - currentTotal;
+
+    if (difference !== 0) {
+      // Distribute difference in multiples of 3
+      const adjustmentSets = Math.floor(Math.abs(difference) / 3);
+      for (let i = 0; i < adjustmentSets; i++) {
+        const randomIndex = Math.floor(Math.random() * colors.length);
+        if (difference > 0) {
+          finalTargetPerColor[randomIndex] += 3;
+        } else if (finalTargetPerColor[randomIndex] > 3) {
+          finalTargetPerColor[randomIndex] -= 3;
+        }
+      }
+    }
 
     const adjustedBoardBlocks = config.blockCount - pipeBlocks - lockBlocks;
-    const finalTargetPerColor = new Array(colors.length).fill(targetPerColor);
 
-    // Create board color distribution
+    // Create varied board color distribution
     const boardColorDistribution: string[] = [];
-    const boardBlocksPerColor = Math.floor(adjustedBoardBlocks / colors.length);
-    const remainder = adjustedBoardBlocks % colors.length;
+
+    // Calculate how many board blocks each color should get (roughly proportional)
+    const totalTargetBlocks = finalTargetPerColor.reduce(
+      (sum, target) => sum + target,
+      0
+    );
 
     colors.forEach((color, index) => {
-      const blocksForThisColor =
-        boardBlocksPerColor + (index < remainder ? 1 : 0);
-      for (let i = 0; i < blocksForThisColor; i++) {
+      const targetRatio = finalTargetPerColor[index] / totalTargetBlocks;
+      const idealBoardBlocks = Math.round(adjustedBoardBlocks * targetRatio);
+      const actualBoardBlocks = Math.max(1, idealBoardBlocks); // At least 1 block per color
+
+      for (let i = 0; i < actualBoardBlocks; i++) {
         boardColorDistribution.push(color);
       }
     });
+
+    // Adjust if we have too many/few board blocks
+    while (boardColorDistribution.length > adjustedBoardBlocks) {
+      boardColorDistribution.pop();
+    }
+    while (boardColorDistribution.length < adjustedBoardBlocks) {
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      boardColorDistribution.push(randomColor);
+    }
 
     // Shuffle for variety
     for (let i = boardColorDistribution.length - 1; i > 0; i--) {
@@ -215,10 +268,50 @@ export class FallbackLevelGenerator {
     const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
     const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
     const lockBlocks = blockLockCount * 2;
-    // Ensure total blocks divisible by 3 for each color
-    const targetPerColor =
+    // Create varied color distribution for symmetric mode while maintaining balance
+    const baseBlocksPerColor =
       Math.floor(config.blockCount / colors.length / 3) * 3;
-    config.blockCount = targetPerColor * colors.length;
+    const totalBaseBlocks = baseBlocksPerColor * colors.length;
+    let availableExtra = config.blockCount - totalBaseBlocks;
+
+    // Ensure extra blocks are divisible by 3 for balance
+    availableExtra = Math.floor(availableExtra / 3) * 3;
+    config.blockCount = totalBaseBlocks + availableExtra;
+
+    // Create variation for symmetric mode
+    const finalTargetPerColor: number[] = [];
+    const variationRange = Math.min(
+      2,
+      Math.floor(availableExtra / colors.length / 3)
+    );
+
+    for (let i = 0; i < colors.length; i++) {
+      // More conservative variation for symmetric mode
+      const variation =
+        Math.floor(Math.random() * (variationRange + 1)) -
+        Math.floor(variationRange / 2);
+      const adjustedBlocks = Math.max(3, baseBlocksPerColor + variation * 3);
+      finalTargetPerColor.push(adjustedBlocks);
+    }
+
+    // Adjust total to match available blocks
+    const currentTotal = finalTargetPerColor.reduce(
+      (sum, target) => sum + target,
+      0
+    );
+    const difference = config.blockCount - currentTotal;
+
+    if (difference !== 0) {
+      const adjustmentSets = Math.floor(Math.abs(difference) / 3);
+      for (let i = 0; i < adjustmentSets; i++) {
+        const randomIndex = Math.floor(Math.random() * colors.length);
+        if (difference > 0) {
+          finalTargetPerColor[randomIndex] += 3;
+        } else if (finalTargetPerColor[randomIndex] > 3) {
+          finalTargetPerColor[randomIndex] -= 3;
+        }
+      }
+    }
 
     let adjustedTotalBlocks = config.blockCount - pipeBlocks - lockBlocks;
 
@@ -228,18 +321,33 @@ export class FallbackLevelGenerator {
       adjustedTotalBlocks = Math.max(2, adjustedTotalBlocks - 1);
     }
 
-    const finalTargetPerColor = new Array(colors.length).fill(targetPerColor);
-    const baseBlocksPerColor = Math.floor(adjustedTotalBlocks / colors.length);
-    const remainder = adjustedTotalBlocks % colors.length;
-
+    // Create varied board color distribution for symmetric mode
     const boardColorDistribution: string[] = [];
+
+    // Calculate proportional distribution based on targets
+    const totalTargetBlocks = finalTargetPerColor.reduce(
+      (sum, target) => sum + target,
+      0
+    );
+
     colors.forEach((color, index) => {
-      const blocksForThisColor =
-        baseBlocksPerColor + (index < remainder ? 1 : 0);
-      for (let i = 0; i < blocksForThisColor; i++) {
+      const targetRatio = finalTargetPerColor[index] / totalTargetBlocks;
+      const idealBoardBlocks = Math.round(adjustedTotalBlocks * targetRatio);
+      const actualBoardBlocks = Math.max(1, idealBoardBlocks); // At least 1 block per color
+
+      for (let i = 0; i < actualBoardBlocks; i++) {
         boardColorDistribution.push(color);
       }
     });
+
+    // Adjust if we have too many/few board blocks
+    while (boardColorDistribution.length > adjustedTotalBlocks) {
+      boardColorDistribution.pop();
+    }
+    while (boardColorDistribution.length < adjustedTotalBlocks) {
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      boardColorDistribution.push(randomColor);
+    }
 
     // Shuffle colors for variety
     for (let i = boardColorDistribution.length - 1; i > 0; i--) {
@@ -723,7 +831,7 @@ export class FallbackLevelGenerator {
     pos: { x: number; y: number },
     elementType: string,
     config: LevelConfig,
-    colors: string[],
+    _colors: string[],
     index: number
   ): boolean {
     board[pos.y][pos.x].element = elementType;
@@ -909,13 +1017,47 @@ export class FallbackLevelGenerator {
         }
       });
     } else {
-      // Fallback: distribute evenly
-      const blocksPerColor = Math.floor(totalPipeBlocks / colors.length);
-      const remainder = totalPipeBlocks % colors.length;
+      // Fallback: create varied distribution even without explicit targets
+      const baseBlocksPerColor =
+        Math.floor(totalPipeBlocks / colors.length / 3) * 3;
+      const totalBaseBlocks = baseBlocksPerColor * colors.length;
+      let extraBlocks = totalPipeBlocks - totalBaseBlocks;
 
+      // Ensure extra blocks are in multiples of 3
+      extraBlocks = Math.floor(extraBlocks / 3) * 3;
+      const adjustedTotal = totalBaseBlocks + extraBlocks;
+
+      // Create variation in pipe distribution
+      const pipeTargets: number[] = [];
+      for (let i = 0; i < colors.length; i++) {
+        // Add some random variation (but keep multiples of 3)
+        const variation = Math.floor(Math.random() * 3) - 1; // -1, 0, or +1 sets of 3
+        const target = Math.max(0, baseBlocksPerColor + variation * 3);
+        pipeTargets.push(target);
+      }
+
+      // Adjust to match total
+      const currentPipeTotal = pipeTargets.reduce(
+        (sum, target) => sum + target,
+        0
+      );
+      const pipeDifference = adjustedTotal - currentPipeTotal;
+
+      if (pipeDifference !== 0) {
+        const adjustmentSets = Math.floor(Math.abs(pipeDifference) / 3);
+        for (let i = 0; i < adjustmentSets; i++) {
+          const randomIndex = Math.floor(Math.random() * colors.length);
+          if (pipeDifference > 0) {
+            pipeTargets[randomIndex] += 3;
+          } else if (pipeTargets[randomIndex] >= 3) {
+            pipeTargets[randomIndex] -= 3;
+          }
+        }
+      }
+
+      // Fill pipe color pool based on varied targets
       colors.forEach((color, index) => {
-        const blocksForThisColor = blocksPerColor + (index < remainder ? 1 : 0);
-        for (let i = 0; i < blocksForThisColor; i++) {
+        for (let i = 0; i < pipeTargets[index]; i++) {
           pipeColorPool.push(color);
         }
       });
