@@ -118,10 +118,10 @@ export function LevelPreview({ level, onLevelUpdate }: LevelPreviewProps) {
                           </span>
                           <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md">
                             <span className="text-sm font-bold text-blue-600">
-                              {pipe.direction === "up" && "↑"}
-                              {pipe.direction === "down" && "↓"}
-                              {pipe.direction === "left" && "←"}
-                              {pipe.direction === "right" && "→"}
+                              {pipe.direction === "up" && "⬆️"}
+                              {pipe.direction === "down" && "⬇️"}
+                              {pipe.direction === "left" && "⬅️"}
+                              {pipe.direction === "right" && "➡️"}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {pipe.direction === "up" && "UP"}

@@ -177,10 +177,10 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       {cell.element === "Pipe" && cell.pipeDirection ? (
                         // For Pipe, only show arrow, no element icon
                         <span className="text-lg font-bold text-orange-400 drop-shadow-lg">
-                          {cell.pipeDirection === "up" && "↑"}
-                          {cell.pipeDirection === "down" && "↓"}
-                          {cell.pipeDirection === "left" && "←"}
-                          {cell.pipeDirection === "right" && "→"}
+                          {cell.pipeDirection === "up" && "⬆️"}
+                          {cell.pipeDirection === "down" && "⬇️"}
+                          {cell.pipeDirection === "left" && "⬅️"}
+                          {cell.pipeDirection === "right" && "➡️"}
                         </span>
                       ) : cell.element === "Key" ? (
                         // For Key element, show key icon

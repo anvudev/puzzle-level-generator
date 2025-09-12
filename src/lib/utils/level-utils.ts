@@ -61,7 +61,7 @@ export function getElementIcon(elementType: string): string {
   const icons: Record<string, string> = {
     Barrel: "📦",
     IceBlock: "🧊",
-    Pipe: "🔧",
+    Pipe: "⬆️",
     BlockLock: "🔒",
     BarrierLock: "🚧",
     Bomb: "💣",
