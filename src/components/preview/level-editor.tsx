@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -151,7 +151,12 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   };
 
   const extractPipeInfo = (board: BoardCell[][]) => {
-    const pipeInfo: any[] = [];
+    const pipeInfo: Array<{
+      id: string;
+      contents: string[];
+      direction: "up" | "down" | "left" | "right";
+      position: { x: number; y: number };
+    }> = [];
     let pipeId = 1;
 
     board.forEach((row, y) => {

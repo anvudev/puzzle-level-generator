@@ -29,23 +29,27 @@ interface LevelActionsProps {
   onSave?: (level: GeneratedLevel) => void;
 }
 
-export function LevelActions({ level, onRegenerate, onSave }: LevelActionsProps) {
+export function LevelActions({
+  level,
+  onRegenerate,
+  onSave,
+}: LevelActionsProps) {
   const [exportFormat, setExportFormat] = useState<"json" | "readable">("json");
   const [copied, setCopied] = useState(false);
 
   const generateReadableFormat = () => {
     const colorCounts: Record<string, number> = {};
     let totalBlocks = 0;
-    let pipeBlocks = 0;
+    // let pipeBlocks = 0;
 
     // Count colors and blocks
     level.board.forEach((row) => {
       row.forEach((cell) => {
         if (cell.type === "block") {
           totalBlocks++;
-          
+
           if (cell.element === "Pipe") {
-            pipeBlocks++;
+            // pipeBlocks++;
             if (cell.pipeContents) {
               cell.pipeContents.forEach((color) => {
                 colorCounts[color] = (colorCounts[color] || 0) + 1;
@@ -59,9 +63,9 @@ export function LevelActions({ level, onRegenerate, onSave }: LevelActionsProps)
     });
 
     const boardString = level.board
-      .map((row, y) =>
+      .map((row) =>
         row
-          .map((cell, x) => {
+          .map((cell) => {
             if (cell.type === "empty") return "⬜";
             if (cell.element === "Pipe") {
               const directionSymbol = {
@@ -89,7 +93,10 @@ export function LevelActions({ level, onRegenerate, onSave }: LevelActionsProps)
 
 ## Color Distribution
 ${Object.entries(colorCounts)
-  .map(([color, count]) => `- ${color}: ${count} blocks ${count % 3 === 0 ? "✅" : "❌"}`)
+  .map(
+    ([color, count]) =>
+      `- ${color}: ${count} blocks ${count % 3 === 0 ? "✅" : "❌"}`
+  )
   .join("\n")}
 
 ## Board Layout
@@ -98,12 +105,16 @@ ${boardString}
 \`\`\`
 
 ## Elements
-${Object.entries(level.config.elements)
-  .filter(([_, count]) => count > 0)
-  .map(([element, count]) => `- ${element}: ${count}`)
-  .join("\n") || "- No special elements"}
+${
+  Object.entries(level.config.elements)
+    .filter(([, count]) => count > 0)
+    .map(([element, count]) => `- ${element}: ${count}`)
+    .join("\n") || "- No special elements"
+}
 
-${level.pipeInfo && level.pipeInfo.length > 0 ? `
+${
+  level.pipeInfo && level.pipeInfo.length > 0
+    ? `
 ## Pipe Details
 ${level.pipeInfo
   .map(
@@ -113,7 +124,9 @@ ${level.pipeInfo
 - Contents: ${pipe.contents.join(" → ")}`
   )
   .join("\n")}
-` : ""}
+`
+    : ""
+}
 
 ## Validation
 - Solvable: ${level.solvable ? "✅" : "❌"}
@@ -142,9 +155,11 @@ ${level.pipeInfo
 
   const handleDownload = () => {
     const data = getExportData();
-    const filename = `level-${level.id}.${exportFormat === "json" ? "json" : "md"}`;
-    const blob = new Blob([data], { 
-      type: exportFormat === "json" ? "application/json" : "text/markdown" 
+    const filename = `level-${level.id}.${
+      exportFormat === "json" ? "json" : "md"
+    }`;
+    const blob = new Blob([data], {
+      type: exportFormat === "json" ? "application/json" : "text/markdown",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -175,7 +190,7 @@ ${level.pipeInfo
               Regenerate
             </Button>
           )}
-          
+
           {onSave && (
             <Button
               variant="outline"
@@ -229,7 +244,7 @@ ${level.pipeInfo
               )}
               {copied ? "Copied!" : "Copy"}
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -260,9 +275,7 @@ ${level.pipeInfo
                 <Badge variant="outline">
                   {exportFormat === "json" ? "JSON Format" : "Markdown Format"}
                 </Badge>
-                <Badge variant="outline">
-                  Level ID: {level.id}
-                </Badge>
+                <Badge variant="outline">Level ID: {level.id}</Badge>
               </div>
               <Textarea
                 value={getExportData()}

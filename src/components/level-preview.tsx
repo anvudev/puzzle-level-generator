@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { LevelInfoCard } from "./preview/level-info-card";
 import { BoardPreview } from "./preview/board-preview";
 import { LevelValidator } from "./preview/level-validator";
-import { LevelActions } from "./preview/level-actions";
+// import { LevelActions } from "./preview/level-actions";
 import type { GeneratedLevel } from "@/config/game-types";
 import { GAME_COLORS, ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
@@ -17,12 +17,7 @@ interface LevelPreviewProps {
   onSave?: (level: GeneratedLevel) => void;
 }
 
-export function LevelPreview({
-  level,
-  onLevelUpdate,
-  onRegenerate,
-  onSave,
-}: LevelPreviewProps) {
+export function LevelPreview({ level, onLevelUpdate }: LevelPreviewProps) {
   // Debug pipe info
   console.log("[DEBUG UI] level.pipeInfo:", level.pipeInfo);
   console.log("[DEBUG UI] pipeInfo exists:", !!level.pipeInfo);

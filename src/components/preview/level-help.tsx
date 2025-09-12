@@ -40,7 +40,9 @@ export function LevelHelp() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">Add</Badge>
-                  <span className="text-sm">Click empty cells to add blocks</span>
+                  <span className="text-sm">
+                    Click empty cells to add blocks
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">Remove</Badge>
@@ -60,7 +62,7 @@ export function LevelHelp() {
                 <h4 className="font-medium mb-2">Pipe Editing</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>• Click pipe to see contents</li>
-                  <li>• Use "Edit Contents" to modify pipe blocks</li>
+                  <li>• Use &quot;Edit Contents&quot; to modify pipe blocks</li>
                   <li>• Change direction with arrow buttons</li>
                   <li>• Each pipe can hold 1-8 blocks</li>
                 </ul>
@@ -79,19 +81,27 @@ export function LevelHelp() {
             <CardContent className="space-y-3">
               <div className="space-y-2">
                 <div>
-                  <Badge variant="destructive" className="mb-1">Critical</Badge>
+                  <Badge variant="destructive" className="mb-1">
+                    Critical
+                  </Badge>
                   <p className="text-sm">Each color must be divisible by 3</p>
                 </div>
                 <div>
-                  <Badge variant="destructive" className="mb-1">Critical</Badge>
+                  <Badge variant="destructive" className="mb-1">
+                    Critical
+                  </Badge>
                   <p className="text-sm">Total blocks must match config</p>
                 </div>
                 <div>
-                  <Badge variant="secondary" className="mb-1">Warning</Badge>
+                  <Badge variant="secondary" className="mb-1">
+                    Warning
+                  </Badge>
                   <p className="text-sm">All selected colors should be used</p>
                 </div>
                 <div>
-                  <Badge variant="secondary" className="mb-1">Warning</Badge>
+                  <Badge variant="secondary" className="mb-1">
+                    Warning
+                  </Badge>
                   <p className="text-sm">All blocks should be connected</p>
                 </div>
               </div>
@@ -99,8 +109,9 @@ export function LevelHelp() {
               <div className="pt-2 border-t">
                 <h4 className="font-medium mb-2">Color Balance</h4>
                 <p className="text-sm text-muted-foreground">
-                  The game requires each color to have a number of blocks 
-                  divisible by 3. This includes both board blocks and pipe contents.
+                  The game requires each color to have a number of blocks
+                  divisible by 3. This includes both board blocks and pipe
+                  contents.
                 </p>
               </div>
             </CardContent>
@@ -157,18 +168,20 @@ export function LevelHelp() {
                 <div>
                   <h4 className="font-medium text-sm">Color Distribution</h4>
                   <p className="text-xs text-muted-foreground">
-                    Distribute colors evenly across the board for better gameplay balance.
+                    Distribute colors evenly across the board for better
+                    gameplay balance.
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-sm">Pipe Placement</h4>
                   <p className="text-xs text-muted-foreground">
-                    Place pipes strategically to create interesting puzzle mechanics.
-                    Ensure pipe directions don't lead off the board.
+                    Place pipes strategically to create interesting puzzle
+                    mechanics. Ensure pipe directions don&apos;t lead off the
+                    board.
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-sm">Board Connectivity</h4>
                   <p className="text-xs text-muted-foreground">
@@ -176,12 +189,12 @@ export function LevelHelp() {
                     Isolated blocks can make the puzzle impossible.
                   </p>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-sm">Testing</h4>
                   <p className="text-xs text-muted-foreground">
-                    Always check the validation panel before finalizing your level.
-                    Fix any critical errors before exporting.
+                    Always check the validation panel before finalizing your
+                    level. Fix any critical errors before exporting.
                   </p>
                 </div>
               </div>
@@ -193,7 +206,7 @@ export function LevelHelp() {
           <h3 className="font-medium mb-2">Quick Start Guide</h3>
           <ol className="text-sm space-y-1 text-muted-foreground">
             <li>1. Generate a level using the configuration panel</li>
-            <li>2. Click "Chỉnh sửa Level" to open the editor</li>
+            <li>2. Click &quot;Chỉnh sửa Level&quot; to open the editor</li>
             <li>3. Select a tool (Add, Remove, Color, Pipe)</li>
             <li>4. Click on board cells to make changes</li>
             <li>5. Check the validation panel for any issues</li>

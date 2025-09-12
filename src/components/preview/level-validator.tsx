@@ -4,7 +4,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 
 interface LevelValidatorProps {
@@ -173,18 +173,18 @@ export function LevelValidator({ level }: LevelValidatorProps) {
 
   const validation = validateLevel();
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      case "warning":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
-      case "info":
-        return <Info className="w-4 h-4 text-blue-500" />;
-      default:
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-    }
-  };
+  // const getIcon = (type: string) => {
+  //   switch (type) {
+  //     case "error":
+  //       return <XCircle className="w-4 h-4 text-red-500" />;
+  //     case "warning":
+  //       return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+  //     case "info":
+  //       return <Info className="w-4 h-4 text-blue-500" />;
+  //     default:
+  //       return <CheckCircle className="w-4 h-4 text-green-500" />;
+  //   }
+  // };
 
   return (
     <Card>
@@ -213,7 +213,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
         </div>
 
         {/* Block Statistics */}
-        <div>
+        {/* <div>
           <h4 className="font-medium mb-2">Block Statistics</h4>
           <div className="space-y-1 text-sm">
             <div className="flex justify-between">
@@ -229,7 +229,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
               <span>{validation.totalBlocks - validation.pipeBlocks}</span>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Issues */}
         {/* {validation.issues.length > 0 && (
