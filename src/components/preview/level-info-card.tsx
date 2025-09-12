@@ -46,23 +46,11 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
           </div>
           <div className="text-center">
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-primary">{boardBlocks}</p>
-              {(pipeBlocks > 0 || lockBlocks > 0) && (
-                <div className="space-y-0.5">
-                  {pipeBlocks > 0 && (
-                    <p className="text-xs text-blue-600">
-                      +{pipeBlocks} trong pipe
-                    </p>
-                  )}
-                  {lockBlocks > 0 && (
-                    <p className="text-xs text-yellow-600">
-                      +{lockBlocks} trong lock
-                    </p>
-                  )}
-                </div>
-              )}
+              <p className="text-2xl font-bold text-primary">
+                {level.config.blockCount}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">Block trên board</p>
+            <p className="text-sm text-muted-foreground">Block</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GAME_COLORS } from "@/config/game-constants";
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
-import { RotateCcw, Move } from "lucide-react";
+import { RotateCcw, Move, RotateCw } from "lucide-react";
 
 interface BoardPreviewProps {
   level: GeneratedLevel;
@@ -22,6 +22,63 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isPipeEditMode, setIsPipeEditMode] = useState(false);
+
+  // Pipe direction rotation logic
+  const rotatePipeDirection = (
+    currentDirection: string
+  ): "up" | "right" | "down" | "left" => {
+    const directions: Array<"up" | "right" | "down" | "left"> = [
+      "up",
+      "right",
+      "down",
+      "left",
+    ];
+    const currentIndex = directions.indexOf(
+      currentDirection as "up" | "right" | "down" | "left"
+    );
+    const nextIndex = (currentIndex + 1) % directions.length;
+    return directions[nextIndex];
+  };
+
+  const handlePipeClick = (x: number, y: number, cell: BoardCell) => {
+    if (!onLevelUpdate || cell.element !== "Pipe") return;
+
+    const currentDirection = cell.pipeDirection || "up";
+    const newDirection = rotatePipeDirection(currentDirection);
+
+    // Create updated level with new pipe direction
+    const updatedBoard = level.board.map((row, rowIndex) =>
+      row.map((c, colIndex) => {
+        if (rowIndex === y && colIndex === x) {
+          return {
+            ...c,
+            pipeDirection: newDirection,
+          } as BoardCell;
+        }
+        return c;
+      })
+    );
+
+    // Update pipe info if it exists
+    const updatedPipeInfo = level.pipeInfo?.map((pipe) => {
+      if (pipe.position.x === x && pipe.position.y === y) {
+        return {
+          ...pipe,
+          direction: newDirection,
+        };
+      }
+      return pipe;
+    });
+
+    const updatedLevel = {
+      ...level,
+      board: updatedBoard,
+      pipeInfo: updatedPipeInfo,
+    };
+
+    onLevelUpdate(updatedLevel);
+  };
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -100,6 +157,15 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
               <Move className="w-4 h-4" />
               {isDragMode ? "Hoàn thành" : "Sắp xếp lại"}
             </Button>
+            <Button
+              variant={isPipeEditMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsPipeEditMode(!isPipeEditMode)}
+              className="flex items-center gap-2"
+            >
+              <RotateCw className="w-4 h-4" />
+              {isPipeEditMode ? "Hoàn thành" : "Chỉnh pipe"}
+            </Button>
             {isDragMode && (
               <Button
                 variant="outline"
@@ -119,6 +185,12 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
             block có màu.
           </p>
         )}
+        {isPipeEditMode && (
+          <p className="text-sm text-muted-foreground">
+            Click vào pipe để thay đổi hướng (↑→↓←). Pipe sẽ nhấp nháy màu xanh
+            khi có thể chỉnh sửa.
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="bg-muted p-4 rounded-lg">
@@ -133,12 +205,17 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
               const isDragging = draggedCell?.index === index;
               const isDragOver = dragOverIndex === index;
               const canDrag = isDragMode && cell.type !== "empty";
+              const canEditPipe = isPipeEditMode && cell.element === "Pipe";
 
               return (
                 <div
                   key={index}
                   className={`aspect-square rounded border border-border flex items-center justify-center text-xs font-bold relative transition-all duration-200 ${
                     canDrag ? "cursor-move hover:scale-105 hover:shadow-lg" : ""
+                  } ${
+                    canEditPipe
+                      ? "cursor-pointer hover:ring-2 hover:ring-blue-400 hover:ring-offset-1"
+                      : ""
                   } ${isDragging ? "opacity-50 scale-95" : ""} ${
                     isDragOver && draggedCell
                       ? "ring-2 ring-primary ring-offset-2"
@@ -164,12 +241,25 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
+                  onClick={() => {
+                    if (canEditPipe) {
+                      const x = index % level.config.width;
+                      const y = Math.floor(index / level.config.width);
+                      handlePipeClick(x, y, cell);
+                    }
+                  }}
                 >
                   {cell.element && (
                     <div className="absolute top-0 right-0 flex items-center gap-1 bg-black/20 backdrop-blur-sm rounded-bl-md px-1 py-0.5">
                       {cell.element === "Pipe" && cell.pipeDirection ? (
                         // For Pipe, only show arrow, no element icon
-                        <span className="text-lg font-bold text-orange-400 drop-shadow-lg">
+                        <span
+                          className={`text-lg font-bold drop-shadow-lg ${
+                            canEditPipe
+                              ? "text-blue-400 animate-pulse"
+                              : "text-orange-400"
+                          }`}
+                        >
                           {cell.pipeDirection === "up" && "↑"}
                           {cell.pipeDirection === "down" && "↓"}
                           {cell.pipeDirection === "left" && "←"}

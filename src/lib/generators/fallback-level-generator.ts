@@ -828,40 +828,100 @@ export class FallbackLevelGenerator {
     );
     console.log(`[DEBUG] Total pipe blocks needed: ${totalPipeBlocks}`);
 
-    // Calculate how many blocks each color needs to be divisible by 3
+    // Calculate balanced color distribution (divisible by 9)
+    const totalColorBlocks = config.blockCount; // Total blocks including pipe contents
     const targetColorCounts = new Map<string, number>();
-    colors.forEach((color) => {
-      const boardCount = boardColorCounts.get(color) || 0;
-      const targetCount = Math.ceil(boardCount / 3) * 3;
-      targetColorCounts.set(color, targetCount);
-    });
 
-    // Create pipe color pool from the difference
-    const pipeColorPool: string[] = [];
-    colors.forEach((color) => {
-      const boardCount = boardColorCounts.get(color) || 0;
-      const targetCount = targetColorCounts.get(color) || 0;
-      const pipeNeeded = targetCount - boardCount;
+    console.log(
+      `[DEBUG] Calculating distribution for ${totalColorBlocks} blocks across ${colors.length} colors`
+    );
+
+    // Smart distribution algorithm
+    const minPossible = colors.length * 9;
+
+    if (totalColorBlocks < minPossible) {
+      // For small block counts, use divisible by 3
+      console.log(
+        `[DEBUG] Small block count (${totalColorBlocks} < ${minPossible}), using divisible by 3`
+      );
+      const basePerColor = Math.floor(totalColorBlocks / colors.length / 3) * 3;
+      const remainder = totalColorBlocks - basePerColor * colors.length;
+
+      colors.forEach((color, index) => {
+        const extra = index < remainder / 3 ? 3 : 0;
+        targetColorCounts.set(color, Math.max(3, basePerColor + extra));
+      });
+    } else {
+      // Standard algorithm: distribute in multiples of 9
+      const baseNine = Math.floor(totalColorBlocks / colors.length / 9) * 9;
+      const remaining = totalColorBlocks - baseNine * colors.length;
+      const extraColors = Math.floor(remaining / 9);
 
       console.log(
-        `[DEBUG] Color ${color}: board=${boardCount}, target=${targetCount}, pipe_needed=${pipeNeeded}`
+        `[DEBUG] Base 9 per color: ${baseNine}, remaining: ${remaining}, extra colors: ${extraColors}`
       );
 
-      for (let i = 0; i < pipeNeeded; i++) {
+      colors.forEach((color, index) => {
+        const base = Math.max(9, baseNine);
+        const extra = index < extraColors ? 9 : 0;
+        targetColorCounts.set(color, base + extra);
+      });
+    }
+
+    // Validate total
+    const finalTotal = Array.from(targetColorCounts.values()).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    console.log(
+      `[DEBUG] Target distribution:`,
+      Object.fromEntries(targetColorCounts)
+    );
+    console.log(
+      `[DEBUG] Final total: ${finalTotal}, expected: ${totalColorBlocks}`
+    );
+
+    if (finalTotal !== totalColorBlocks) {
+      console.error(
+        `[DEBUG] Distribution mismatch: ${finalTotal} ≠ ${totalColorBlocks}`
+      );
+      // Fallback: simple even distribution
+      const evenBase = Math.floor(totalColorBlocks / colors.length);
+      const remainder = totalColorBlocks % colors.length;
+
+      colors.forEach((color, index) => {
+        const count = evenBase + (index < remainder ? 1 : 0);
+        targetColorCounts.set(color, count);
+      });
+
+      console.log(
+        `[DEBUG] Using fallback even distribution:`,
+        Object.fromEntries(targetColorCounts)
+      );
+    }
+
+    // Create pipe color pool with balanced distribution
+    const pipeColorPool: string[] = [];
+
+    // Simple balanced distribution for pipe contents
+    const colorsPerPipe = Math.floor(totalPipeBlocks / colors.length);
+    const remainder = totalPipeBlocks % colors.length;
+
+    colors.forEach((color, index) => {
+      const count = colorsPerPipe + (index < remainder ? 1 : 0);
+      for (let i = 0; i < count; i++) {
         pipeColorPool.push(color);
       }
     });
 
-    // If we don't have enough colors, add more to reach total pipe blocks needed
-    while (pipeColorPool.length < totalPipeBlocks) {
-      // Add 3 blocks of each color to maintain balance
-      colors.forEach((color) => {
-        for (let i = 0; i < 3 && pipeColorPool.length < totalPipeBlocks; i++) {
-          pipeColorPool.push(color);
-          targetColorCounts.set(color, (targetColorCounts.get(color) || 0) + 1);
-        }
-      });
-    }
+    console.log(
+      `[DEBUG] Pipe color distribution: ${colors
+        .map(
+          (color) =>
+            `${color}=${pipeColorPool.filter((c) => c === color).length}`
+        )
+        .join(", ")}`
+    );
 
     // Shuffle pipe color pool
     for (let i = pipeColorPool.length - 1; i > 0; i--) {
@@ -911,13 +971,14 @@ export class FallbackLevelGenerator {
   }
 
   /**
-   * Validate that all colors have blocks divisible by 3
+   * Validate that all colors have blocks divisible by 9 and total count matches blockCount
    */
   private static validateColorBalance(
     board: BoardCell[][],
     config: LevelConfig
   ): void {
     const colorCounts = new Map<string, number>();
+    let totalColorBlocks = 0;
 
     // Count colors on board
     for (let y = 0; y < config.height; y++) {
@@ -925,34 +986,52 @@ export class FallbackLevelGenerator {
         const cell = board[y][x];
         if (cell.type === "block" && cell.color) {
           colorCounts.set(cell.color, (colorCounts.get(cell.color) || 0) + 1);
+          totalColorBlocks++;
         }
 
         // Count colors in pipe contents
         if (cell.element === "Pipe" && cell.pipeContents) {
           for (const pipeColor of cell.pipeContents) {
             colorCounts.set(pipeColor, (colorCounts.get(pipeColor) || 0) + 1);
+            totalColorBlocks++;
           }
         }
       }
     }
 
     console.log(`[VALIDATION] Color balance check:`);
+    console.log(
+      `[VALIDATION] Total color blocks: ${totalColorBlocks} (expected: ${config.blockCount})`
+    );
+
     let allBalanced = true;
+    let totalBlockCountCorrect = totalColorBlocks === config.blockCount;
 
     for (const [color, count] of colorCounts) {
-      const isDivisibleBy3 = count % 3 === 0;
+      const isDivisibleBy9 = count % 9 === 0;
       console.log(
-        `[VALIDATION] ${color}: ${count} blocks (divisible by 3: ${isDivisibleBy3})`
+        `[VALIDATION] ${color}: ${count} blocks (divisible by 9: ${isDivisibleBy9})`
       );
-      if (!isDivisibleBy3) {
+      if (!isDivisibleBy9) {
         allBalanced = false;
       }
     }
 
-    if (allBalanced) {
-      console.log(`[VALIDATION] ✅ All colors are balanced (divisible by 3)`);
+    if (allBalanced && totalBlockCountCorrect) {
+      console.log(
+        `[VALIDATION] ✅ All colors are balanced (divisible by 9) and total count is correct`
+      );
     } else {
-      console.warn(`[VALIDATION] ❌ Some colors are not balanced!`);
+      if (!allBalanced) {
+        console.warn(
+          `[VALIDATION] ❌ Some colors are not balanced (not divisible by 9)!`
+        );
+      }
+      if (!totalBlockCountCorrect) {
+        console.warn(
+          `[VALIDATION] ❌ Total block count mismatch: ${totalColorBlocks} ≠ ${config.blockCount}!`
+        );
+      }
     }
   }
 }
