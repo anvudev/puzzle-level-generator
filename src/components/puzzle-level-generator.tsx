@@ -69,18 +69,12 @@ export function PuzzleLevelGenerator() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
-                  <Target className="w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    AI tự động cân bằng
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
                   <Palette className="w-4 h-4" />
                   <span className="text-sm font-medium">12 màu sắc</span>
                 </div>
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
                   <Grid3X3 className="w-4 h-4" />
-                  <span className="text-sm font-medium">8 loại element</span>
+                  <span className="text-sm font-medium">7 loại element</span>
                 </div>
               </div>
             </div>
@@ -99,7 +93,7 @@ export function PuzzleLevelGenerator() {
                 ) : (
                   <>
                     <Sparkles className="w-6 h-6 mr-3" />
-                    Tạo Level với AI
+                    Tạo Level
                   </>
                 )}
               </Button>
