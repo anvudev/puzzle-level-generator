@@ -9,6 +9,8 @@ import { GAME_COLORS } from "@/config/game-constants";
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
 import { RotateCcw, Move } from "lucide-react";
+import { LevelEditor } from "./level-editor";
+import { LevelHelp } from "./level-help";
 
 interface BoardPreviewProps {
   level: GeneratedLevel;
@@ -91,6 +93,11 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
         <div className="flex items-center justify-between">
           <CardTitle>Bảng game</CardTitle>
           <div className="flex items-center gap-2">
+            <LevelEditor
+              level={level}
+              onLevelUpdate={onLevelUpdate || (() => {})}
+            />
+            <LevelHelp />
             <Button
               variant={isDragMode ? "default" : "outline"}
               size="sm"

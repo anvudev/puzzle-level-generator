@@ -40,29 +40,17 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">
-              {level.config.width}x{level.config.height}
+              {level.config.width}x{level.config.blockCount}
             </p>
             <p className="text-sm text-muted-foreground">Kích thước</p>
           </div>
           <div className="text-center">
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-primary">{boardBlocks}</p>
-              {(pipeBlocks > 0 || lockBlocks > 0) && (
-                <div className="space-y-0.5">
-                  {pipeBlocks > 0 && (
-                    <p className="text-xs text-blue-600">
-                      +{pipeBlocks} trong pipe
-                    </p>
-                  )}
-                  {lockBlocks > 0 && (
-                    <p className="text-xs text-yellow-600">
-                      +{lockBlocks} trong lock
-                    </p>
-                  )}
-                </div>
-              )}
+              <p className="text-2xl font-bold text-primary">
+                {level.config.blockCount}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">Block trên board</p>
+            <p className="text-sm text-muted-foreground">Block</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">
@@ -79,10 +67,6 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Tổng blocks:</span>
-            <Badge variant="outline">{level.config.blockCount}</Badge>
-          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Độ khó:</span>
             <Badge className={getDifficultyColor(level.config.difficulty)}>

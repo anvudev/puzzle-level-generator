@@ -66,10 +66,6 @@ export function PuzzleLevelGenerator() {
                 <h1 className="text-4xl font-black mb-2">
                   Puzzle Level Generator
                 </h1>
-                <p className="text-xl text-white/90 font-medium">
-                  Tạo level puzzle thông minh với Google Gemini AI - Nhanh, đẹp,
-                  và thú vị!
-                </p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
@@ -169,6 +165,12 @@ export function PuzzleLevelGenerator() {
             <LevelPreview
               level={generatedLevel}
               onLevelUpdate={handleLevelUpdate}
+              // onRegenerate={generateLevel}
+              onSave={(level) => {
+                console.log("Saving level:", level);
+                // You can implement save functionality here
+                // For now, just log the level
+              }}
             />
           ) : (
             <Card className="border-2 border-dashed border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl shadow-xl overflow-hidden">

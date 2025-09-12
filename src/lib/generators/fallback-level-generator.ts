@@ -76,44 +76,36 @@ export class FallbackLevelGenerator {
   ): BoardCell[][] {
     const colors = config.selectedColors;
 
-    // Calculate blocks excluding pipe contents and block lock pairs
-    console.log(`[DEBUG] config.elements:`, config.elements);
+    // Calculate pipe and lock blocks
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
-
-    // Each pipe now contains difficulty-based random blocks
     const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
-    const avgBlocksPerPipe = pipeRange.avg;
-    const blocksPerLock = 2; // Each Block Lock requires 2 blocks (1 Lock + 1 Key)
+    const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
+    const lockBlocks = blockLockCount * 2;
 
-    const pipeBlocks = Math.floor(pipeCount * avgBlocksPerPipe);
-    const lockBlocks = blockLockCount * blocksPerLock;
-    const boardBlocks = config.blockCount - pipeBlocks - lockBlocks; // Actual blocks on board
+    // Ensure total blocks divisible by 3 for each color
+    const targetPerColor =
+      Math.floor(config.blockCount / colors.length / 3) * 3;
+    config.blockCount = targetPerColor * colors.length;
 
-    console.log(
-      `[DEBUG] Difficulty: ${config.difficulty}, Pipe range: ${pipeRange.min}-${pipeRange.max} (avg: ${pipeRange.avg})`
-    );
-    console.log(
-      `[DEBUG] Total blocks: ${config.blockCount}, Pipe count: ${pipeCount}, Pipe blocks: ${pipeBlocks}, Block Lock count: ${blockLockCount}, Lock blocks: ${lockBlocks}, Board blocks: ${boardBlocks}`
-    );
+    const adjustedBoardBlocks = config.blockCount - pipeBlocks - lockBlocks;
+    const finalTargetPerColor = new Array(colors.length).fill(targetPerColor);
 
-    const totalBlocks = Math.max(1, boardBlocks); // Ensure at least 1 block on board
-
-    // Create initial color distribution for board blocks only
-    const baseBlocksPerColor = Math.floor(totalBlocks / colors.length);
-    const remainder = totalBlocks % colors.length;
-
+    // Create board color distribution
     const boardColorDistribution: string[] = [];
+    const boardBlocksPerColor = Math.floor(adjustedBoardBlocks / colors.length);
+    const remainder = adjustedBoardBlocks % colors.length;
+
     colors.forEach((color, index) => {
       const blocksForThisColor =
-        baseBlocksPerColor + (index < remainder ? 1 : 0);
+        boardBlocksPerColor + (index < remainder ? 1 : 0);
       for (let i = 0; i < blocksForThisColor; i++) {
         boardColorDistribution.push(color);
       }
     });
 
-    // Shuffle the board color distribution
+    // Shuffle for variety
     for (let i = boardColorDistribution.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [boardColorDistribution[i], boardColorDistribution[j]] = [
@@ -122,17 +114,31 @@ export class FallbackLevelGenerator {
       ];
     }
 
-    console.log(
-      `[DEBUG] Board color distribution: ${boardColorDistribution.length} blocks`
+    return this.placeBlocksConnected(
+      board,
+      config,
+      boardColorDistribution,
+      finalTargetPerColor
     );
+  }
 
+  /**
+   * Place blocks ensuring connectivity
+   */
+  private static placeBlocksConnected(
+    board: BoardCell[][],
+    config: LevelConfig,
+    boardColorDistribution: string[],
+    finalTargetPerColor: number[]
+  ): BoardCell[][] {
     // Initialize empty pipe color pool (will be calculated after pipes are placed)
     // pipeColorPool will be calculated in generatePipeColors method
 
     // CONNECTED PLACEMENT ALGORITHM
+    const totalBlocks = boardColorDistribution.length;
     let placedBlocks = 0;
 
-    // Place first block at center or random position
+    // Place first block at center
     const startX = Math.floor(config.width / 2);
     const startY = Math.floor(config.height / 2);
     board[startY][startX] = {
@@ -178,22 +184,7 @@ export class FallbackLevelGenerator {
     this.placeSpecialElements(board, config);
 
     // Calculate and assign balanced pipe contents after all pipes are placed
-    this.assignBalancedPipeContents(board, config);
-
-    // Final connectivity check and validation
-    const isConnectedBoard = LevelGeneratorUtils.isConnected(board);
-    console.log(
-      `[v2] Random board generated: ${placedBlocks} blocks placed (requested: ${totalBlocks}), connected: ${isConnectedBoard}`
-    );
-
-    if (!isConnectedBoard) {
-      console.warn(
-        "Generated random board is not connected, this should not happen!"
-      );
-    }
-
-    // Validate color balance
-    this.validateColorBalance(board, config);
+    this.assignBalancedPipeContents(board, config, finalTargetPerColor);
 
     return board;
   }
@@ -217,33 +208,29 @@ export class FallbackLevelGenerator {
     const colors = config.selectedColors;
     const centerX = Math.floor(config.width / 2);
 
-    // Calculate blocks excluding pipe contents and block lock pairs
-    console.log(`[DEBUG Symmetric] config.elements:`, config.elements);
+    // Calculate blocks
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
-
-    // Each pipe now contains difficulty-based random blocks
     const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
-    const avgBlocksPerPipe = pipeRange.avg;
-    const blocksPerLock = 2; // Each Block Lock requires 2 blocks (1 Lock + 1 Key)
+    const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
+    const lockBlocks = blockLockCount * 2;
+    // Ensure total blocks divisible by 3 for each color
+    const targetPerColor =
+      Math.floor(config.blockCount / colors.length / 3) * 3;
+    config.blockCount = targetPerColor * colors.length;
 
-    const pipeBlocks = Math.floor(pipeCount * avgBlocksPerPipe);
-    const lockBlocks = blockLockCount * blocksPerLock;
-    const boardBlocks = config.blockCount - pipeBlocks - lockBlocks; // Actual blocks on board
+    let adjustedTotalBlocks = config.blockCount - pipeBlocks - lockBlocks;
 
-    console.log(
-      `[DEBUG Symmetric] Difficulty: ${config.difficulty}, Pipe range: ${pipeRange.min}-${pipeRange.max} (avg: ${pipeRange.avg})`
-    );
-    console.log(
-      `[DEBUG Symmetric] Total blocks: ${config.blockCount}, Pipe count: ${pipeCount}, Pipe blocks: ${pipeBlocks}, Block Lock count: ${blockLockCount}, Lock blocks: ${lockBlocks}, Board blocks: ${boardBlocks}`
-    );
+    // For symmetric mode, ensure blocks work with symmetric pairs
+    const hasCenter = config.width % 2 === 1;
+    if (!hasCenter && adjustedTotalBlocks % 2 === 1) {
+      adjustedTotalBlocks = Math.max(2, adjustedTotalBlocks - 1);
+    }
 
-    const totalBlocks = Math.max(1, boardBlocks); // Ensure at least 1 block on board
-
-    // Create initial color distribution for board blocks only (same as random board)
-    const baseBlocksPerColor = Math.floor(totalBlocks / colors.length);
-    const remainder = totalBlocks % colors.length;
+    const finalTargetPerColor = new Array(colors.length).fill(targetPerColor);
+    const baseBlocksPerColor = Math.floor(adjustedTotalBlocks / colors.length);
+    const remainder = adjustedTotalBlocks % colors.length;
 
     const boardColorDistribution: string[] = [];
     colors.forEach((color, index) => {
@@ -272,8 +259,9 @@ export class FallbackLevelGenerator {
 
     let placedBlocks = 0;
     let colorIndex = 0;
+    const totalBlocks = adjustedTotalBlocks; // Use adjusted total for symmetric placement
 
-    // CONNECTED SYMMETRIC PLACEMENT ALGORITHM
+    // PERFECT SYMMETRIC PLACEMENT ALGORITHM
     const placeSymmetricBlock = (
       x: number,
       y: number,
@@ -288,6 +276,9 @@ export class FallbackLevelGenerator {
         return false;
       if (board[y][x].type !== "empty") return false;
 
+      const mirrorX = config.width - 1 - x;
+      const isCenter = x === centerX;
+
       // Check connectivity (except for first block)
       if (!forcePlace && placedBlocks > 0) {
         const neighbors = LevelGeneratorUtils.getNeighbors(
@@ -300,34 +291,9 @@ export class FallbackLevelGenerator {
           (n) => board[n.y][n.x].type === "block"
         );
         if (!hasBlockNeighbor) return false;
-      }
 
-      board[y][x] = {
-        type: "block",
-        color: boardColorDistribution[colorIndex],
-        element: null,
-      };
-      placedBlocks++;
-      colorIndex++;
-
-      // Place symmetric counterpart if different position
-      const mirrorX = config.width - 1 - x;
-      if (
-        mirrorX !== x &&
-        placedBlocks < totalBlocks &&
-        colorIndex < boardColorDistribution.length &&
-        board[y][mirrorX].type === "empty"
-      ) {
-        // Check connectivity for mirror block too (except when forcing)
-        if (forcePlace || placedBlocks === 1) {
-          board[y][mirrorX] = {
-            type: "block",
-            color: boardColorDistribution[colorIndex],
-            element: null,
-          };
-          placedBlocks++;
-          colorIndex++;
-        } else {
+        // For non-center blocks, also check mirror connectivity
+        if (!isCenter && board[y][mirrorX].type === "empty") {
           const mirrorNeighbors = LevelGeneratorUtils.getNeighbors(
             mirrorX,
             y,
@@ -337,18 +303,47 @@ export class FallbackLevelGenerator {
           const mirrorHasBlockNeighbor = mirrorNeighbors.some(
             (n) => board[n.y][n.x].type === "block"
           );
-          if (mirrorHasBlockNeighbor) {
-            board[y][mirrorX] = {
-              type: "block",
-              color: boardColorDistribution[colorIndex],
-              element: null,
-            };
-            placedBlocks++;
-            colorIndex++;
-          }
+          if (!mirrorHasBlockNeighbor) return false;
         }
       }
-      return true;
+
+      // Place center block
+      if (isCenter) {
+        board[y][x] = {
+          type: "block",
+          color: boardColorDistribution[colorIndex],
+          element: null,
+        };
+        placedBlocks++;
+        colorIndex++;
+        return true;
+      }
+
+      // Place symmetric pair
+      if (
+        board[y][mirrorX].type === "empty" &&
+        placedBlocks + 1 < totalBlocks &&
+        colorIndex + 1 < boardColorDistribution.length
+      ) {
+        board[y][x] = {
+          type: "block",
+          color: boardColorDistribution[colorIndex],
+          element: null,
+        };
+        placedBlocks++;
+        colorIndex++;
+
+        board[y][mirrorX] = {
+          type: "block",
+          color: boardColorDistribution[colorIndex],
+          element: null,
+        };
+        placedBlocks++;
+        colorIndex++;
+        return true;
+      }
+
+      return false;
     };
 
     // Start with center block to ensure connectivity
@@ -458,9 +453,20 @@ export class FallbackLevelGenerator {
         ];
       }
 
-      const pos = connectedPositions[0];
-      if (!placeSymmetricBlock(pos.x, pos.y)) {
-        console.warn("Failed to place symmetric block, breaking");
+      // Try multiple positions instead of just the first one
+      let placed = false;
+      for (let i = 0; i < Math.min(5, connectedPositions.length); i++) {
+        const pos = connectedPositions[i];
+        if (placeSymmetricBlock(pos.x, pos.y)) {
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        console.warn(
+          "Failed to place symmetric block after trying multiple positions, breaking"
+        );
         break;
       }
     }
@@ -469,7 +475,7 @@ export class FallbackLevelGenerator {
     this.placeSpecialElementsSymmetrically(board, config, centerX);
 
     // Calculate and assign balanced pipe contents after all pipes are placed
-    this.assignBalancedPipeContents(board, config);
+    this.assignBalancedPipeContents(board, config, finalTargetPerColor);
 
     // Final connectivity check and validation
     const isConnectedBoard = LevelGeneratorUtils.isConnected(board);
@@ -500,6 +506,8 @@ export class FallbackLevelGenerator {
 
     Object.entries(config.elements).forEach(([elementType, count]) => {
       if (count > 0) {
+        console.log(`[DEBUG] Placing ${count} ${elementType} elements`);
+
         const blockPositions = [];
         for (let y = 0; y < config.height; y++) {
           for (let x = 0; x < config.width; x++) {
@@ -509,43 +517,62 @@ export class FallbackLevelGenerator {
           }
         }
 
-        // Distribute elements across three regions
-        const topRegion = blockPositions.filter(
-          (pos) => pos.y < config.height * 0.33
-        );
-        const middleRegion = blockPositions.filter(
-          (pos) => pos.y >= config.height * 0.33 && pos.y < config.height * 0.66
-        );
-        const bottomRegion = blockPositions.filter(
-          (pos) => pos.y >= config.height * 0.66
+        console.log(
+          `[DEBUG] Available positions for ${elementType}: ${blockPositions.length}`
         );
 
-        const topCount = Math.floor(count * 0.3);
-        const middleCount = Math.floor(count * 0.45);
-        const bottomCount = count - topCount - middleCount;
+        if (blockPositions.length === 0) {
+          console.warn(`[DEBUG] No available positions for ${elementType}`);
+          return;
+        }
 
-        // Place elements in each region
-        const placeInRegion = (
-          region: { x: number; y: number }[],
-          targetCount: number
-        ) => {
-          const shuffled = [...region].sort(() => Math.random() - 0.5);
-          for (let i = 0; i < Math.min(targetCount, shuffled.length); i++) {
-            const pos = shuffled[i];
-            this.placeSpecialElement(
-              board,
-              pos,
-              elementType,
-              config,
-              colors,
-              i
+        // Shuffle all positions to ensure random distribution
+        const shuffledPositions = [...blockPositions].sort(
+          () => Math.random() - 0.5
+        );
+
+        let placedCount = 0;
+        let attempts = 0;
+        const maxAttempts = shuffledPositions.length * 3; // Allow multiple passes
+
+        while (placedCount < count && attempts < maxAttempts) {
+          const posIndex = attempts % shuffledPositions.length;
+          const pos = shuffledPositions[posIndex];
+
+          // Skip if position is already occupied
+          if (board[pos.y][pos.x].element) {
+            attempts++;
+            continue;
+          }
+
+          const success = this.placeSpecialElement(
+            board,
+            pos,
+            elementType,
+            config,
+            colors,
+            placedCount
+          );
+
+          if (success) {
+            placedCount++;
+            console.log(
+              `[DEBUG] Successfully placed ${elementType} ${placedCount}/${count} at (${pos.x}, ${pos.y})`
             );
           }
-        };
 
-        placeInRegion(topRegion, topCount);
-        placeInRegion(middleRegion, middleCount);
-        placeInRegion(bottomRegion, bottomCount);
+          attempts++;
+        }
+
+        console.log(
+          `[DEBUG] Final count for ${elementType}: ${placedCount}/${count} placed`
+        );
+
+        if (placedCount < count) {
+          console.warn(
+            `[DEBUG] Could not place all ${elementType} elements: ${placedCount}/${count}`
+          );
+        }
       }
     });
   }
@@ -562,46 +589,40 @@ export class FallbackLevelGenerator {
 
     Object.entries(config.elements).forEach(([elementType, count]) => {
       if (count > 0) {
-        const blockPositions = [];
+        console.log(
+          `[DEBUG Symmetric] Placing ${count} ${elementType} elements symmetrically`
+        );
+
+        // Get all available positions on the left side (including center if odd width)
+        const leftSidePositions = [];
         for (let y = 0; y < config.height; y++) {
           for (let x = 0; x <= centerX; x++) {
             if (board[y][x].type === "block" && !board[y][x].element) {
-              blockPositions.push({ x, y });
+              leftSidePositions.push({ x, y });
             }
           }
         }
 
-        // Distribute elements across regions for symmetric placement
-        const topRegion = blockPositions.filter(
-          (pos) => pos.y < config.height * 0.33
-        );
-        const middleRegion = blockPositions.filter(
-          (pos) => pos.y >= config.height * 0.33 && pos.y < config.height * 0.66
-        );
-        const bottomRegion = blockPositions.filter(
-          (pos) => pos.y >= config.height * 0.66
+        console.log(
+          `[DEBUG Symmetric] Available left-side positions for ${elementType}: ${leftSidePositions.length}`
         );
 
-        // For symmetric mode, we still want to place the exact count requested
-        const totalElementsToPlace = count;
-        const topCount = Math.floor(totalElementsToPlace * 0.3);
-        const middleCount = Math.floor(totalElementsToPlace * 0.45);
-        const bottomCount = totalElementsToPlace - topCount - middleCount;
+        // Shuffle positions for random distribution
+        const shuffledPositions = [...leftSidePositions].sort(
+          () => Math.random() - 0.5
+        );
 
-        const placeSymmetricElements = (
-          region: { x: number; y: number }[],
-          targetCount: number
-        ) => {
-          const shuffled = [...region].sort(() => Math.random() - 0.5);
-          let placedCount = 0;
+        let placedCount = 0;
 
-          for (
-            let i = 0;
-            i < shuffled.length && placedCount < targetCount;
-            i++
-          ) {
-            const pos = shuffled[i];
-            const elementPlaced = this.placeSpecialElement(
+        for (const pos of shuffledPositions) {
+          if (placedCount >= count) break;
+
+          const mirrorX = config.width - 1 - pos.x;
+          const isCenter = pos.x === centerX;
+
+          // For center column elements, place only one
+          if (isCenter) {
+            const success = this.placeSpecialElement(
               board,
               pos,
               elementType,
@@ -610,40 +631,86 @@ export class FallbackLevelGenerator {
               placedCount
             );
 
-            if (elementPlaced) {
+            if (success) {
               placedCount++;
+              console.log(
+                `[DEBUG Symmetric] Placed ${elementType} ${placedCount}/${count} at center (${pos.x}, ${pos.y})`
+              );
+            }
+          } else {
+            // For non-center elements, try to place both sides
+            const mirrorAvailable =
+              board[pos.y][mirrorX].type === "block" &&
+              !board[pos.y][mirrorX].element;
 
-              // Try to place symmetric counterpart
-              const mirrorX = config.width - 1 - pos.x;
-              if (
-                mirrorX !== pos.x &&
-                board[pos.y][mirrorX].type === "block" &&
-                !board[pos.y][mirrorX].element &&
-                placedCount < targetCount
-              ) {
-                const mirrorPlaced = this.placeSpecialElement(
+            if (mirrorAvailable && placedCount + 1 < count) {
+              // Place both sides
+              const leftSuccess = this.placeSpecialElement(
+                board,
+                pos,
+                elementType,
+                config,
+                colors,
+                placedCount
+              );
+
+              if (leftSuccess) {
+                const rightSuccess = this.placeSpecialElement(
                   board,
                   { x: mirrorX, y: pos.y },
                   elementType,
                   config,
                   colors,
-                  placedCount
+                  placedCount + 1
                 );
-                if (mirrorPlaced) {
-                  placedCount++;
+
+                if (rightSuccess) {
+                  placedCount += 2;
+                  console.log(
+                    `[DEBUG Symmetric] Placed ${elementType} pair ${
+                      placedCount - 1
+                    }-${placedCount}/${count} at (${pos.x}, ${
+                      pos.y
+                    }) and (${mirrorX}, ${pos.y})`
+                  );
+                } else {
+                  // If mirror failed, remove the left one to maintain symmetry
+                  board[pos.y][pos.x].element = null;
+                  console.log(
+                    `[DEBUG Symmetric] Failed to place mirror, removed left element to maintain symmetry`
+                  );
                 }
+              }
+            } else if (placedCount + 1 === count && isCenter) {
+              // Only one element left, place it at center if possible
+              const success = this.placeSpecialElement(
+                board,
+                pos,
+                elementType,
+                config,
+                colors,
+                placedCount
+              );
+
+              if (success) {
+                placedCount++;
+                console.log(
+                  `[DEBUG Symmetric] Placed final ${elementType} ${placedCount}/${count} at center (${pos.x}, ${pos.y})`
+                );
               }
             }
           }
+        }
 
-          console.log(
-            `[DEBUG] ${elementType}: Placed ${placedCount}/${targetCount} elements in region`
+        console.log(
+          `[DEBUG Symmetric] Final count for ${elementType}: ${placedCount}/${count} placed`
+        );
+
+        if (placedCount < count) {
+          console.warn(
+            `[DEBUG Symmetric] Could not place all ${elementType} elements symmetrically: ${placedCount}/${count}`
           );
-        };
-
-        placeSymmetricElements(topRegion, topCount);
-        placeSymmetricElements(middleRegion, middleCount);
-        placeSymmetricElements(bottomRegion, bottomCount);
+        }
       }
     });
   }
@@ -799,11 +866,12 @@ export class FallbackLevelGenerator {
    */
   private static assignBalancedPipeContents(
     board: BoardCell[][],
-    config: LevelConfig
+    config: LevelConfig,
+    targetPerColor?: number[]
   ): void {
     const colors = config.selectedColors;
 
-    // Count board colors first
+    // Count board colors and pipe blocks
     const boardColorCounts = new Map<string, number>();
     let totalPipeBlocks = 0;
 
@@ -822,48 +890,38 @@ export class FallbackLevelGenerator {
       }
     }
 
-    console.log(
-      `[DEBUG] Board color counts:`,
-      Object.fromEntries(boardColorCounts)
-    );
-    console.log(`[DEBUG] Total pipe blocks needed: ${totalPipeBlocks}`);
+    if (totalPipeBlocks === 0) {
+      return;
+    }
 
-    // Calculate how many blocks each color needs to be divisible by 3
-    const targetColorCounts = new Map<string, number>();
-    colors.forEach((color) => {
-      const boardCount = boardColorCounts.get(color) || 0;
-      const targetCount = Math.ceil(boardCount / 3) * 3;
-      targetColorCounts.set(color, targetCount);
-    });
-
-    // Create pipe color pool from the difference
+    // Calculate how many pipe blocks each color needs
     const pipeColorPool: string[] = [];
-    colors.forEach((color) => {
-      const boardCount = boardColorCounts.get(color) || 0;
-      const targetCount = targetColorCounts.get(color) || 0;
-      const pipeNeeded = targetCount - boardCount;
 
-      console.log(
-        `[DEBUG] Color ${color}: board=${boardCount}, target=${targetCount}, pipe_needed=${pipeNeeded}`
-      );
+    if (targetPerColor) {
+      // Use target-based distribution
+      colors.forEach((color, index) => {
+        const boardCount = boardColorCounts.get(color) || 0;
+        const target = targetPerColor[index];
+        const needed = Math.max(0, target - boardCount);
 
-      for (let i = 0; i < pipeNeeded; i++) {
-        pipeColorPool.push(color);
-      }
-    });
-
-    // If we don't have enough colors, add more to reach total pipe blocks needed
-    while (pipeColorPool.length < totalPipeBlocks) {
-      // Add 3 blocks of each color to maintain balance
-      colors.forEach((color) => {
-        for (let i = 0; i < 3 && pipeColorPool.length < totalPipeBlocks; i++) {
+        for (let i = 0; i < needed; i++) {
           pipeColorPool.push(color);
-          targetColorCounts.set(color, (targetColorCounts.get(color) || 0) + 1);
+        }
+      });
+    } else {
+      // Fallback: distribute evenly
+      const blocksPerColor = Math.floor(totalPipeBlocks / colors.length);
+      const remainder = totalPipeBlocks % colors.length;
+
+      colors.forEach((color, index) => {
+        const blocksForThisColor = blocksPerColor + (index < remainder ? 1 : 0);
+        for (let i = 0; i < blocksForThisColor; i++) {
+          pipeColorPool.push(color);
         }
       });
     }
 
-    // Shuffle pipe color pool
+    // Shuffle for randomness
     for (let i = pipeColorPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pipeColorPool[i], pipeColorPool[j]] = [
@@ -872,39 +930,26 @@ export class FallbackLevelGenerator {
       ];
     }
 
-    console.log(`[DEBUG] Pipe color pool: ${pipeColorPool.length} blocks`);
-    console.log(
-      `[DEBUG] Target color counts:`,
-      Object.fromEntries(targetColorCounts)
-    );
-
     // Assign colors to pipes
-    let poolIndex = 0;
+    let colorIndex = 0;
     for (let y = 0; y < config.height; y++) {
       for (let x = 0; x < config.width; x++) {
         const cell = board[y][x];
-        if (cell.element === "Pipe" && cell.pipeSize) {
-          const pipeContents = [];
-          for (let i = 0; i < cell.pipeSize; i++) {
-            if (poolIndex < pipeColorPool.length) {
-              pipeContents.push(pipeColorPool[poolIndex]);
-              poolIndex++;
-            } else {
-              // Fallback
-              const randomColor =
-                colors[Math.floor(Math.random() * colors.length)];
-              pipeContents.push(randomColor);
-              console.warn(
-                `[DEBUG] Pipe color pool exhausted, using fallback: ${randomColor}`
-              );
-            }
+        if (
+          cell.element === "Pipe" &&
+          cell.pipeSize &&
+          colorIndex < pipeColorPool.length
+        ) {
+          const pipeContents: string[] = [];
+          for (
+            let i = 0;
+            i < cell.pipeSize && colorIndex < pipeColorPool.length;
+            i++
+          ) {
+            pipeContents.push(pipeColorPool[colorIndex]);
+            colorIndex++;
           }
           cell.pipeContents = pipeContents;
-          console.log(
-            `[DEBUG] Assigned ${
-              pipeContents.length
-            } colors to pipe at (${x}, ${y}): [${pipeContents.join(", ")}]`
-          );
         }
       }
     }
@@ -919,40 +964,19 @@ export class FallbackLevelGenerator {
   ): void {
     const colorCounts = new Map<string, number>();
 
-    // Count colors on board
+    // Count colors on board and in pipes
     for (let y = 0; y < config.height; y++) {
       for (let x = 0; x < config.width; x++) {
         const cell = board[y][x];
         if (cell.type === "block" && cell.color) {
           colorCounts.set(cell.color, (colorCounts.get(cell.color) || 0) + 1);
         }
-
-        // Count colors in pipe contents
         if (cell.element === "Pipe" && cell.pipeContents) {
           for (const pipeColor of cell.pipeContents) {
             colorCounts.set(pipeColor, (colorCounts.get(pipeColor) || 0) + 1);
           }
         }
       }
-    }
-
-    console.log(`[VALIDATION] Color balance check:`);
-    let allBalanced = true;
-
-    for (const [color, count] of colorCounts) {
-      const isDivisibleBy3 = count % 3 === 0;
-      console.log(
-        `[VALIDATION] ${color}: ${count} blocks (divisible by 3: ${isDivisibleBy3})`
-      );
-      if (!isDivisibleBy3) {
-        allBalanced = false;
-      }
-    }
-
-    if (allBalanced) {
-      console.log(`[VALIDATION] ✅ All colors are balanced (divisible by 3)`);
-    } else {
-      console.warn(`[VALIDATION] ❌ Some colors are not balanced!`);
     }
   }
 }

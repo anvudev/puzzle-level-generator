@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LevelInfoCard } from "./preview/level-info-card";
 import { BoardPreview } from "./preview/board-preview";
+import { LevelValidator } from "./preview/level-validator";
+import { LevelActions } from "./preview/level-actions";
 import type { GeneratedLevel } from "@/config/game-types";
 import { GAME_COLORS, ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
@@ -11,9 +13,16 @@ import { getElementIcon } from "@/lib/utils/level-utils";
 interface LevelPreviewProps {
   level: GeneratedLevel;
   onLevelUpdate?: (updatedLevel: GeneratedLevel) => void;
+  onRegenerate?: () => void;
+  onSave?: (level: GeneratedLevel) => void;
 }
 
-export function LevelPreview({ level, onLevelUpdate }: LevelPreviewProps) {
+export function LevelPreview({
+  level,
+  onLevelUpdate,
+  onRegenerate,
+  onSave,
+}: LevelPreviewProps) {
   // Debug pipe info
   console.log("[DEBUG UI] level.pipeInfo:", level.pipeInfo);
   console.log("[DEBUG UI] pipeInfo exists:", !!level.pipeInfo);
@@ -26,8 +35,19 @@ export function LevelPreview({ level, onLevelUpdate }: LevelPreviewProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BoardPreview level={level} onLevelUpdate={onLevelUpdate} />
 
-        {/* Colors and Elements */}
+        {/* Right Panel */}
         <div className="space-y-4">
+          {/* Level Actions */}
+          {/* <LevelActions
+            level={level}
+            onRegenerate={onRegenerate}
+            onSave={onSave}
+          /> */}
+
+          {/* Level Validator */}
+          <LevelValidator level={level} />
+
+          {/* Colors and Elements */}
           {/* Selected Colors */}
           <Card>
             <CardHeader>
