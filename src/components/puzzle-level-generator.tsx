@@ -12,7 +12,6 @@ import {
   Sparkles,
   Gamepad2,
   Zap,
-  Target,
   Palette,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";

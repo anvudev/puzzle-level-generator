@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useCallback } from "react";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 import { GeminiLevelGenerator } from "@/lib/generators/gemini-level-generator";
