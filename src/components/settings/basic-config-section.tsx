@@ -13,6 +13,7 @@ import {
 import { Grid3X3, Ruler, Hash, Shuffle, Target } from "lucide-react";
 import { DIFFICULTY_LEVELS } from "@/config/game-constants";
 import type { LevelConfig } from "@/config/game-types";
+import { useEffect, useState } from "react";
 
 interface BasicConfigSectionProps {
   config: LevelConfig;
@@ -23,6 +24,25 @@ export function BasicConfigSection({
   config,
   updateConfig,
 }: BasicConfigSectionProps) {
+  const [blockCountInput, setBlockCountInput] = useState<string>(
+    String(config.blockCount)
+  );
+
+  useEffect(() => {
+    setBlockCountInput(String(config.blockCount));
+  }, [config.blockCount]);
+
+  const roundToNearestMultipleOf3 = (value: number): number => {
+    if (!Number.isFinite(value)) return 27;
+    const minimum = 3;
+    if (value < minimum) return minimum;
+    const remainder = value % 3;
+    if (remainder === 0) return value;
+    // remainder 1 -> -1, remainder 2 -> +1 (nearest bội số của 3)
+    const rounded = remainder === 1 ? value - 1 : value + 1;
+    return Math.max(minimum, rounded);
+  };
+
   return (
     <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 shadow-lg">
       <CardHeader className="pb-4">
@@ -92,16 +112,21 @@ export function BasicConfigSection({
             type="number"
             min="3"
             step="3"
-            value={config.blockCount}
+            value={blockCountInput}
             onChange={(e) => {
-              const value = Number.parseInt(e.target.value) || 27;
-              const adjusted = Math.ceil(value / 3) * 3;
+              setBlockCountInput(e.target.value);
+            }}
+            onBlur={() => {
+              const parsed = Number.parseInt(blockCountInput);
+              const adjusted = roundToNearestMultipleOf3(parsed);
+              // cập nhật config và đồng bộ hiển thị
               updateConfig({ blockCount: adjusted });
+              setBlockCountInput(String(adjusted));
             }}
             className="border-2 border-orange-200 focus:border-orange-400 focus:ring-orange-200 bg-white/80 text-lg font-medium"
           />
           <p className="text-xs text-orange-600 bg-orange-100 px-3 py-1 rounded-full inline-block">
-            Tự động điều chỉnh để chia hết cho 3
+            Tự động điều chỉnh về bội số của 3 khi rời ô nhập
           </p>
         </div>
 

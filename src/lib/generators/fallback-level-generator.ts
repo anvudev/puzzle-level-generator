@@ -127,9 +127,7 @@ export class FallbackLevelGenerator {
         }
       }
     }
-
     const adjustedBoardBlocks = config.blockCount - pipeBlocks - lockBlocks;
-
     // Create varied board color distribution
     const boardColorDistribution: string[] = [];
 

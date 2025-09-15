@@ -22,6 +22,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
     const colorCounts: Record<string, number> = {};
     let totalBlocks = 0;
     let pipeBlocks = 0;
+    let coloredBlocksOnBoard = 0;
 
     level.board.forEach((row) => {
       row.forEach((cell) => {
@@ -38,6 +39,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
             }
           } else if (cell.color) {
             colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+            coloredBlocksOnBoard++;
           }
         }
       });
@@ -73,14 +75,22 @@ export function LevelValidator({ level }: LevelValidatorProps) {
       });
     }
 
-    // Check block count
+    // Check block count (only colored blocks on board + pipe contents)
     const expectedBlocks = level.config.blockCount;
-    const actualBlocks = totalBlocks;
+    let totalPipeContents = 0;
+    level.board.forEach((row) => {
+      row.forEach((cell) => {
+        if (cell.element === "Pipe" && cell.pipeContents) {
+          totalPipeContents += cell.pipeContents.length;
+        }
+      });
+    });
+    const actualPlayableBlocks = coloredBlocksOnBoard + totalPipeContents;
 
-    if (actualBlocks !== expectedBlocks) {
+    if (actualPlayableBlocks !== expectedBlocks) {
       issues.push({
         type: "error",
-        message: `Block count mismatch: expected ${expectedBlocks}, got ${actualBlocks}`,
+        message: `Block count mismatch: expected ${expectedBlocks}, got ${actualPlayableBlocks} (board colored: ${coloredBlocksOnBoard}, pipe: ${totalPipeContents})`,
       });
     }
 
