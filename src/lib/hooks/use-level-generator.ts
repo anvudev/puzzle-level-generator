@@ -239,6 +239,9 @@ export function useLevelGenerator() {
           GeminiLevelGenerator.setApiKey(apiKey);
         }
 
+        // Nhường CPU để React kịp render spinner trước khi vào vòng lặp nặng
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
             // Giả lập độ trễ tạo level (nếu cần giữ UX)
@@ -254,6 +257,11 @@ export function useLevelGenerator() {
             // Nếu chưa valid và chưa hết lượt thì tiếp tục thử
           } catch (err) {
             lastError = err;
+          }
+
+          // Định kỳ yield về event loop để UI không bị đơ và spinner hiển thị
+          if (attempt % 20 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
           }
         }
 

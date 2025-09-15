@@ -88,7 +88,7 @@ export function PuzzleLevelGenerator() {
                 {isGenerating ? (
                   <>
                     <RefreshCw className="w-6 h-6 mr-3 animate-spin" />
-                    AI đang tạo level...
+                    Đang tạo level...
                   </>
                 ) : (
                   <>
@@ -114,12 +114,12 @@ export function PuzzleLevelGenerator() {
           {isGenerating ? (
             <>
               <RefreshCw className="w-5 h-5 mr-3 animate-spin" />
-              AI đang tạo level...
+              Đang tạo level...
             </>
           ) : (
             <>
               <Sparkles className="w-5 h-5 mr-3" />
-              Tạo Level với AI
+              Tạo Level
             </>
           )}
         </Button>
