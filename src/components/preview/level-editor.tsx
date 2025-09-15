@@ -123,7 +123,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
 
       case "pipe":
         // Add/Edit pipe
-        if (cell.type === "empty" || cell.element === "Pipe") {
+        if (cell.type === "empty") {
+          // Tạo pipe mới với contents mặc định theo màu đang chọn
           newBoard[rowIndex][colIndex] = {
             type: "block",
             color: null,
@@ -131,6 +132,17 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
             pipeDirection: selectedPipeDirection,
             pipeSize: 3,
             pipeContents: [selectedColor, selectedColor, selectedColor],
+          };
+        } else if (cell.element === "Pipe") {
+          // Chỉ cập nhật hướng, GIỮ NGUYÊN pipeContents và pipeSize hiện có
+          newBoard[rowIndex][colIndex] = {
+            ...cell,
+            pipeDirection: selectedPipeDirection,
+            pipeSize: cell.pipeSize || cell.pipeContents?.length || 3,
+            pipeContents:
+              cell.pipeContents && cell.pipeContents.length > 0
+                ? cell.pipeContents
+                : [selectedColor, selectedColor, selectedColor],
           };
         }
         break;

@@ -154,7 +154,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   style={{
                     backgroundColor:
                       cell.element === "Pipe"
-                        ? "#6b7280" // Gray color for pipe blocks (dead blocks)
+                        ? "#fff" // Gray color for pipe blocks (dead blocks)
                         : cell.color
                         ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS]
                         : "#f3f4f6",
@@ -173,10 +173,10 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   onDragEnd={handleDragEnd}
                 >
                   {cell.element && (
-                    <div className="absolute top-0 right-0 flex items-center gap-1 bg-black/20 backdrop-blur-sm rounded-bl-md px-1 py-0.5">
+                    <div className="absolute top-0 flex items-center gap-1   rounded-bl-md px-1 py-0.5">
                       {cell.element === "Pipe" && cell.pipeDirection ? (
                         // For Pipe, only show arrow, no element icon
-                        <span className="text-lg font-bold text-orange-400 drop-shadow-lg">
+                        <span className="text-4xl font-bold text-orange-400 ">
                           {cell.pipeDirection === "up" && "⬆️"}
                           {cell.pipeDirection === "down" && "⬇️"}
                           {cell.pipeDirection === "left" && "⬅️"}
@@ -184,12 +184,12 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         </span>
                       ) : cell.element === "Key" ? (
                         // For Key element, show key icon
-                        <span className="text-yellow-400 drop-shadow-md text-base">
+                        <span className="text-yellow-400 drop-shadow-md text-3xl">
                           🗝️
                         </span>
                       ) : (
                         // For other elements, show icon
-                        <span className="text-white drop-shadow-md">
+                        <span className="text-3xl text-white ">
                           {getElementIcon(cell.element)}
                         </span>
                       )}
