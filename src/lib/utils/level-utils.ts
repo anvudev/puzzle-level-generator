@@ -63,7 +63,7 @@ export function getElementIcon(elementType: string): string {
     IceBlock: "🧊",
     Pipe: "⬆️",
     BlockLock: "🔒",
-    BarrierLock: "🚧",
+    PullPin: "🔱",
     Bomb: "💣",
     Moving: "➡️",
   };

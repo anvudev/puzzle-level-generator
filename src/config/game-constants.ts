@@ -29,19 +29,19 @@ export const ELEMENT_TYPES = {
   Pipe: {
     name: "Pipe",
     description:
-      "ống có **duy nhất 1 hướng** được random từ đầu game (↑/→/↓/←). Khi **block ở ô cửa của Pipe được pick**, Pipe tự động **đẩy 1 block tiếp theo** ra theo hướng đó vào ô Pipe (tuần tự theo **thứ tự màu đã định sẵn** trong ống). Khi số đếm của Pipe về 0 thì Pipe rỗng (không đẩy nữa). Nếu ô phía trước bị tường (Barrier lock) hoặc ra ngoài board → **không sinh map như vậy** (invalid).",
+      "ống có **duy nhất 1 hướng** được random từ đầu game (↑/→/↓/←). Khi **block ở ô cửa của Pipe được pick**, Pipe tự động **đẩy 1 block tiếp theo** ra theo hướng đó vào ô Pipe (tuần tự theo **thứ tự màu đã định sẵn** trong ống). Khi số đếm của Pipe về 0 thì Pipe rỗng (không đẩy nữa). Nếu ô phía trước bị tường (Pull Pin) hoặc ra ngoài board → **không sinh map như vậy** (invalid).",
     points: 2,
   },
   BlockLock: {
     name: "Block Lock",
     description:
-      "mỗi Lock đi kèm **1 Key**. **Key chỉ được đặt lên block thường** (không đặt trên Barrel/Ice/Pipe/Bomb/Moving). Khi pick block chứa Key, Lock tương ứng mở. **Bắt buộc** Key phải reachable (không bị barrier cứng cô lập) trước thời điểm cần mở Loc",
+      "mỗi Lock đi kèm **1 Key**. **Key chỉ được đặt lên block thường** (không đặt trên Barrel/Ice/Pipe/Bomb/Moving). Khi pick block chứa Key, Lock tương ứng mở. **Bắt buộc** Key phải reachable (không bị pull pin cứng cô lập) trước thời điểm cần mở Loc",
     points: 5,
   },
-  BarrierLock: {
-    name: "Barrier Lock",
+  PullPin: {
+    name: "Pull Pin",
     description:
-      "là **tường cứng**. Có đầu–đuôi, chắn thẳng đến hết cột hoặc hết dòng theo hướng của barrier. Chỉ biến mất khi pick block “kẹp” ở đầu barrier. Không cho phép sinh barrier cắt board thành vùng không thể tiếp cận mục tiêu/Key.",
+      'là **tường cứng** có hướng như pipe. Có đầu–đuôi, chắn thẳng đến hết cột hoặc hết dòng theo hướng của pull pin. Phía trước hướng của Pull Pin có 1-3 ô trống tạo hiệu ứng "cổng" hoặc "lối mở". Chỉ biến mất khi pick block “kẹp” ở đầu pull pin. Không cho phép sinh pull pin cắt board thành vùng không thể tiếp cận mục tiêu/Key.',
     points: 5,
   },
   Bomb: {

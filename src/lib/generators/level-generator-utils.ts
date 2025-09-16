@@ -220,6 +220,82 @@ export class LevelGeneratorUtils {
   }
 
   /**
+   * Get valid directions where a Pull Pin can create a gate
+   */
+  static getValidPullPinDirections(
+    x: number,
+    y: number,
+    board: BoardCell[][],
+    config: LevelConfig
+  ): Array<"up" | "down" | "left" | "right"> {
+    const validDirections: Array<"up" | "down" | "left" | "right"> = [];
+    const directions = [
+      { dir: "up" as const, dx: 0, dy: -1 },
+      { dir: "down" as const, dx: 0, dy: 1 },
+      { dir: "left" as const, dx: -1, dy: 0 },
+      { dir: "right" as const, dx: 1, dy: 0 },
+    ];
+
+    console.log(
+      `[DEBUG] Checking valid directions for Pull Pin at (${x}, ${y})`
+    );
+
+    for (const { dir, dx, dy } of directions) {
+      // Check if we can create a gate (1-3 empty cells) in this direction
+      let canCreateGate = true;
+      const maxGateSize = 3;
+
+      for (let i = 1; i <= maxGateSize; i++) {
+        const targetX = x + dx * i;
+        const targetY = y + dy * i;
+
+        // Check if target position is within bounds
+        if (
+          targetX >= 0 &&
+          targetX < config.width &&
+          targetY >= 0 &&
+          targetY < config.height
+        ) {
+          const targetCell = board[targetY][targetX];
+
+          // Pull Pin gate requires empty space
+          if (targetCell.type !== "empty") {
+            // If we hit a block before creating at least 1 gate cell, this direction is invalid
+            if (i === 1) {
+              canCreateGate = false;
+            }
+            break;
+          }
+        } else {
+          // If we go out of bounds before creating at least 1 gate cell, this direction is invalid
+          if (i === 1) {
+            canCreateGate = false;
+          }
+          break;
+        }
+      }
+
+      if (canCreateGate) {
+        validDirections.push(dir);
+        console.log(
+          `[DEBUG] Valid Pull Pin direction: ${dir} - can create gate`
+        );
+      } else {
+        console.log(
+          `[DEBUG] Invalid Pull Pin direction: ${dir} - cannot create gate`
+        );
+      }
+    }
+
+    console.log(
+      `[DEBUG] Found ${
+        validDirections.length
+      } valid directions for Pull Pin: [${validDirections.join(", ")}]`
+    );
+    return validDirections;
+  }
+
+  /**
    * Calculate difficulty score for a level configuration
    */
   static calculateDifficultyScore(config: LevelConfig): number {

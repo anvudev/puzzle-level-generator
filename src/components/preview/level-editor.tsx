@@ -45,10 +45,13 @@ interface LevelEditorProps {
 
 export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedTool, setSelectedTool] = useState<
-    "add" | "remove" | "color" | "pipe"
+    "add" | "remove" | "color" | "pipe" | "pullpin"
   >("add");
   const [selectedColor, setSelectedColor] = useState<string>("Red");
   const [selectedPipeDirection, setSelectedPipeDirection] = useState<
+    "up" | "down" | "left" | "right"
+  >("up");
+  const [selectedPullPinDirection, setSelectedPullPinDirection] = useState<
     "up" | "down" | "left" | "right"
   >("up");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -75,6 +78,9 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
           break;
         case "4":
           setSelectedTool("pipe");
+          break;
+        case "5":
+          setSelectedTool("pullpin");
           break;
         case "Escape":
           setIsEditorOpen(false);
@@ -143,6 +149,27 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
               cell.pipeContents && cell.pipeContents.length > 0
                 ? cell.pipeContents
                 : [selectedColor, selectedColor, selectedColor],
+          };
+        }
+        break;
+
+      case "pullpin":
+        // Add/Edit Pull Pin
+        if (cell.type === "empty") {
+          // Tạo Pull Pin mới
+          newBoard[rowIndex][colIndex] = {
+            type: "block",
+            color: null,
+            element: "PullPin",
+            pullPinDirection: selectedPullPinDirection,
+            pullPinGateSize: 2, // Default gate size
+          };
+        } else if (cell.element === "PullPin") {
+          // Chỉ cập nhật hướng, GIỮ NGUYÊN pullPinGateSize hiện có
+          newBoard[rowIndex][colIndex] = {
+            ...cell,
+            pullPinDirection: selectedPullPinDirection,
+            pullPinGateSize: cell.pullPinGateSize || 2,
           };
         }
         break;
@@ -228,7 +255,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Tool Selection */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <Button
                     variant={selectedTool === "add" ? "default" : "outline"}
                     size="sm"
@@ -264,6 +291,14 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   >
                     <RotateCw className="w-4 h-4" />
                     Pipe
+                  </Button>
+                  <Button
+                    variant={selectedTool === "pullpin" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTool("pullpin")}
+                    className="flex items-center gap-2"
+                  >
+                    🔱 Pull Pin
                   </Button>
                 </div>
 
@@ -333,6 +368,37 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   </div>
                 )}
 
+                {/* Pull Pin Direction Selection */}
+                {selectedTool === "pullpin" && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Hướng Pull Pin:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["up", "down", "left", "right"] as const).map(
+                        (direction) => (
+                          <Button
+                            key={direction}
+                            variant={
+                              selectedPullPinDirection === direction
+                                ? "default"
+                                : "outline"
+                            }
+                            size="sm"
+                            onClick={() =>
+                              setSelectedPullPinDirection(direction)
+                            }
+                            className="flex items-center gap-2"
+                          >
+                            {getDirectionIcon(direction)}
+                            {direction.toUpperCase()}
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Instructions */}
                 <div className="text-sm text-muted-foreground space-y-1">
                   <p>
@@ -350,6 +416,9 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     </li>
                     <li>
                       <strong>Pipe:</strong> Click để thêm/sửa pipe
+                    </li>
+                    <li>
+                      <strong>Pull Pin:</strong> Click để thêm/sửa pull pin (🔱)
                     </li>
                   </ul>
                 </div>
@@ -386,6 +455,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                             backgroundColor:
                               cell.element === "Pipe"
                                 ? "#6b7280"
+                                : cell.element === "PullPin"
+                                ? "#8B4513"
                                 : cell.color
                                 ? GAME_COLORS[
                                     cell.color as keyof typeof GAME_COLORS
@@ -393,6 +464,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                 : "#f3f4f6",
                             color:
                               cell.element === "Pipe"
+                                ? "#fff"
+                                : cell.element === "PullPin"
                                 ? "#fff"
                                 : cell.color &&
                                   ["Yellow", "White"].includes(cell.color)

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-
+import ring from "@/public/ring.png";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [selectedPullPinDirection, setSelectedPullPinDirection] = useState<
+    "up" | "down" | "left" | "right"
+  >("up");
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -84,6 +87,48 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     if (onLevelUpdate) {
       // This would trigger a regeneration - for now just toggle drag mode off
       setIsDragMode(false);
+    }
+  };
+
+  const handlePullPinClick = (index: number) => {
+    if (!onLevelUpdate) return;
+
+    const row = Math.floor(index / level.config.width);
+    const col = index % level.config.width;
+    const cell = level.board[row][col];
+
+    if (cell.element === "PullPin") {
+      // Cycle through directions: up -> right -> down -> left -> up
+      const directions: Array<"up" | "down" | "left" | "right"> = [
+        "up",
+        "right",
+        "down",
+        "left",
+      ];
+      const currentIndex = directions.indexOf(cell.pullPinDirection || "up");
+      const nextDirection = directions[(currentIndex + 1) % directions.length];
+
+      // Update the board with new direction
+      const newBoard = level.board.map((boardRow, rowIndex) =>
+        boardRow.map((boardCell, colIndex) => {
+          if (rowIndex === row && colIndex === col) {
+            return {
+              ...boardCell,
+              pullPinDirection: nextDirection,
+            };
+          }
+          return boardCell;
+        })
+      );
+
+      // Update the level
+      const updatedLevel = {
+        ...level,
+        board: newBoard,
+      };
+
+      onLevelUpdate(updatedLevel);
+      setSelectedPullPinDirection(nextDirection);
     }
   };
 
@@ -150,17 +195,25 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                     isDragOver && draggedCell
                       ? "ring-2 ring-primary ring-offset-2"
                       : ""
+                  } ${
+                    cell.element === "PullPin" && !isDragMode
+                      ? "cursor-pointer hover:ring-2 hover:ring-blue-400"
+                      : ""
                   }`}
                   style={{
                     backgroundColor:
                       cell.element === "Pipe"
                         ? "#fff" // Gray color for pipe blocks (dead blocks)
+                        : cell.element === "PullPin"
+                        ? "#fff" // Brown color for pull pin blocks (barrier)
                         : cell.color
                         ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS]
                         : "#f3f4f6",
                     color:
                       cell.element === "Pipe"
                         ? "#fff" // White text for pipe blocks
+                        : cell.element === "PullPin"
+                        ? "#fff" // White text for pull pin blocks
                         : cell.color && ["Yellow", "White"].includes(cell.color)
                         ? "#000"
                         : "#fff",
@@ -171,6 +224,11 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
+                  onClick={() => {
+                    if (!isDragMode && cell.element === "PullPin") {
+                      handlePullPinClick(index);
+                    }
+                  }}
                 >
                   {cell.element && (
                     <div className="absolute top-0 flex items-center gap-1   rounded-bl-md px-1 py-0.5">
@@ -181,6 +239,15 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                           {cell.pipeDirection === "down" && "⬇️"}
                           {cell.pipeDirection === "left" && "⬅️"}
                           {cell.pipeDirection === "right" && "➡️"}
+                        </span>
+                      ) : cell.element === "PullPin" &&
+                        cell.pullPinDirection ? (
+                        // For Pull Pin, show directional pin icon
+                        <span className="text-sm text-yellow-400 ">
+                          {cell.pullPinDirection === "up" && "🔱⬆️"}
+                          {cell.pullPinDirection === "down" && "🔱⬇️"}
+                          {cell.pullPinDirection === "left" && "🔱⬅️"}
+                          {cell.pullPinDirection === "right" && "🔱➡️"}
                         </span>
                       ) : cell.element === "Key" ? (
                         // For Key element, show key icon
@@ -199,6 +266,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                     ? ""
                     : cell.element === "Pipe"
                     ? "PIPE"
+                    : cell.element === "PullPin"
+                    ? "PIN"
                     : cell.color?.charAt(0) || ""}
                   {canDrag && (
                     <div className="absolute inset-0 bg-black/10 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">

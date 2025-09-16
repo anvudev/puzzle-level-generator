@@ -76,13 +76,15 @@ export class FallbackLevelGenerator {
   ): BoardCell[][] {
     const colors = config.selectedColors;
 
-    // Calculate pipe and lock blocks
+    // Calculate pipe, lock, and pull pin blocks
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
+    const pullPinCount = config.elements.PullPin || 0;
     const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
     const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
     const lockBlocks = blockLockCount * 2;
+    const pullPinBlocks = pullPinCount; // Each pull pin is one block
 
     // Create varied color distribution while maintaining balance
     const baseBlocksPerColor =
@@ -263,9 +265,11 @@ export class FallbackLevelGenerator {
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
+    const pullPinCount = config.elements.PullPin || 0;
     const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
     const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
     const lockBlocks = blockLockCount * 2;
+    const pullPinBlocks = pullPinCount; // Each pull pin is one block
     // Create varied color distribution for symmetric mode while maintaining balance
     const baseBlocksPerColor =
       Math.floor(config.blockCount / colors.length / 3) * 3;
@@ -917,6 +921,41 @@ export class FallbackLevelGenerator {
         );
         board[pos.y][pos.x].element = null;
         board[pos.y][pos.x].lockId = undefined;
+        return false;
+      }
+    }
+
+    // If it's a Pull Pin, add directional data and create gate
+    if (elementType === "PullPin") {
+      const validDirections = LevelGeneratorUtils.getValidPullPinDirections(
+        pos.x,
+        pos.y,
+        board,
+        config
+      );
+
+      if (validDirections.length > 0) {
+        // Pull Pin block acts as a barrier
+        board[pos.y][pos.x].color = null;
+        board[pos.y][pos.x].pullPinDirection =
+          validDirections[Math.floor(Math.random() * validDirections.length)];
+
+        // Generate gate size (1-3 empty cells)
+        const gateSize = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+        board[pos.y][pos.x].pullPinGateSize = gateSize;
+
+        console.log(
+          `[DEBUG] Created Pull Pin at (${pos.x}, ${pos.y}) with direction ${
+            board[pos.y][pos.x].pullPinDirection
+          } and gate size ${gateSize}`
+        );
+        return true;
+      } else {
+        // If no valid direction, don't place pull pin element
+        console.warn(
+          `No valid direction for Pull Pin at (${pos.x}, ${pos.y}), removing pull pin element`
+        );
+        board[pos.y][pos.x].element = null;
         return false;
       }
     }

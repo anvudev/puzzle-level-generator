@@ -122,11 +122,11 @@ QUY TẮC ĐỐI XỨNG:
 ĐỊNH NGHĨA & LUẬT ELEMENT (áp dụng khi có trong “Elements đặc biệt”):
 - Barrel: block ẩn màu, đã định nghĩa sẵn màu. Chỉ khi có block được pick ở **bất kỳ ô kề 8 hướng** quanh Barrel thì Barrel **lộ màu** (vẫn là block thường sau khi lộ).
 - Ice block: block bị đóng băng, hiển thị số X. Mỗi lần pick **một block nằm kề 8 hướng** quanh ô Ice thì X - 1. Khi về 0, Ice unlock và lộ màu có sẵn. Bản thân Ice không thể được pick khi chưa unlock.
-- Pipe: ống có **duy nhất 1 hướng** được random từ đầu game (↑/→/↓/←). Khi **block ở ô cửa của Pipe được pick**, Pipe tự động **đẩy 1 block tiếp theo** ra theo hướng đó vào ô Pipe (tuần tự theo **thứ tự màu đã định sẵn** trong ống). Khi số đếm của Pipe về 0 thì Pipe rỗng (không đẩy nữa). Nếu ô phía trước bị tường (Barrier lock) hoặc ra ngoài board → **không sinh map như vậy** (invalid).
-- Block lock + Key: mỗi Lock đi kèm **1 Key**. **Key chỉ được đặt lên block thường** (không đặt trên Barrel/Ice/Pipe/Bomb/Moving). Khi pick block chứa Key, Lock tương ứng mở. **Bắt buộc** Key phải reachable (không bị barrier cứng cô lập) trước thời điểm cần mở Lock.
-- Barrier lock: là **tường cứng**. Có đầu–đuôi, chắn thẳng đến hết cột hoặc hết dòng theo hướng của barrier. Chỉ biến mất khi pick block “kẹp” ở đầu barrier. Không cho phép sinh barrier cắt board thành vùng không thể tiếp cận mục tiêu/Key.
+- Pipe: ống có **duy nhất 1 hướng** được random từ đầu game (↑/→/↓/←). Khi **block ở ô cửa của Pipe được pick**, Pipe tự động **đẩy 1 block tiếp theo** ra theo hướng đó vào ô Pipe (tuần tự theo **thứ tự màu đã định sẵn** trong ống). Khi số đếm của Pipe về 0 thì Pipe rỗng (không đẩy nữa). Nếu ô phía trước bị tường (Pull Pin) hoặc ra ngoài board → **không sinh map như vậy** (invalid).
+- Block lock + Key: mỗi Lock đi kèm **1 Key**. **Key chỉ được đặt lên block thường** (không đặt trên Barrel/Ice/Pipe/Bomb/Moving). Khi pick block chứa Key, Lock tương ứng mở. **Bắt buộc** Key phải reachable (không bị pull pin cứng cô lập) trước thời điểm cần mở Lock.
+- Pull Pin: là **tường cứng** có hướng như pipe. Có đầu–đuôi, chắn thẳng đến hết cột hoặc hết dòng theo hướng của pull pin. Phía trước hướng của Pull Pin có 1-3 ô trống tạo hiệu ứng "cổng" hoặc "lối mở". Chỉ biến mất khi pick block “kẹp” ở đầu pull pin. Không cho phép sinh pull pin cắt board thành vùng không thể tiếp cận mục tiêu/Key.
 - Bomb: có số đếm. **Mỗi lần pick bất kỳ block**, Bomb - 1. Khi về 0 → THUA ngay. Bomb không reset số đếm. Không sinh level có Bomb mà countdown quá thấp đến mức không thể hoàn thành mục tiêu tối thiểu.
-- Moving (băng chuyền): chỉ **kích hoạt khi pick block liên quan** (đứng trên băng chuyền hoặc ô trigger). Khi kích hoạt, nó **đẩy liên tiếp** theo hướng cho đến khi hết cột/dòng hoặc gặp vật cản cứng (Barrier). Không tạo tình huống đẩy block xuyên tường.
+- Moving (băng chuyền): chỉ **kích hoạt khi pick block liên quan** (đứng trên băng chuyền hoặc ô trigger). Khi kích hoạt, nó **đẩy liên tiếp** theo hướng cho đến khi hết cột/dòng hoặc gặp vật cản cứng (Pull Pin). Không tạo tình huống đẩy block xuyên tường.
 
 
 CÁCH KIỂM TRA:

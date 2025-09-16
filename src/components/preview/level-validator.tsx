@@ -22,6 +22,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
     const colorCounts: Record<string, number> = {};
     let totalBlocks = 0;
     let pipeBlocks = 0;
+    let pullPinBlocks = 0;
     let coloredBlocksOnBoard = 0;
 
     level.board.forEach((row) => {
@@ -37,6 +38,9 @@ export function LevelValidator({ level }: LevelValidatorProps) {
                 colorCounts[color] = (colorCounts[color] || 0) + 1;
               });
             }
+          } else if (cell.element === "PullPin") {
+            pullPinBlocks++;
+            // Pull Pin blocks don't contribute to color counts
           } else if (cell.color) {
             colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
             coloredBlocksOnBoard++;
@@ -111,6 +115,32 @@ export function LevelValidator({ level }: LevelValidatorProps) {
       });
     }
 
+    // Check Pull Pin validation
+    if (pullPinBlocks > 0) {
+      let validPullPins = 0;
+      level.board.forEach((row) => {
+        row.forEach((cell) => {
+          if (cell.element === "PullPin") {
+            if (cell.pullPinDirection && cell.pullPinGateSize) {
+              validPullPins++;
+            }
+          }
+        });
+      });
+
+      issues.push({
+        type: "info",
+        message: `Pull Pins: ${pullPinBlocks} pins (${validPullPins} with valid direction/gate)`,
+      });
+
+      if (validPullPins < pullPinBlocks) {
+        issues.push({
+          type: "warning",
+          message: `Some Pull Pins missing direction or gate configuration`,
+        });
+      }
+    }
+
     // Check board connectivity (basic check)
     const connectedBlocks = checkConnectivity();
     if (connectedBlocks < totalBlocks) {
@@ -125,6 +155,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
       colorCounts,
       totalBlocks,
       pipeBlocks,
+      pullPinBlocks,
       isValid: issues.filter((i) => i.type === "error").length === 0,
     };
   };

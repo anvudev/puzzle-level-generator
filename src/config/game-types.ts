@@ -22,6 +22,9 @@ export interface BoardCell {
   // For Block Lock system: lock ID and key ID
   lockId?: string; // For Lock elements
   keyId?: string; // For Key elements (matches with lockId)
+  // For Pull Pin element: direction and gate configuration
+  pullPinDirection?: "up" | "down" | "left" | "right";
+  pullPinGateSize?: number; // Number of empty cells (1-3) in front of the pin
 }
 
 export interface Container {
