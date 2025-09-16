@@ -14,11 +14,13 @@ import {
   Zap,
   Palette,
   History,
+  Upload,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";
 import { ConfigurationPanel } from "./configuration-panel";
 import { ExportPanel } from "./export-panel";
 import { LevelHistory } from "./level-history";
+import { BatchImport } from "./batch-import";
 import { DEFAULT_CONFIG } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
 import { useLevelHistory } from "@/lib/hooks/use-level-history";
@@ -163,6 +165,13 @@ export function PuzzleLevelGenerator() {
             <History className="w-4 h-4" />
             Lịch sử
           </TabsTrigger>
+          {/* <TabsTrigger
+            value="batch-import"
+            className="flex items-center gap-2 rounded-xl font-bold text-card-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300"
+          >
+            <Upload className="w-4 h-4" />
+            Nhập hàng loạt
+          </TabsTrigger> */}
           <TabsTrigger
             value="export"
             className="flex items-center gap-2 rounded-xl font-bold text-card-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300"
@@ -239,6 +248,16 @@ export function PuzzleLevelGenerator() {
         <TabsContent value="history" className="space-y-6">
           <LevelHistory
             onLoadLevel={handleLoadLevel}
+            onEditLevel={(level) => {
+              setGeneratedLevel(level);
+              setActiveTab("preview");
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="batch-import" className="space-y-6">
+          <BatchImport
+            onSaveLevel={handleSaveLevel}
             onEditLevel={(level) => {
               setGeneratedLevel(level);
               setActiveTab("preview");

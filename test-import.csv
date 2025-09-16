@@ -1,0 +1,3 @@
+name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,blockLockCount,pullPinCount,bombCount,movingCount
+"Test Level",8,8,Normal,"Red,Blue,Green",30,random,2,"3,4",1,1,0,1,0,0
+"Symmetric Test",10,10,Hard,"Red,Blue,Green,Yellow",50,symmetric,3,"4,5,6",2,1,1,2,1,0

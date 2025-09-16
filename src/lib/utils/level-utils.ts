@@ -69,3 +69,13 @@ export function getElementIcon(elementType: string): string {
   };
   return icons[elementType] || "⬜";
 }
+
+export function getPipeIcon(direction: string): string {
+  const icons: Record<string, string> = {
+    up: "⬆️",
+    down: "⬇️",
+    left: "⬅️",
+    right: "➡️",
+  };
+  return icons[direction] || "⬜";
+}

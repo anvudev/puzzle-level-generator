@@ -43,6 +43,7 @@ import {
 import { GAME_COLORS } from "@/config/game-constants";
 // import { BoardPreview } from "./preview/board-preview";
 import type { GeneratedLevel } from "@/config/game-types";
+import { getElementIcon, getPipeIcon } from "@/lib/utils/level-utils";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -357,7 +358,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                     .map((cell, index) => (
                                       <div
                                         key={index}
-                                        className="rounded border border-gray-200 flex items-center justify-center text-xs"
+                                        className="rounded text-3xl border border-gray-200 flex items-center justify-center"
                                         style={{
                                           backgroundColor:
                                             cell.type === "block"
@@ -365,12 +366,30 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                                 ? GAME_COLORS[
                                                     cell.color as keyof typeof GAME_COLORS
                                                   ] || "#f3f4f6"
-                                                : "#e5e7eb"
+                                                : ""
                                               : "#f9fafb",
                                         }}
                                       >
-                                        {cell.element === "Pipe" && "🔧"}
-                                        {cell.element === "PullPin" && "🔱"}
+                                        {cell.element === "Pipe" &&
+                                          getPipeIcon(
+                                            cell.pipeDirection || "up"
+                                          )}
+                                        {cell.element === "PullPin" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "Barrel" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "IceBlock" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "BlockLock" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "PullPin" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "Bomb" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "Moving" &&
+                                          getElementIcon(cell.element)}
+                                        {cell.element === "Key" &&
+                                          getElementIcon(cell.element)}
                                       </div>
                                     ))}
                                 </div>
