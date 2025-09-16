@@ -28,7 +28,7 @@ describe("Pull Pin Implementation", () => {
   describe("Visual Icons", () => {
     it("should have Pull Pin icon", () => {
       const icon = getElementIcon("PullPin");
-      expect(icon).toBe("📍");
+      expect(icon).toBe("🔱");
     });
 
     it("should not have BarrierLock icon", () => {
@@ -213,6 +213,173 @@ describe("Pull Pin Implementation", () => {
       expect(description).toContain("1-3 ô trống");
       expect(description).toContain("cổng");
       expect(description).toContain("lối mở");
+    });
+  });
+
+  describe("Pipe Configuration", () => {
+    it("should support pipe configuration in LevelConfig", () => {
+      const config: LevelConfig = {
+        width: 8,
+        height: 8,
+        blockCount: 24,
+        colorCount: 4,
+        selectedColors: ["Red", "Blue", "Green", "Yellow"],
+        generationMode: "random",
+        elements: { Pipe: 2 },
+        difficulty: "Normal",
+        pipeCount: 2,
+        pipeBlockCount: 5,
+      };
+
+      expect(config.pipeCount).toBe(2);
+      expect(config.pipeBlockCount).toBe(5);
+    });
+
+    it("should have pipe direction logic pointing towards blocks", () => {
+      const board: BoardCell[][] = [
+        [
+          { type: "empty", color: null, element: null },
+          { type: "block", color: "Red", element: null },
+        ],
+        [
+          { type: "empty", color: null, element: null },
+          { type: "empty", color: null, element: null },
+        ],
+      ];
+
+      const config: LevelConfig = {
+        width: 2,
+        height: 2,
+        blockCount: 1,
+        colorCount: 1,
+        selectedColors: ["Red"],
+        generationMode: "random",
+        elements: {},
+        difficulty: "Normal",
+      };
+
+      const validDirections = LevelGeneratorUtils.getValidPipeDirections(
+        0,
+        0,
+        board,
+        config
+      );
+
+      // Pipe at (0,0) should only point right towards the block at (1,0)
+      expect(validDirections).toContain("right");
+      expect(validDirections).not.toContain("down"); // No block at (0,1)
+    });
+
+    it("should not allow pipe to point towards empty spaces", () => {
+      const board: BoardCell[][] = [
+        [
+          { type: "empty", color: null, element: null },
+          { type: "empty", color: null, element: null },
+        ],
+        [
+          { type: "empty", color: null, element: null },
+          { type: "empty", color: null, element: null },
+        ],
+      ];
+
+      const config: LevelConfig = {
+        width: 2,
+        height: 2,
+        blockCount: 0,
+        colorCount: 1,
+        selectedColors: ["Red"],
+        generationMode: "random",
+        elements: {},
+        difficulty: "Normal",
+      };
+
+      const validDirections = LevelGeneratorUtils.getValidPipeDirections(
+        0,
+        0,
+        board,
+        config
+      );
+
+      // No valid directions since all adjacent cells are empty
+      expect(validDirections).toHaveLength(0);
+    });
+  });
+
+  describe("Individual Pipe Block Configuration", () => {
+    it("should support individual pipe block counts", () => {
+      const config: LevelConfig = {
+        width: 8,
+        height: 8,
+        blockCount: 24,
+        colorCount: 4,
+        selectedColors: ["Red", "Blue", "Green", "Yellow"],
+        generationMode: "random",
+        elements: { Pipe: 3 },
+        difficulty: "Normal",
+        pipeCount: 3,
+        pipeBlockCounts: [2, 5, 3], // Pipe 1: 2 blocks, Pipe 2: 5 blocks, Pipe 3: 3 blocks
+      };
+
+      expect(config.pipeBlockCounts).toHaveLength(3);
+      expect(config.pipeBlockCounts![0]).toBe(2);
+      expect(config.pipeBlockCounts![1]).toBe(5);
+      expect(config.pipeBlockCounts![2]).toBe(3);
+
+      // Total blocks should be 2 + 5 + 3 = 10
+      const totalBlocks = config.pipeBlockCounts!.reduce(
+        (sum, count) => sum + count,
+        0
+      );
+      expect(totalBlocks).toBe(10);
+    });
+
+    it("should handle max 20 pipes with different block counts", () => {
+      const pipeBlockCounts = Array(20)
+        .fill(0)
+        .map((_, i) => i + 1); // 1, 2, 3, ..., 20
+
+      const config: LevelConfig = {
+        width: 15,
+        height: 15,
+        blockCount: 100,
+        colorCount: 4,
+        selectedColors: ["Red", "Blue", "Green", "Yellow"],
+        generationMode: "random",
+        elements: { Pipe: 20 },
+        difficulty: "Normal",
+        pipeCount: 20,
+        pipeBlockCounts,
+      };
+
+      expect(config.pipeBlockCounts).toHaveLength(20);
+      expect(config.pipeBlockCounts![0]).toBe(1);
+      expect(config.pipeBlockCounts![19]).toBe(20);
+
+      // Total blocks should be 1+2+3+...+20 = 210
+      const totalBlocks = config.pipeBlockCounts!.reduce(
+        (sum, count) => sum + count,
+        0
+      );
+      expect(totalBlocks).toBe(210);
+    });
+
+    it("should fallback to default when no individual counts provided", () => {
+      const config: LevelConfig = {
+        width: 8,
+        height: 8,
+        blockCount: 24,
+        colorCount: 4,
+        selectedColors: ["Red", "Blue", "Green", "Yellow"],
+        generationMode: "random",
+        elements: { Pipe: 2 },
+        difficulty: "Normal",
+        pipeCount: 2,
+        pipeBlockCount: 4, // Default for all pipes
+      };
+
+      expect(config.pipeBlockCounts).toBeUndefined();
+      expect(config.pipeBlockCount).toBe(4);
+      expect(config.pipeCount).toBe(2);
     });
   });
 });

@@ -23,7 +23,30 @@ export function ElementsSection({
     } else {
       elements[elementType] = count;
     }
-    updateConfig({ elements });
+
+    // Special handling for Pipe element
+    if (elementType === "Pipe") {
+      const currentPipeCount = config.pipeCount || 0;
+      const newPipeCount = count; // Use the exact count from input
+
+      console.log(
+        `[DEBUG] updateElement Pipe: count=${count}, currentPipeCount=${currentPipeCount}, newPipeCount=${newPipeCount}`
+      );
+
+      // Ensure pipeBlockCounts array matches the new pipe count
+      const currentBlockCounts = config.pipeBlockCounts || [];
+      const newBlockCounts = Array(newPipeCount)
+        .fill(0)
+        .map((_, index) => currentBlockCounts[index] || 3);
+
+      updateConfig({
+        elements,
+        pipeCount: newPipeCount,
+        pipeBlockCounts: newBlockCounts,
+      });
+    } else {
+      updateConfig({ elements });
+    }
   };
 
   return (
@@ -84,6 +107,65 @@ export function ElementsSection({
                   </span>
                 </div>
               </div>
+
+              {/* Pipe Configuration */}
+              {elementKey === "Pipe" &&
+                (config.elements[elementKey] || 0) > 0 && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h5 className="text-sm font-semibold text-blue-800 mb-3">
+                      Số blocks cho từng pipe:
+                    </h5>
+
+                    {/* Individual pipe configurations */}
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto border border-gray-200 p-2 rounded">
+                        {(() => {
+                          const pipeCount =
+                            config.pipeCount ||
+                            config.elements[elementKey] ||
+                            0;
+                          console.log(
+                            `[DEBUG UI] Rendering ${pipeCount} pipe inputs. config.pipeCount=${config.pipeCount}, elements.Pipe=${config.elements[elementKey]}`
+                          );
+                          return Array(pipeCount);
+                        })()
+                          .fill(0)
+                          .map((_, index) => (
+                            <div
+                              key={index}
+                              className="flex flex-col items-center"
+                            >
+                              <span className="text-xs text-blue-600 font-medium mb-1">
+                                Pipe {index + 1}
+                              </span>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={
+                                  (config.pipeBlockCounts &&
+                                    config.pipeBlockCounts[index]) ||
+                                  3
+                                }
+                                onChange={(e) => {
+                                  const newBlockCounts = [
+                                    ...(config.pipeBlockCounts || []),
+                                  ];
+                                  newBlockCounts[index] =
+                                    Number.parseInt(e.target.value) || 3;
+                                  updateConfig({
+                                    pipeBlockCounts: newBlockCounts,
+                                  });
+                                }}
+                                className="w-16 h-8 text-center text-sm border-blue-300 focus:border-blue-500"
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg">
                 {element.description}
               </p>

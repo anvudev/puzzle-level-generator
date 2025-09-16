@@ -163,6 +163,7 @@ export class LevelGeneratorUtils {
 
   /**
    * Get valid directions where a pipe can output blocks
+   * NEW LOGIC: Pipe must point towards existing blocks, not empty spaces
    */
   static getValidPipeDirections(
     x: number,
@@ -193,15 +194,15 @@ export class LevelGeneratorUtils {
       ) {
         const targetCell = board[targetY][targetX];
 
-        // Pipe can ONLY output to empty space (will place first block from pipe there)
-        if (targetCell.type === "empty") {
+        // NEW LOGIC: Pipe can ONLY output towards existing blocks
+        if (targetCell.type === "block") {
           validDirections.push(dir);
           console.log(
-            `[DEBUG] Valid direction: ${dir} -> (${targetX}, ${targetY}) [EMPTY - can place block]`
+            `[DEBUG] Valid direction: ${dir} -> (${targetX}, ${targetY}) [BLOCK - can output towards existing block]`
           );
         } else {
           console.log(
-            `[DEBUG] Invalid direction: ${dir} -> (${targetX}, ${targetY}) [${targetCell.type} - already occupied]`
+            `[DEBUG] Invalid direction: ${dir} -> (${targetX}, ${targetY}) [${targetCell.type} - no block to output towards]`
           );
         }
       } else {

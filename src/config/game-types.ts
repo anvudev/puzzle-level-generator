@@ -7,6 +7,10 @@ export interface LevelConfig {
   generationMode: "random" | "symmetric";
   elements: Record<string, number>;
   difficulty: "Normal" | "Hard" | "Super Hard";
+  // Pipe configuration
+  pipeCount?: number; // Number of pipes to generate
+  pipeBlockCount?: number; // Default number of blocks inside each pipe
+  pipeBlockCounts?: number[]; // Individual block counts for each pipe
 }
 
 export interface BoardCell {

@@ -81,8 +81,22 @@ export class FallbackLevelGenerator {
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
     const pullPinCount = config.elements.PullPin || 0;
-    const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
-    const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
+
+    // Calculate total pipe blocks from individual pipe configurations
+    let pipeBlocks = 0;
+    if (config.pipeBlockCounts && config.pipeBlockCounts.length > 0) {
+      // Use individual pipe block counts
+      pipeBlocks = config.pipeBlockCounts.reduce(
+        (sum, count) => sum + count,
+        0
+      );
+    } else {
+      // Fallback to default calculation
+      const pipeBlocksPerPipe =
+        config.pipeBlockCount ||
+        LevelGeneratorUtils.getPipeBlockRange(config.difficulty).avg;
+      pipeBlocks = Math.floor(pipeCount * pipeBlocksPerPipe);
+    }
     const lockBlocks = blockLockCount * 2;
     const pullPinBlocks = pullPinCount; // Each pull pin is one block
 
@@ -266,8 +280,22 @@ export class FallbackLevelGenerator {
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
     const pullPinCount = config.elements.PullPin || 0;
-    const pipeRange = LevelGeneratorUtils.getPipeBlockRange(config.difficulty);
-    const pipeBlocks = Math.floor(pipeCount * pipeRange.avg);
+
+    // Calculate total pipe blocks from individual pipe configurations
+    let pipeBlocks = 0;
+    if (config.pipeBlockCounts && config.pipeBlockCounts.length > 0) {
+      // Use individual pipe block counts
+      pipeBlocks = config.pipeBlockCounts.reduce(
+        (sum, count) => sum + count,
+        0
+      );
+    } else {
+      // Fallback to default calculation
+      const pipeBlocksPerPipe =
+        config.pipeBlockCount ||
+        LevelGeneratorUtils.getPipeBlockRange(config.difficulty).avg;
+      pipeBlocks = Math.floor(pipeCount * pipeBlocksPerPipe);
+    }
     const lockBlocks = blockLockCount * 2;
     const pullPinBlocks = pullPinCount; // Each pull pin is one block
     // Create varied color distribution for symmetric mode while maintaining balance
@@ -854,9 +882,18 @@ export class FallbackLevelGenerator {
           validDirections[Math.floor(Math.random() * validDirections.length)];
 
         // Store pipe size for later content assignment
-        const pipeSize = LevelGeneratorUtils.generatePipeSize(
-          config.difficulty
-        );
+        // Use individual pipe block counts if available
+        let pipeSize: number;
+        if (
+          config.pipeBlockCounts &&
+          config.pipeBlockCounts[index] !== undefined
+        ) {
+          pipeSize = config.pipeBlockCounts[index];
+        } else if (config.pipeBlockCount) {
+          pipeSize = config.pipeBlockCount;
+        } else {
+          pipeSize = LevelGeneratorUtils.generatePipeSize(config.difficulty);
+        }
         board[pos.y][pos.x].pipeSize = pipeSize;
         console.log(
           `[DEBUG] Created pipe block (no color) at (${pos.x}, ${

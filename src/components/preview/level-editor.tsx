@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -54,6 +54,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedPullPinDirection, setSelectedPullPinDirection] = useState<
     "up" | "down" | "left" | "right"
   >("up");
+  // New pipe configuration states
+  const [pipeBlockCount, setPipeBlockCount] = useState<number>(3);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingPipe, setEditingPipe] = useState<{
     row: number;
@@ -130,25 +132,27 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
       case "pipe":
         // Add/Edit pipe
         if (cell.type === "empty") {
-          // Tạo pipe mới với contents mặc định theo màu đang chọn
+          // Tạo pipe mới với contents theo số lượng đã chọn
+          const defaultContents = Array(pipeBlockCount).fill(selectedColor);
           newBoard[rowIndex][colIndex] = {
             type: "block",
             color: null,
             element: "Pipe",
             pipeDirection: selectedPipeDirection,
-            pipeSize: 3,
-            pipeContents: [selectedColor, selectedColor, selectedColor],
+            pipeSize: pipeBlockCount,
+            pipeContents: defaultContents,
           };
         } else if (cell.element === "Pipe") {
           // Chỉ cập nhật hướng, GIỮ NGUYÊN pipeContents và pipeSize hiện có
           newBoard[rowIndex][colIndex] = {
             ...cell,
             pipeDirection: selectedPipeDirection,
-            pipeSize: cell.pipeSize || cell.pipeContents?.length || 3,
+            pipeSize:
+              cell.pipeSize || cell.pipeContents?.length || pipeBlockCount,
             pipeContents:
               cell.pipeContents && cell.pipeContents.length > 0
                 ? cell.pipeContents
-                : [selectedColor, selectedColor, selectedColor],
+                : Array(pipeBlockCount).fill(selectedColor),
           };
         }
         break;
@@ -339,31 +343,59 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   </div>
                 )}
 
-                {/* Pipe Direction Selection */}
+                {/* Pipe Configuration */}
                 {selectedTool === "pipe" && (
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Hướng pipe:
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(["up", "down", "left", "right"] as const).map(
-                        (direction) => (
-                          <Button
-                            key={direction}
-                            variant={
-                              selectedPipeDirection === direction
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setSelectedPipeDirection(direction)}
-                            className="flex items-center gap-2"
-                          >
-                            {getDirectionIcon(direction)}
-                            {direction.toUpperCase()}
-                          </Button>
-                        )
-                      )}
+                  <div className="space-y-4">
+                    {/* Pipe Block Count */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Số blocks trong pipe:
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={pipeBlockCount}
+                        onChange={(e) =>
+                          setPipeBlockCount(parseInt(e.target.value) || 1)
+                        }
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Số lượng blocks sẽ được đặt trong pipe (1-8)
+                      </p>
+                    </div>
+                    {/* Pipe Direction Selection */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Hướng pipe:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["up", "down", "left", "right"] as const).map(
+                          (direction) => (
+                            <Button
+                              key={direction}
+                              variant={
+                                selectedPipeDirection === direction
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() =>
+                                setSelectedPipeDirection(direction)
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              {getDirectionIcon(direction)}
+                              {direction.toUpperCase()}
+                            </Button>
+                          )
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ⚠️ Pipe giờ phải hướng về phía có block (không phải ô
+                        trống)
+                      </p>
                     </div>
                   </div>
                 )}
@@ -421,6 +453,59 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                       <strong>Pull Pin:</strong> Click để thêm/sửa pull pin (🔱)
                     </li>
                   </ul>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Thông số</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Color Distribution</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(() => {
+                      // Count colors on board (similar to level-validator.tsx)
+                      const colorCounts: Record<string, number> = {};
+
+                      level.board.forEach((row) => {
+                        row.forEach((cell) => {
+                          if (cell.type === "block") {
+                            if (cell.element === "Pipe") {
+                              // Count pipe contents
+                              if (cell.pipeContents) {
+                                cell.pipeContents.forEach((color) => {
+                                  colorCounts[color] =
+                                    (colorCounts[color] || 0) + 1;
+                                });
+                              }
+                            } else if (cell.color) {
+                              colorCounts[cell.color] =
+                                (colorCounts[cell.color] || 0) + 1;
+                            }
+                          }
+                        });
+                      });
+
+                      return Object.entries(colorCounts).map(
+                        ([color, count]) => (
+                          <div
+                            key={color}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span>{color}:</span>
+                            <Badge
+                              variant={
+                                count % 3 === 0 ? "default" : "destructive"
+                              }
+                            >
+                              {count} {count % 3 === 0 ? "✓" : "✗"}
+                            </Badge>
+                          </div>
+                        )
+                      );
+                    })()}
+                  </div>
                 </div>
               </CardContent>
             </Card>

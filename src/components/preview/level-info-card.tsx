@@ -40,7 +40,7 @@ export function LevelInfoCard({ level }: LevelInfoCardProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">
-              {level.config.width}x{level.config.blockCount}
+              {level.config.width}x{level.config.height}
             </p>
             <p className="text-sm text-muted-foreground">Kích thước</p>
           </div>
