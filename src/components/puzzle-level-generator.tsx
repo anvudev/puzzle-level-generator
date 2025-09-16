@@ -13,12 +13,15 @@ import {
   Gamepad2,
   Zap,
   Palette,
+  History,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";
 import { ConfigurationPanel } from "./configuration-panel";
 import { ExportPanel } from "./export-panel";
+import { LevelHistory } from "./level-history";
 import { DEFAULT_CONFIG } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
+import { useLevelHistory } from "@/lib/hooks/use-level-history";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 
 export function PuzzleLevelGenerator() {
@@ -28,8 +31,21 @@ export function PuzzleLevelGenerator() {
   const { generatedLevel, isGenerating, generateLevel, setGeneratedLevel } =
     useLevelGenerator();
 
+  const { saveLevel } = useLevelHistory();
+
   const handleLevelUpdate = (updatedLevel: GeneratedLevel) => {
     setGeneratedLevel(updatedLevel);
+  };
+
+  const handleSaveLevel = (level: GeneratedLevel, name?: string) => {
+    const savedId = saveLevel(level, name);
+    console.log("Level saved with ID:", savedId);
+    return savedId;
+  };
+
+  const handleLoadLevel = (level: GeneratedLevel) => {
+    setGeneratedLevel(level);
+    setActiveTab("preview");
   };
 
   const handleGenerateLevel = async () => {
@@ -125,7 +141,7 @@ export function PuzzleLevelGenerator() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8 bg-cardrounded-2xl border border-orange-200 shadow-lg">
+        <TabsList className="grid w-full grid-cols-4 mb-8 bg-card rounded-2xl border border-orange-200 shadow-lg">
           <TabsTrigger
             value="config"
             className="flex items-center gap-2 rounded-xl font-bold text-card-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300"
@@ -139,6 +155,13 @@ export function PuzzleLevelGenerator() {
           >
             <Grid3X3 className="w-4 h-4" />
             Xem trước
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="flex items-center gap-2 rounded-xl font-bold text-card-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300"
+          >
+            <History className="w-4 h-4" />
+            Lịch sử
           </TabsTrigger>
           <TabsTrigger
             value="export"
@@ -159,11 +182,7 @@ export function PuzzleLevelGenerator() {
               level={generatedLevel}
               onLevelUpdate={handleLevelUpdate}
               // onRegenerate={generateLevel}
-              onSave={(level) => {
-                console.log("Saving level:", level);
-                // You can implement save functionality here
-                // For now, just log the level
-              }}
+              onSave={handleSaveLevel}
             />
           ) : (
             <Card className="border-2 border-dashed border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50 rounded-3xl shadow-xl overflow-hidden">
@@ -215,6 +234,16 @@ export function PuzzleLevelGenerator() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          <LevelHistory
+            onLoadLevel={handleLoadLevel}
+            onEditLevel={(level) => {
+              setGeneratedLevel(level);
+              setActiveTab("preview");
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="export" className="space-y-6">
