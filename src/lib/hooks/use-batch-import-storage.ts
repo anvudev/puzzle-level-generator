@@ -30,15 +30,28 @@ export function useBatchImportStorage() {
           console.log("📥 Loaded configs from storage:", parsed.length);
 
           // Deserialize configs with proper handling of Date objects
-          const deserializedConfigs = parsed.map((config: any) => ({
-            ...config,
-            generatedLevel: config.generatedLevel
-              ? {
-                  ...config.generatedLevel,
-                  timestamp: new Date(config.generatedLevel.timestamp),
-                }
-              : undefined,
-          }));
+          const deserializedConfigs = parsed
+            .filter(
+              (c): c is Record<string, unknown> =>
+                typeof c === "object" && c !== null
+            )
+            .map((configObj) => {
+              const base = configObj as Partial<ImportedLevelConfig>;
+              const generated = base.generatedLevel
+                ? {
+                    ...base.generatedLevel,
+                    timestamp: new Date(
+                      typeof base.generatedLevel.timestamp === "string"
+                        ? base.generatedLevel.timestamp
+                        : String(base.generatedLevel.timestamp)
+                    ),
+                  }
+                : undefined;
+              return {
+                ...base,
+                generatedLevel: generated,
+              } as ImportedLevelConfig;
+            });
 
           setImportedConfigs(deserializedConfigs);
           console.log("✅ Successfully loaded from localStorage");

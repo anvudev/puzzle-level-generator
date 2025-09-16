@@ -10,11 +10,13 @@ interface AlertDialogContextType {
   setOpen: (open: boolean) => void;
 }
 
-const AlertDialogContext = React.createContext<AlertDialogContextType | null>(null);
+const AlertDialogContext = React.createContext<AlertDialogContextType | null>(
+  null
+);
 
 const AlertDialog: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [open, setOpen] = React.useState(false);
-  
+
   return (
     <AlertDialogContext.Provider value={{ open, setOpen }}>
       {children}
@@ -22,39 +24,39 @@ const AlertDialog: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-const AlertDialogTrigger: React.FC<{ 
-  children: React.ReactNode; 
+const AlertDialogTrigger: React.FC<{
+  children: React.ReactElement;
   asChild?: boolean;
 }> = ({ children, asChild }) => {
   const context = React.useContext(AlertDialogContext);
-  if (!context) throw new Error("AlertDialogTrigger must be used within AlertDialog");
-  
+  if (!context)
+    throw new Error("AlertDialogTrigger must be used within AlertDialog");
+
   const handleClick = () => context.setOpen(true);
-  
+
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, { onClick: handleClick });
+    type Clickable = { onClick?: React.MouseEventHandler<HTMLElement> };
+    const child = children as React.ReactElement<Clickable>;
+    return React.cloneElement(child, { onClick: handleClick });
   }
-  
+
   return <div onClick={handleClick}>{children}</div>;
 };
 
-const AlertDialogPortal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AlertDialogPortal: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const context = React.useContext(AlertDialogContext);
   if (!context || !context.open) return null;
-  
-  return (
-    <div className="fixed inset-0 z-50">
-      {children}
-    </div>
-  );
+
+  return <div className="fixed inset-0 z-50">{children}</div>;
 };
 
-const AlertDialogOverlay: React.FC<{ className?: string }> = ({ className }) => (
+const AlertDialogOverlay: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <div
-    className={cn(
-      "fixed inset-0 bg-black/80 animate-in fade-in-0",
-      className
-    )}
+    className={cn("fixed inset-0 bg-black/80 animate-in fade-in-0", className)}
   />
 );
 
@@ -64,7 +66,7 @@ const AlertDialogContent: React.FC<{
 }> = ({ children, className }) => {
   const context = React.useContext(AlertDialogContext);
   if (!context || !context.open) return null;
-  
+
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
@@ -112,18 +114,14 @@ const AlertDialogTitle: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
-  <h2 className={cn("text-lg font-semibold", className)}>
-    {children}
-  </h2>
+  <h2 className={cn("text-lg font-semibold", className)}>{children}</h2>
 );
 
 const AlertDialogDescription: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
-  <p className={cn("text-sm text-muted-foreground", className)}>
-    {children}
-  </p>
+  <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
 );
 
 const AlertDialogAction: React.FC<{
@@ -132,18 +130,16 @@ const AlertDialogAction: React.FC<{
   onClick?: () => void;
 }> = ({ children, className, onClick }) => {
   const context = React.useContext(AlertDialogContext);
-  if (!context) throw new Error("AlertDialogAction must be used within AlertDialog");
-  
+  if (!context)
+    throw new Error("AlertDialogAction must be used within AlertDialog");
+
   const handleClick = () => {
     onClick?.();
     context.setOpen(false);
   };
-  
+
   return (
-    <button
-      className={cn(buttonVariants(), className)}
-      onClick={handleClick}
-    >
+    <button className={cn(buttonVariants(), className)} onClick={handleClick}>
       {children}
     </button>
   );
@@ -155,13 +151,14 @@ const AlertDialogCancel: React.FC<{
   onClick?: () => void;
 }> = ({ children, className, onClick }) => {
   const context = React.useContext(AlertDialogContext);
-  if (!context) throw new Error("AlertDialogCancel must be used within AlertDialog");
-  
+  if (!context)
+    throw new Error("AlertDialogCancel must be used within AlertDialog");
+
   const handleClick = () => {
     onClick?.();
     context.setOpen(false);
   };
-  
+
   return (
     <button
       className={cn(

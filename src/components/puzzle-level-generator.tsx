@@ -14,7 +14,6 @@ import {
   Zap,
   Palette,
   History,
-  Upload,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";
 import { ConfigurationPanel } from "./configuration-panel";

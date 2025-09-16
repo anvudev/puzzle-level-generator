@@ -33,7 +33,6 @@ import {
   Calendar,
   Grid3X3,
   Palette,
-  Zap,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -476,8 +475,8 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                 Xóa level này?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Bạn có chắc muốn xóa "{savedLevel.name}"? Hành
-                                động này không thể hoàn tác.
+                                Bạn có chắc muốn xóa &quot;{savedLevel.name}
+                                &quot;? Hành động này không thể hoàn tác.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

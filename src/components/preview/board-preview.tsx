@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import ring from "@/public/ring.png";
+// removed unused import 'ring'
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
