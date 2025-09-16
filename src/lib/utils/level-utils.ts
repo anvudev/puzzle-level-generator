@@ -66,6 +66,7 @@ export function getElementIcon(elementType: string): string {
     PullPin: "🔱",
     Bomb: "💣",
     Moving: "➡️",
+    Key: "🔑",
   };
   return icons[elementType] || "⬜";
 }
