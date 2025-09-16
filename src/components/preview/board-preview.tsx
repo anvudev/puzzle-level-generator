@@ -203,7 +203,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   style={{
                     backgroundColor:
                       cell.element === "Pipe"
-                        ? "#fff" // Gray color for pipe blocks (dead blocks)
+                        ? "" // Gray color for pipe blocks (dead blocks)
                         : cell.element === "PullPin"
                         ? "#fff" // Brown color for pull pin blocks (barrier)
                         : cell.color
