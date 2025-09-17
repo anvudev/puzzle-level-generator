@@ -9,7 +9,7 @@ import React from "react";
 import { LevelInfoCard } from "./preview/level-info-card";
 import { BoardPreview } from "./preview/board-preview";
 import { LevelValidator } from "./preview/level-validator";
-// import { LevelActions } from "./preview/level-actions";
+import { LevelActions } from "./preview/level-actions";
 import type { GeneratedLevel } from "@/config/game-types";
 import { GAME_COLORS, ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
@@ -24,6 +24,7 @@ interface LevelPreviewProps {
 export function LevelPreview({
   level,
   onLevelUpdate,
+  onRegenerate,
   onSave,
 }: LevelPreviewProps) {
   const [saveName, setSaveName] = React.useState("");
@@ -161,11 +162,7 @@ export function LevelPreview({
         {/* Right Panel */}
         <div className="space-y-4">
           {/* Level Actions */}
-          {/* <LevelActions
-            level={level}
-            onRegenerate={onRegenerate}
-            onSave={onSave}
-          /> */}
+          <LevelActions level={level} onRegenerate={onRegenerate} />
 
           {/* Level Validator */}
           <LevelValidator level={level} />

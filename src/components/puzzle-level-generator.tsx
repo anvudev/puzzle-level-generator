@@ -38,6 +38,12 @@ export function PuzzleLevelGenerator() {
     setGeneratedLevel(updatedLevel);
   };
 
+  const handleRegenerate = () => {
+    if (generatedLevel) {
+      generateLevel(generatedLevel.config);
+    }
+  };
+
   const handleSaveLevel = (level: GeneratedLevel, name?: string) => {
     const savedId = saveLevel(level, name);
     console.log("Level saved with ID:", savedId);
@@ -189,7 +195,7 @@ export function PuzzleLevelGenerator() {
             <LevelPreview
               level={generatedLevel}
               onLevelUpdate={handleLevelUpdate}
-              // onRegenerate={generateLevel}
+              onRegenerate={handleRegenerate}
               onSave={handleSaveLevel}
             />
           ) : (
