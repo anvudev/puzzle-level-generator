@@ -10,6 +10,7 @@ import {
   Grid3X3,
   Sparkles,
   History,
+  Upload,
 } from "lucide-react";
 import { LevelPreview } from "./level-preview";
 import { ConfigurationPanel } from "./configuration-panel";
@@ -42,11 +43,11 @@ export function PuzzleLevelGenerator() {
       title: "Lịch sử",
       value: "history",
     },
-    // {
-    //   icon: <Upload className="w-4 h-4" />,
-    //   title: "Import CSV",
-    //   value: "batch-import",
-    // },
+    {
+      icon: <Upload className="w-4 h-4" />,
+      title: "Import CSV",
+      value: "batch-import",
+    },
     {
       icon: <Download className="w-4 h-4" />,
       title: "Xuất file",
@@ -122,7 +123,10 @@ export function PuzzleLevelGenerator() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList
-          className={`grid w-full grid-cols-${tabContents.length} mb-8 bg-card rounded-2xl border border-orange-200 shadow-lg`}
+          className="grid w-full mb-8 bg-card rounded-2xl border border-orange-200 shadow-lg"
+          style={{
+            gridTemplateColumns: `repeat(${tabContents.length}, minmax(0, 1fr))`,
+          }}
         >
           {tabContents.flatMap((tab) => (
             <TabsTrigger

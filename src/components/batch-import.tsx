@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   Upload,
   FileText,
@@ -19,6 +18,7 @@ import {
   Grid3X3,
   Palette,
   Zap,
+  RefreshCw,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -51,7 +51,7 @@ import {
   useBatchImportStorage,
   type ImportedLevelConfig,
 } from "@/lib/hooks/use-batch-import-storage";
-import { getElementIcon, getPipeIcon } from "@/lib/utils/level-utils";
+import { GenerateBoard, GenerateBoardSmall } from "@/lib/utils/boardGenerate";
 
 interface BatchImportProps {
   onSaveLevel?: (level: GeneratedLevel, name?: string) => string;
@@ -64,6 +64,9 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [savedLevels, setSavedLevels] = useState<Set<string>>(new Set());
+  const [isSavingAll, setIsSavingAll] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { generateLevel } = useLevelGenerator();
@@ -74,6 +77,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     deleteConfig: deleteStoredConfig,
     clearAll: clearAllStored,
     getStats,
+    debugStorage,
   } = useBatchImportStorage();
 
   // Debug localStorage state
@@ -82,21 +86,70 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     importedConfigs.length
   );
 
+  // Additional debug logging
+  React.useEffect(() => {
+    console.log("🔧 BatchImport mounted/updated");
+    debugStorage();
+  }, [debugStorage]);
+
+  React.useEffect(() => {
+    console.log("📊 importedConfigs changed:", importedConfigs.length);
+  }, [importedConfigs.length]);
+
+  // Prevent data loss on unmount
+  React.useEffect(() => {
+    return () => {
+      console.log(
+        "🚪 BatchImport unmounting, current data:",
+        importedConfigs.length
+      );
+    };
+  }, [importedConfigs.length]);
+
+  const validateFile = (file: File) => {
+    if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+      setUploadError("Vui lòng chọn file CSV hợp lệ");
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      setUploadError("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB");
+      return false;
+    }
+    return true;
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
-        setUploadError("Vui lòng chọn file CSV hợp lệ");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setUploadError("File quá lớn. Vui lòng chọn file nhỏ hơn 5MB");
-        return;
-      }
+    if (file && validateFile(file)) {
       setSelectedFile(file);
       setUploadError(null);
     }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+
+    const file = event.dataTransfer.files[0];
+    if (file && validateFile(file)) {
+      setSelectedFile(file);
+      setUploadError(null);
+    }
+  };
+
+  const handleClickUpload = () => {
+    fileInputRef.current?.click();
   };
 
   const parseCSV = (csvText: string): ImportedLevelConfig[] => {
@@ -186,17 +239,43 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     if (!config?.generatedLevel || !onSaveLevel) return;
 
     onSaveLevel(config.generatedLevel, config.name);
+
+    // Mark as saved with visual feedback
+    setSavedLevels((prev) => new Set(prev).add(configId));
+
+    // Remove saved state after 2 seconds
+    setTimeout(() => {
+      setSavedLevels((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(configId);
+        return newSet;
+      });
+    }, 2000);
   };
 
   const saveAllLevels = () => {
     const generatedConfigs = importedConfigs.filter(
       (c) => c.status === "generated" && c.generatedLevel
     );
+
+    if (generatedConfigs.length === 0) return;
+
+    setIsSavingAll(true);
+
     generatedConfigs.forEach((config) => {
       if (config.generatedLevel && onSaveLevel) {
         onSaveLevel(config.generatedLevel, config.name);
+
+        // Mark as saved with visual feedback
+        setSavedLevels((prev) => new Set(prev).add(config.id));
       }
     });
+
+    // Remove all saved states after 2 seconds
+    setTimeout(() => {
+      setSavedLevels(new Set());
+      setIsSavingAll(false);
+    }, 2000);
   };
 
   const deleteConfig = (configId: string) => {
@@ -208,6 +287,9 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     clearAllStored();
     setUploadError(null);
     setSelectedFile(null);
+    setSavedLevels(new Set());
+    setIsSavingAll(false);
+    setIsDragOver(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -257,21 +339,123 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleFileSelect}
-              className="flex-1"
-            />
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className="min-w-[100px]"
+          {/* Enhanced File Upload Area */}
+          <div className="space-y-4">
+            {/* Drag & Drop Zone */}
+            <div
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 ${
+                isDragOver
+                  ? "border-purple-500 bg-purple-50 scale-[1.02]"
+                  : selectedFile
+                  ? "border-green-400 bg-green-50"
+                  : "border-gray-300 bg-gray-50"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleClickUpload}
             >
-              {isUploading ? "Đang tải..." : "Tải lên"}
-            </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              <div className="space-y-4">
+                {/* Icon */}
+                <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-100 to-indigo-100">
+                  {selectedFile ? (
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  ) : (
+                    <Upload className="w-8 h-8 text-purple-600" />
+                  )}
+                </div>
+
+                {/* Text */}
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {selectedFile ? (
+                      <span className="text-green-600">File đã chọn</span>
+                    ) : isDragOver ? (
+                      "Thả file vào đây"
+                    ) : (
+                      "Kéo thả file CSV hoặc click để chọn"
+                    )}
+                  </h3>
+
+                  {selectedFile ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-700">
+                        📄 {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Kích thước: {(selectedFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      Hỗ trợ file .csv, tối đa 5MB
+                    </p>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-3">
+                  {!selectedFile ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClickUpload}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Chọn file
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpload();
+                        }}
+                        disabled={isUploading}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isUploading ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Đang tải...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Tải lên
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFile(null);
+                          setUploadError(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                          }
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Hủy
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {uploadError && (
@@ -345,43 +529,28 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                   <Zap className="w-4 h-4 mr-2" />
                   Tạo tất cả
                 </Button>
-                <Button onClick={saveAllLevels} size="sm" variant="outline">
-                  <Save className="w-4 h-4 mr-2" />
-                  Lưu tất cả
+                <Button
+                  onClick={saveAllLevels}
+                  size="sm"
+                  variant="outline"
+                  className={
+                    isSavingAll
+                      ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                      : ""
+                  }
+                >
+                  {isSavingAll ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Đã lưu tất cả
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Lưu tất cả
+                    </>
+                  )}
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-orange-600 hover:bg-orange-50"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Clear Cache
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Xóa cache localStorage?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Hành động này sẽ xóa tất cả dữ liệu batch import đã lưu
-                        trong localStorage. Bạn sẽ mất tất cả levels đã import
-                        và generated. Không thể hoàn tác.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Hủy</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={clearAll}
-                        className="bg-orange-600 hover:bg-orange-700"
-                      >
-                        Xóa Cache
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -427,46 +596,11 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                         <div className="w-24 h-24 border-2 border-gray-200 rounded-lg overflow-hidden bg-white flex items-center justify-center">
                           {config.status === "generated" &&
                           config.generatedLevel ? (
-                            <div
-                              className="w-full h-full grid gap-0.5 p-1"
-                              style={{
-                                gridTemplateColumns: `repeat(${config.generatedLevel.config.width}, 1fr)`,
-                                gridTemplateRows: `repeat(${config.generatedLevel.config.height}, 1fr)`,
-                              }}
-                            >
-                              {config.generatedLevel.board
-                                .flat()
-                                .map((cell, index) => (
-                                  <div
-                                    key={index}
-                                    className="rounded-sm border border-gray-100"
-                                    style={{
-                                      backgroundColor:
-                                        cell.type === "block"
-                                          ? cell.color
-                                            ? GAME_COLORS[
-                                                cell.color as keyof typeof GAME_COLORS
-                                              ] || "#f3f4f6"
-                                            : "#e5e7eb"
-                                          : "#f9fafb",
-                                      fontSize: "6px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                    }}
-                                  >
-                                    {cell.element === "Pipe" && "🔧"}
-                                    {cell.element === "PullPin" && "🔱"}
-                                    {cell.element === "Barrel" && "📦"}
-                                    {cell.element === "IceBlock" && "🧊"}
-                                    {cell.element === "BlockLock" && "🔒"}
-                                    {cell.element === "Block Lock" && "🔒"}
-                                    {cell.element === "Key" && "🗝️"}
-                                    {cell.element === "Bomb" && "💣"}
-                                    {cell.element === "Moving" && "🔄"}
-                                  </div>
-                                ))}
-                            </div>
+                            <GenerateBoardSmall
+                              board={config.generatedLevel.board}
+                              width={config.generatedLevel.config.width}
+                              height={config.generatedLevel.config.height}
+                            />
                           ) : config.status === "generating" ? (
                             <div className="text-blue-500 text-xs text-center">
                               <Zap className="w-6 h-6 mx-auto mb-1 animate-pulse" />
@@ -515,7 +649,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                               </Badge>
                               {(config.pipeCount || 0) > 0 && (
                                 <Badge variant="outline" className="text-xs">
-                                  🔧 {config.pipeCount} pipe
+                                  ⬆️ {config.pipeCount} pipe
                                 </Badge>
                               )}
                               {(config.elements?.["Barrel"] || 0) > 0 && (
@@ -627,53 +761,15 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                                   </DialogHeader>
                                   <div className="space-y-4">
                                     <div className="w-full max-w-md mx-auto border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
-                                      <div
-                                        className="w-full aspect-square grid gap-1 p-2"
-                                        style={{
-                                          gridTemplateColumns: `repeat(${config.generatedLevel.config.width}, 1fr)`,
-                                          gridTemplateRows: `repeat(${config.generatedLevel.config.height}, 1fr)`,
-                                        }}
-                                      >
-                                        {config.generatedLevel.board
-                                          .flat()
-                                          .map((cell, index) => (
-                                            <div
-                                              key={index}
-                                              className="rounded text-3xl border border-gray-200 flex items-center justify-center"
-                                              style={{
-                                                backgroundColor:
-                                                  cell.type === "block"
-                                                    ? cell.color
-                                                      ? GAME_COLORS[
-                                                          cell.color as keyof typeof GAME_COLORS
-                                                        ] || "#f3f4f6"
-                                                      : ""
-                                                    : "#f9fafb",
-                                              }}
-                                            >
-                                              {cell.element === "Pipe" &&
-                                                getPipeIcon(
-                                                  cell.pipeDirection || "up"
-                                                )}
-                                              {cell.element === "PullPin" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "Barrel" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "IceBlock" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "BlockLock" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "PullPin" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "Bomb" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "Moving" &&
-                                                getElementIcon(cell.element)}
-                                              {cell.element === "Key" &&
-                                                getElementIcon(cell.element)}
-                                            </div>
-                                          ))}
-                                      </div>
+                                      <GenerateBoard
+                                        board={config.generatedLevel.board}
+                                        width={
+                                          config.generatedLevel.config.width
+                                        }
+                                        height={
+                                          config.generatedLevel.config.height
+                                        }
+                                      />
                                     </div>
                                   </div>
                                 </DialogContent>
@@ -695,9 +791,23 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                               <Button
                                 size="sm"
                                 onClick={() => saveLevel(config.id)}
+                                className={
+                                  savedLevels.has(config.id)
+                                    ? "bg-green-600 hover:bg-green-700 text-white"
+                                    : ""
+                                }
                               >
-                                <Save className="w-4 h-4 mr-1" />
-                                Lưu
+                                {savedLevels.has(config.id) ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Đã lưu
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4 mr-1" />
+                                    Lưu
+                                  </>
+                                )}
                               </Button>
                             </>
                           ) : null}

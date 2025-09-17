@@ -261,6 +261,7 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
 
     const config: Partial<CSVLevelConfig> = {
       ...DEFAULT_CONFIG,
+      elements: {}, // Fresh empty object for each config
     };
 
     headers.forEach((header, index) => {
@@ -346,9 +347,11 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           break;
         case "barrelCount":
           const barrelCount = parseInt(value) || 0;
+          console.log(`🔍 barrelCount: ${barrelCount}, value: "${value}"`);
           if (barrelCount > 0) {
             config.elements = config.elements || {};
             config.elements["Barrel"] = barrelCount;
+            console.log(`✅ Added Barrel: ${barrelCount}`);
           }
           break;
         case "iceBlockCount":
@@ -374,9 +377,13 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           break;
         case "bombCount":
           const bombCount = parseInt(value) || 0;
+          console.log(`🔍 bombCount: ${bombCount}, value: "${value}"`);
           if (bombCount > 0) {
             config.elements = config.elements || {};
             config.elements["Bomb"] = bombCount;
+            console.log(`✅ Added Bomb: ${bombCount}`);
+          } else {
+            console.log(`❌ Skipped Bomb (count: ${bombCount})`);
           }
           break;
         case "movingCount":

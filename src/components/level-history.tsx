@@ -16,7 +16,6 @@ import {
   History,
   Eye,
   Edit3,
-  Trash2,
   Copy,
   Download,
   Calendar,
@@ -30,7 +29,7 @@ import {
 } from "@/lib/hooks/use-level-history";
 import { GAME_COLORS } from "@/config/game-constants";
 import type { GeneratedLevel } from "@/config/game-types";
-import { getElementIcon } from "@/lib/utils/level-utils";
+import { getElementIcon, getPipeIcon } from "@/lib/utils/level-utils";
 import { AlertDialogUI } from "./alert/alert";
 
 interface LevelHistoryProps {
@@ -204,7 +203,11 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                 justifyContent: "center",
                               }}
                             >
-                              {cell.element && getElementIcon(cell.element)}
+                              {cell.element === "Pipe" &&
+                                getPipeIcon(cell.pipeDirection || "up")}
+                              {cell.element &&
+                                cell.element !== "Pipe" &&
+                                getElementIcon(cell.element)}
                             </div>
                           ))}
                         </div>
@@ -324,7 +327,12 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                               : "#f9fafb",
                                         }}
                                       >
+                                        {cell.element === "Pipe" &&
+                                          getPipeIcon(
+                                            cell.pipeDirection || "up"
+                                          )}
                                         {cell.element &&
+                                          cell.element !== "Pipe" &&
                                           getElementIcon(cell.element)}
                                       </div>
                                     ))}
