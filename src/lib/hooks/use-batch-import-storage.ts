@@ -20,15 +20,9 @@ export function useBatchImportStorage() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      console.log(
-        "🔍 Loading from localStorage:",
-        stored ? "Found data" : "No data"
-      );
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          console.log("📥 Loaded configs from storage:", parsed.length);
-
           // Deserialize configs with proper handling of Date objects
           const deserializedConfigs = parsed
             .filter(
@@ -54,7 +48,6 @@ export function useBatchImportStorage() {
             });
 
           setImportedConfigs(deserializedConfigs);
-          console.log("✅ Successfully loaded from localStorage");
         }
       }
     } catch (error) {
@@ -68,12 +61,6 @@ export function useBatchImportStorage() {
   // Save to localStorage whenever data changes
   useEffect(() => {
     try {
-      console.log(
-        "💾 Saving to localStorage:",
-        importedConfigs.length,
-        "configs"
-      );
-
       // Serialize configs with proper handling of Date objects
       const serializedConfigs = importedConfigs.map((config) => ({
         ...config,
@@ -86,7 +73,6 @@ export function useBatchImportStorage() {
       }));
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedConfigs));
-      console.log("✅ Successfully saved to localStorage");
     } catch (error) {
       console.error(
         "❌ Failed to save batch import data to localStorage:",
@@ -96,10 +82,8 @@ export function useBatchImportStorage() {
   }, [importedConfigs]);
 
   const addConfigs = (configs: ImportedLevelConfig[]) => {
-    console.log("🔧 Adding configs to storage:", configs.length);
     setImportedConfigs((prev) => {
       const newConfigs = [...prev, ...configs];
-      console.log("📦 New total configs:", newConfigs.length);
       return newConfigs;
     });
   };

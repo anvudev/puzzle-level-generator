@@ -213,16 +213,6 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     }
   };
 
-  // const debugLocalStorage = () => {
-  //   const stored = localStorage.getItem("puzzle-batch-import-data");
-  //   console.log("🔍 localStorage debug:", {
-  //     hasData: !!stored,
-  //     dataLength: stored?.length || 0,
-  //     parsedLength: stored ? JSON.parse(stored).length : 0,
-  //     currentConfigs: importedConfigs.length,
-  //   });
-  // };
-
   const handleDownloadTemplate = () => {
     downloadCSVTemplate();
   };

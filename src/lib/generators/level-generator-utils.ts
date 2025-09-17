@@ -179,8 +179,6 @@ export class LevelGeneratorUtils {
       { dir: "right" as const, dx: 1, dy: 0 },
     ];
 
-    console.log(`[DEBUG] Checking valid directions for pipe at (${x}, ${y})`);
-
     for (const { dir, dx, dy } of directions) {
       const targetX = x + dx;
       const targetY = y + dy;
@@ -197,26 +195,10 @@ export class LevelGeneratorUtils {
         // NEW LOGIC: Pipe can ONLY output towards existing blocks
         if (targetCell.type === "block") {
           validDirections.push(dir);
-          console.log(
-            `[DEBUG] Valid direction: ${dir} -> (${targetX}, ${targetY}) [BLOCK - can output towards existing block]`
-          );
-        } else {
-          console.log(
-            `[DEBUG] Invalid direction: ${dir} -> (${targetX}, ${targetY}) [${targetCell.type} - no block to output towards]`
-          );
         }
-      } else {
-        console.log(
-          `[DEBUG] Out of bounds: ${dir} -> (${targetX}, ${targetY})`
-        );
       }
     }
 
-    console.log(
-      `[DEBUG] Found ${
-        validDirections.length
-      } valid directions for pipe: [${validDirections.join(", ")}]`
-    );
     return validDirections;
   }
 
@@ -236,10 +218,6 @@ export class LevelGeneratorUtils {
       { dir: "left" as const, dx: -1, dy: 0 },
       { dir: "right" as const, dx: 1, dy: 0 },
     ];
-
-    console.log(
-      `[DEBUG] Checking valid directions for Pull Pin at (${x}, ${y})`
-    );
 
     for (const { dir, dx, dy } of directions) {
       // Check if we can create a gate (1-3 empty cells) in this direction
@@ -278,21 +256,9 @@ export class LevelGeneratorUtils {
 
       if (canCreateGate) {
         validDirections.push(dir);
-        console.log(
-          `[DEBUG] Valid Pull Pin direction: ${dir} - can create gate`
-        );
-      } else {
-        console.log(
-          `[DEBUG] Invalid Pull Pin direction: ${dir} - cannot create gate`
-        );
       }
     }
 
-    console.log(
-      `[DEBUG] Found ${
-        validDirections.length
-      } valid directions for Pull Pin: [${validDirections.join(", ")}]`
-    );
     return validDirections;
   }
 
@@ -321,13 +287,6 @@ export class LevelGeneratorUtils {
     for (let y = 0; y < config.height; y++) {
       for (let x = 0; x < config.width; x++) {
         const cell = board[y][x];
-        if (cell.element === "Pipe") {
-          console.log(`[DEBUG] Found pipe at (${x},${y}):`, {
-            element: cell.element,
-            pipeContents: cell.pipeContents,
-            pipeDirection: cell.pipeDirection,
-          });
-        }
         if (
           cell.element === "Pipe" &&
           cell.pipeContents &&
@@ -343,11 +302,6 @@ export class LevelGeneratorUtils {
         }
       }
     }
-
-    console.log(
-      `[DEBUG] Generated ${pipeInfo.length} pipe info entries:`,
-      pipeInfo
-    );
 
     return pipeInfo.length > 0 ? pipeInfo : undefined;
   }
@@ -366,11 +320,9 @@ export class LevelGeneratorUtils {
         const cell = board[y][x];
         if (cell.element === "Block Lock" && cell.lockId) {
           lockPositions.set(cell.lockId, { x, y });
-          console.log(`[DEBUG] Found Block Lock ${cell.lockId} at (${x},${y})`);
         }
         if (cell.element === "Key" && cell.keyId) {
           keyPositions.set(cell.keyId, { x, y });
-          console.log(`[DEBUG] Found Key element ${cell.keyId} at (${x},${y})`);
         }
       }
     }
@@ -388,15 +340,8 @@ export class LevelGeneratorUtils {
           keyPosition: keyPos,
           keyReachable,
         });
-      } else {
-        console.warn(`Lock ${lockId} has no corresponding key`);
       }
     }
-
-    console.log(
-      `[DEBUG] Generated ${lockInfo.length} lock info entries:`,
-      lockInfo
-    );
 
     return lockInfo.length > 0 ? lockInfo : undefined;
   }

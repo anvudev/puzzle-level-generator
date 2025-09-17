@@ -26,12 +26,10 @@ export class AILevelGenerator {
       !AI_GENERATION_CONFIG.ENABLE_AI_GENERATION ||
       AI_GENERATION_CONFIG.FORCE_USE_FALLBACK
     ) {
-      console.log("AI generation disabled, using fallback algorithm");
       return FallbackLevelGenerator.generateLevel(config);
     }
 
     if (!this.apiKey) {
-      console.warn("Google Gemini API key chưa được thiết lập, using fallback");
       return FallbackLevelGenerator.generateLevel(config);
     }
 
@@ -82,7 +80,6 @@ export class AILevelGenerator {
       }
 
       const data = await response.json();
-      console.log("[AI] Gemini API Response:", data);
 
       if (!data.candidates || data.candidates.length === 0) {
         console.error("No candidates in Gemini response:", data);
@@ -108,7 +105,6 @@ export class AILevelGenerator {
       }
 
       const generatedText = candidate.content.parts[0].text;
-      console.log("[AI] Generated text from Gemini:", generatedText);
 
       if (!generatedText) {
         throw new Error("Không nhận được text từ Gemini API");
@@ -127,7 +123,6 @@ export class AILevelGenerator {
       let levelData;
       try {
         levelData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-        console.log("[AI] Parsed level data:", levelData);
       } catch (parseError) {
         console.error(
           "JSON parse error:",

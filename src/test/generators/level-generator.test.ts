@@ -44,10 +44,8 @@ describe("Level Generator Tests", () => {
         }
       }
 
-      console.log("Color counts:", Object.fromEntries(colorCounts));
-
       // Check each color is divisible by 3
-      for (const [color, count] of colorCounts) {
+      for (const [, count] of colorCounts) {
         expect(count % 3).toBe(0);
       }
     });
@@ -90,7 +88,7 @@ describe("Level Generator Tests", () => {
       expect(pipeCount).toBe(2);
 
       // Check color balance
-      for (const [_, count] of colorCounts) {
+      for (const [, count] of colorCounts) {
         expect(count % 3).toBe(0);
       }
     });
@@ -123,8 +121,6 @@ describe("Level Generator Tests", () => {
           }
         }
       }
-
-      console.log("Element counts:", Object.fromEntries(elementCounts));
 
       expect(elementCounts.get("Pipe")).toBe(3);
       expect(elementCounts.get("Barrel")).toBe(2);

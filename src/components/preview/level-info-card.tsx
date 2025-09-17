@@ -11,19 +11,6 @@ interface LevelInfoCardProps {
 
 export function LevelInfoCard({ level }: LevelInfoCardProps) {
   // Calculate actual blocks on board (excluding pipe contents)
-  const pipeCount = level.config.elements.Pipe || 0;
-  const blockLockCount =
-    level.config.elements["BlockLock"] ||
-    level.config.elements["Block Lock"] ||
-    0;
-
-  const pipeBlocks = pipeCount * 8; // Each pipe contains 8 blocks
-  const lockBlocks = blockLockCount * 2; // Each Block Lock requires 2 blocks (1 Lock + 1 Key)
-  const boardBlocks = level.config.blockCount - pipeBlocks - lockBlocks;
-
-  console.log(
-    `[DEBUG UI] Pipe count: ${pipeCount}, Pipe blocks: ${pipeBlocks}, Board blocks: ${boardBlocks}`
-  );
 
   return (
     <Card>

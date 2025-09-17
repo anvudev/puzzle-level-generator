@@ -26,12 +26,7 @@ export function ElementsSection({
 
     // Special handling for Pipe element
     if (elementType === "Pipe") {
-      const currentPipeCount = config.pipeCount || 0;
       const newPipeCount = count; // Use the exact count from input
-
-      console.log(
-        `[DEBUG] updateElement Pipe: count=${count}, currentPipeCount=${currentPipeCount}, newPipeCount=${newPipeCount}`
-      );
 
       // Ensure pipeBlockCounts array matches the new pipe count
       const currentBlockCounts = config.pipeBlockCounts || [];
@@ -124,9 +119,7 @@ export function ElementsSection({
                             config.pipeCount ||
                             config.elements[elementKey] ||
                             0;
-                          console.log(
-                            `[DEBUG UI] Rendering ${pipeCount} pipe inputs. config.pipeCount=${config.pipeCount}, elements.Pipe=${config.elements[elementKey]}`
-                          );
+
                           return Array(pipeCount);
                         })()
                           .fill(0)

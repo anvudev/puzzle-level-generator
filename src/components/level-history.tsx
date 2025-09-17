@@ -13,17 +13,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/simple-alert-dialog";
-import {
   History,
   Eye,
   Edit3,
@@ -40,9 +29,9 @@ import {
   type SavedLevel,
 } from "@/lib/hooks/use-level-history";
 import { GAME_COLORS } from "@/config/game-constants";
-// import { BoardPreview } from "./preview/board-preview";
 import type { GeneratedLevel } from "@/config/game-types";
-import { getElementIcon, getPipeIcon } from "@/lib/utils/level-utils";
+import { getElementIcon } from "@/lib/utils/level-utils";
+import { AlertDialogUI } from "./alert/alert";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -60,7 +49,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
     totalCount,
   } = useLevelHistory();
 
-  const [selectedLevel, setSelectedLevel] = useState<SavedLevel | null>(null);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
 
@@ -95,8 +83,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
 
   const getLevelStats = (level: GeneratedLevel) => {
     let blockCount = 0;
-    let pipeCount = 0;
-    let pullPinCount = 0;
     const colors = new Set<string>();
 
     level.board.forEach((row) => {
@@ -104,12 +90,9 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         if (cell.type === "block") {
           blockCount++;
           if (cell.element === "Pipe") {
-            pipeCount++;
             if (cell.pipeContents) {
               cell.pipeContents.forEach((color) => colors.add(color));
             }
-          } else if (cell.element === "PullPin") {
-            pullPinCount++;
           } else if (cell.color) {
             colors.add(cell.color);
           }
@@ -119,8 +102,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
 
     return {
       blockCount,
-      pipeCount,
-      pullPinCount,
+      elements: level.config.elements,
       colorCount: colors.size,
       dimensions: `${level.config.width}×${level.config.height}`,
     };
@@ -157,36 +139,11 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
               </div>
             </div>
             {totalCount > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 border-red-200 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Xóa tất cả
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Xóa tất cả lịch sử?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Hành động này sẽ xóa vĩnh viễn tất cả {totalCount} level
-                      đã lưu. Bạn không thể hoàn tác sau khi xóa.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={clearHistory}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Xóa tất cả
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <AlertDialogUI
+                title="Xóa tất cả lịch sử?"
+                description={`Hành động này sẽ xóa vĩnh viễn tất cả ${totalCount} level`}
+                onConfirm={clearHistory}
+              />
             )}
           </div>
         </CardHeader>
@@ -211,7 +168,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         <div className="grid gap-4">
           {savedLevels.map((savedLevel) => {
             const stats = getLevelStats(savedLevel.level);
-
             return (
               <Card
                 key={savedLevel.id}
@@ -248,8 +204,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                 justifyContent: "center",
                               }}
                             >
-                              {cell.element === "Pipe" && "🔧"}
-                              {cell.element === "PullPin" && "🔱"}
+                              {cell.element && getElementIcon(cell.element)}
                             </div>
                           ))}
                         </div>
@@ -314,15 +269,19 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                           <Palette className="w-3 h-3 mr-1" />
                           {stats.colorCount} màu
                         </Badge>
-                        {stats.pipeCount > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            🔧 {stats.pipeCount} pipe
-                          </Badge>
-                        )}
-                        {stats.pullPinCount > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            🔱 {stats.pullPinCount} pull pin
-                          </Badge>
+                        {Object.entries(stats.elements).map(
+                          ([elementType, count]) => {
+                            return (
+                              <Badge
+                                key={elementType}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {getElementIcon(elementType)} {count}{" "}
+                                {elementType}
+                              </Badge>
+                            );
+                          }
                         )}
                       </div>
 
@@ -330,11 +289,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                       <div className="flex items-center gap-2">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setSelectedLevel(savedLevel)}
-                            >
+                            <Button size="sm" variant="outline">
                               <Eye className="w-4 h-4 mr-1" />
                               Xem
                             </Button>
@@ -369,25 +324,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                               : "#f9fafb",
                                         }}
                                       >
-                                        {cell.element === "Pipe" &&
-                                          getPipeIcon(
-                                            cell.pipeDirection || "up"
-                                          )}
-                                        {cell.element === "PullPin" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "Barrel" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "IceBlock" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "BlockLock" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "PullPin" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "Bomb" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "Moving" &&
-                                          getElementIcon(cell.element)}
-                                        {cell.element === "Key" &&
+                                        {cell.element &&
                                           getElementIcon(cell.element)}
                                       </div>
                                     ))}
@@ -404,16 +341,16 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                   <span className="font-medium">Màu sắc:</span>
                                   <div>{stats.colorCount} màu</div>
                                 </div>
-                                <div>
-                                  <span className="font-medium">Pipes:</span>
-                                  <div>{stats.pipeCount}</div>
-                                </div>
-                                <div>
-                                  <span className="font-medium">
-                                    Pull Pins:
-                                  </span>
-                                  <div>{stats.pullPinCount}</div>
-                                </div>
+                                {Object.entries(stats.elements).map(
+                                  ([elementType, count]) => (
+                                    <div key={elementType}>
+                                      <span className="font-medium">
+                                        {elementType}:
+                                      </span>
+                                      <div>{count}</div>
+                                    </div>
+                                  )
+                                )}
                               </div>
                             </div>
                           </DialogContent>
@@ -458,38 +395,11 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                           Sao chép
                         </Button>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              Xóa
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Xóa level này?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Bạn có chắc muốn xóa &quot;{savedLevel.name}
-                                &quot;? Hành động này không thể hoàn tác.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteLevel(savedLevel.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <AlertDialogUI
+                          title="Xóa level này?"
+                          description={savedLevel.name}
+                          onConfirm={() => deleteLevel(savedLevel.id)}
+                        />
                       </div>
                     </div>
                   </div>

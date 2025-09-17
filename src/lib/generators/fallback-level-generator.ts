@@ -17,7 +17,6 @@ export class FallbackLevelGenerator {
    */
   static generateLevel(config: LevelConfig): GeneratedLevel {
     const board = this.generateBoard(config);
-    console.log("generateFallbackLevel", board);
 
     const reason = !AI_GENERATION_CONFIG.ENABLE_AI_GENERATION
       ? "Fallback level - AI generation bị tắt"
@@ -47,7 +46,6 @@ export class FallbackLevelGenerator {
    * Generate game board based on configuration
    */
   static generateBoard(config: LevelConfig): BoardCell[][] {
-    console.log("generateFallbackBoard", config);
     const board: BoardCell[][] = Array(config.height)
       .fill(null)
       .map(() =>
@@ -80,7 +78,6 @@ export class FallbackLevelGenerator {
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
-    const pullPinCount = config.elements.PullPin || 0;
 
     // Calculate total pipe blocks from individual pipe configurations
     let pipeBlocks = 0;
@@ -98,7 +95,6 @@ export class FallbackLevelGenerator {
       pipeBlocks = Math.floor(pipeCount * pipeBlocksPerPipe);
     }
     const lockBlocks = blockLockCount * 2;
-    const pullPinBlocks = pullPinCount; // Each pull pin is one block
 
     // Create varied color distribution while maintaining balance
     const baseBlocksPerColor =
@@ -224,7 +220,6 @@ export class FallbackLevelGenerator {
       );
 
       if (connectedPositions.length === 0) {
-        console.warn("No more connected positions available, breaking early");
         break;
       }
 
@@ -279,7 +274,6 @@ export class FallbackLevelGenerator {
     const pipeCount = config.elements.Pipe || 0;
     const blockLockCount =
       config.elements["BlockLock"] || config.elements["Block Lock"] || 0;
-    const pullPinCount = config.elements.PullPin || 0;
 
     // Calculate total pipe blocks from individual pipe configurations
     let pipeBlocks = 0;
@@ -297,7 +291,6 @@ export class FallbackLevelGenerator {
       pipeBlocks = Math.floor(pipeCount * pipeBlocksPerPipe);
     }
     const lockBlocks = blockLockCount * 2;
-    const pullPinBlocks = pullPinCount; // Each pull pin is one block
     // Create varied color distribution for symmetric mode while maintaining balance
     const baseBlocksPerColor =
       Math.floor(config.blockCount / colors.length / 3) * 3;
@@ -387,10 +380,6 @@ export class FallbackLevelGenerator {
         boardColorDistribution[i],
       ];
     }
-
-    console.log(
-      `[DEBUG Symmetric] Board color distribution: ${boardColorDistribution.length} blocks`
-    );
 
     // Initialize empty pipe color pool (will be calculated after pipes are placed)
     // pipeColorPool will be calculated in generatePipeColors method
@@ -576,9 +565,6 @@ export class FallbackLevelGenerator {
       }
 
       if (connectedPositions.length === 0) {
-        console.warn(
-          "No more connected positions available for symmetric placement"
-        );
         break;
       }
 
@@ -602,9 +588,6 @@ export class FallbackLevelGenerator {
       }
 
       if (!placed) {
-        console.warn(
-          "Failed to place symmetric block after trying multiple positions, breaking"
-        );
         break;
       }
     }
@@ -616,16 +599,6 @@ export class FallbackLevelGenerator {
     this.assignBalancedPipeContents(board, config, finalTargetPerColor);
 
     // Final connectivity check and validation
-    const isConnectedBoard = LevelGeneratorUtils.isConnected(board);
-    console.log(
-      `[v2] Symmetric board generated: ${placedBlocks} blocks placed (requested: ${totalBlocks}), connected: ${isConnectedBoard}`
-    );
-
-    if (!isConnectedBoard) {
-      console.warn(
-        "Generated symmetric board is not connected, this should not happen!"
-      );
-    }
 
     // Validate color balance
     this.validateColorBalance(board, config);
@@ -644,8 +617,6 @@ export class FallbackLevelGenerator {
 
     Object.entries(config.elements).forEach(([elementType, count]) => {
       if (count > 0) {
-        console.log(`[DEBUG] Placing ${count} ${elementType} elements`);
-
         const blockPositions = [];
         for (let y = 0; y < config.height; y++) {
           for (let x = 0; x < config.width; x++) {
@@ -655,12 +626,7 @@ export class FallbackLevelGenerator {
           }
         }
 
-        console.log(
-          `[DEBUG] Available positions for ${elementType}: ${blockPositions.length}`
-        );
-
         if (blockPositions.length === 0) {
-          console.warn(`[DEBUG] No available positions for ${elementType}`);
           return;
         }
 
@@ -694,22 +660,9 @@ export class FallbackLevelGenerator {
 
           if (success) {
             placedCount++;
-            console.log(
-              `[DEBUG] Successfully placed ${elementType} ${placedCount}/${count} at (${pos.x}, ${pos.y})`
-            );
           }
 
           attempts++;
-        }
-
-        console.log(
-          `[DEBUG] Final count for ${elementType}: ${placedCount}/${count} placed`
-        );
-
-        if (placedCount < count) {
-          console.warn(
-            `[DEBUG] Could not place all ${elementType} elements: ${placedCount}/${count}`
-          );
         }
       }
     });
@@ -727,10 +680,6 @@ export class FallbackLevelGenerator {
 
     Object.entries(config.elements).forEach(([elementType, count]) => {
       if (count > 0) {
-        console.log(
-          `[DEBUG Symmetric] Placing ${count} ${elementType} elements symmetrically`
-        );
-
         // Get all available positions on the left side (including center if odd width)
         const leftSidePositions = [];
         for (let y = 0; y < config.height; y++) {
@@ -740,10 +689,6 @@ export class FallbackLevelGenerator {
             }
           }
         }
-
-        console.log(
-          `[DEBUG Symmetric] Available left-side positions for ${elementType}: ${leftSidePositions.length}`
-        );
 
         // Shuffle positions for random distribution
         const shuffledPositions = [...leftSidePositions].sort(
@@ -771,9 +716,6 @@ export class FallbackLevelGenerator {
 
             if (success) {
               placedCount++;
-              console.log(
-                `[DEBUG Symmetric] Placed ${elementType} ${placedCount}/${count} at center (${pos.x}, ${pos.y})`
-              );
             }
           } else {
             // For non-center elements, try to place both sides
@@ -804,19 +746,9 @@ export class FallbackLevelGenerator {
 
                 if (rightSuccess) {
                   placedCount += 2;
-                  console.log(
-                    `[DEBUG Symmetric] Placed ${elementType} pair ${
-                      placedCount - 1
-                    }-${placedCount}/${count} at (${pos.x}, ${
-                      pos.y
-                    }) and (${mirrorX}, ${pos.y})`
-                  );
                 } else {
                   // If mirror failed, remove the left one to maintain symmetry
                   board[pos.y][pos.x].element = null;
-                  console.log(
-                    `[DEBUG Symmetric] Failed to place mirror, removed left element to maintain symmetry`
-                  );
                 }
               }
             } else if (placedCount + 1 === count && isCenter) {
@@ -832,22 +764,9 @@ export class FallbackLevelGenerator {
 
               if (success) {
                 placedCount++;
-                console.log(
-                  `[DEBUG Symmetric] Placed final ${elementType} ${placedCount}/${count} at center (${pos.x}, ${pos.y})`
-                );
               }
             }
           }
-        }
-
-        console.log(
-          `[DEBUG Symmetric] Final count for ${elementType}: ${placedCount}/${count} placed`
-        );
-
-        if (placedCount < count) {
-          console.warn(
-            `[DEBUG Symmetric] Could not place all ${elementType} elements symmetrically: ${placedCount}/${count}`
-          );
         }
       }
     });
@@ -895,19 +814,9 @@ export class FallbackLevelGenerator {
           pipeSize = LevelGeneratorUtils.generatePipeSize(config.difficulty);
         }
         board[pos.y][pos.x].pipeSize = pipeSize;
-        console.log(
-          `[DEBUG] Created pipe block (no color) at (${pos.x}, ${
-            pos.y
-          }) with direction ${
-            board[pos.y][pos.x].pipeDirection
-          } and ${pipeSize} blocks (contents will be assigned later)`
-        );
         return true;
       } else {
         // If no valid direction, don't place pipe element
-        console.warn(
-          `No valid direction for pipe at (${pos.x}, ${pos.y}), removing pipe element`
-        );
         board[pos.y][pos.x].element = null;
         return false;
       }
@@ -918,9 +827,6 @@ export class FallbackLevelGenerator {
       // Generate unique lock ID
       const lockId = `lock_${index + 1}`;
       board[pos.y][pos.x].lockId = lockId;
-      console.log(
-        `[DEBUG] Placed Block Lock ${lockId} at (${pos.x}, ${pos.y})`
-      );
 
       // Find a suitable position for the Key (must be on normal block)
       const normalBlockPositions = [];
@@ -948,14 +854,8 @@ export class FallbackLevelGenerator {
         const keyPos = normalBlockPositions[0];
         board[keyPos.y][keyPos.x].element = "Key";
         board[keyPos.y][keyPos.x].keyId = lockId;
-        console.log(
-          `[DEBUG] Placed Key element ${lockId} at (${keyPos.x}, ${keyPos.y})`
-        );
         return true;
       } else {
-        console.warn(
-          `No suitable position for Key ${lockId}, removing Block Lock`
-        );
         board[pos.y][pos.x].element = null;
         board[pos.y][pos.x].lockId = undefined;
         return false;
@@ -980,18 +880,9 @@ export class FallbackLevelGenerator {
         // Generate gate size (1-3 empty cells)
         const gateSize = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
         board[pos.y][pos.x].pullPinGateSize = gateSize;
-
-        console.log(
-          `[DEBUG] Created Pull Pin at (${pos.x}, ${pos.y}) with direction ${
-            board[pos.y][pos.x].pullPinDirection
-          } and gate size ${gateSize}`
-        );
         return true;
       } else {
         // If no valid direction, don't place pull pin element
-        console.warn(
-          `No valid direction for Pull Pin at (${pos.x}, ${pos.y}), removing pull pin element`
-        );
         board[pos.y][pos.x].element = null;
         return false;
       }
@@ -1035,11 +926,9 @@ export class FallbackLevelGenerator {
   /**
    * Check if level is solvable (simplified implementation)
    */
-  static checkSolvability(
-    _board: BoardCell[][],
-    _containers: Container[]
-  ): boolean {
-    console.log("checkSolvability", _board, _containers);
+  static checkSolvability(): // _board: BoardCell[][],
+  // _containers: Container[]
+  boolean {
     return true; // Simplified for fallback
   }
 

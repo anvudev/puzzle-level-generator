@@ -24,9 +24,6 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [selectedPullPinDirection, setSelectedPullPinDirection] = useState<
-    "up" | "down" | "left" | "right"
-  >("up");
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -128,7 +125,6 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
       };
 
       onLevelUpdate(updatedLevel);
-      setSelectedPullPinDirection(nextDirection);
     }
   };
 
