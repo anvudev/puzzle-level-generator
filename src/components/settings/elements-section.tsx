@@ -39,6 +39,36 @@ export function ElementsSection({
         pipeCount: newPipeCount,
         pipeBlockCounts: newBlockCounts,
       });
+    }
+    // Special handling for Bomb element
+    else if (elementType === "Bomb") {
+      const newBombCount = count;
+
+      // Ensure bombCounts array matches the new bomb count
+      const currentBombCounts = config.bombCounts || [];
+      const newBombCounts = Array(newBombCount)
+        .fill(0)
+        .map((_, index) => currentBombCounts[index] || 2);
+
+      updateConfig({
+        elements,
+        bombCounts: newBombCounts,
+      });
+    }
+    // Special handling for Ice element
+    else if (elementType === "IceBlock") {
+      const newIceCount = count;
+
+      // Ensure iceCounts array matches the new ice count
+      const currentIceCounts = config.iceCounts || [];
+      const newIceCounts = Array(newIceCount)
+        .fill(0)
+        .map((_, index) => currentIceCounts[index] || 2);
+
+      updateConfig({
+        elements,
+        iceCounts: newIceCounts,
+      });
     } else {
       updateConfig({ elements });
     }
@@ -155,6 +185,105 @@ export function ElementsSection({
                             </div>
                           ))}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+              {/* Bomb Count Inputs */}
+              {elementKey === "Bomb" &&
+                config.elements[elementKey] &&
+                config.elements[elementKey]! > 0 && (
+                  <div className="mt-3">
+                    <div className="text-sm font-medium text-red-600 mb-2">
+                      Bomb Power Settings:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(() => {
+                        const bombCount = config.elements[elementKey] || 0;
+
+                        return Array(bombCount);
+                      })()
+                        .fill(0)
+                        .map((_, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center"
+                          >
+                            <span className="text-xs text-red-600 font-medium mb-1">
+                              Bomb {index + 1}
+                            </span>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="20"
+                              value={
+                                (config.bombCounts &&
+                                  config.bombCounts[index]) ||
+                                2
+                              }
+                              onChange={(e) => {
+                                const newBombCounts = [
+                                  ...(config.bombCounts || []),
+                                ];
+                                newBombCounts[index] =
+                                  Number.parseInt(e.target.value) || 2;
+                                updateConfig({
+                                  bombCounts: newBombCounts,
+                                });
+                              }}
+                              className="w-16 h-8 text-center text-sm border-red-300 focus:border-red-500"
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* Ice Count Inputs */}
+              {elementKey === "IceBlock" &&
+                config.elements[elementKey] &&
+                config.elements[elementKey]! > 0 && (
+                  <div className="mt-3">
+                    <div className="text-sm font-medium text-blue-600 mb-2">
+                      Ice Hit Settings:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(() => {
+                        const iceCount = config.elements[elementKey] || 0;
+
+                        return Array(iceCount);
+                      })()
+                        .fill(0)
+                        .map((_, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center"
+                          >
+                            <span className="text-xs text-blue-600 font-medium mb-1">
+                              Ice {index + 1}
+                            </span>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="5"
+                              value={
+                                (config.iceCounts && config.iceCounts[index]) ||
+                                2
+                              }
+                              onChange={(e) => {
+                                const newIceCounts = [
+                                  ...(config.iceCounts || []),
+                                ];
+                                newIceCounts[index] =
+                                  Number.parseInt(e.target.value) || 2;
+                                updateConfig({
+                                  iceCounts: newIceCounts,
+                                });
+                              }}
+                              className="w-16 h-8 text-center text-sm border-blue-300 focus:border-blue-500"
+                            />
+                          </div>
+                        ))}
                     </div>
                   </div>
                 )}

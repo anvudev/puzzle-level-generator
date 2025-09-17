@@ -17,17 +17,19 @@ export const CSV_HEADERS = [
   "pipeBlockCounts",
   "barrelCount",
   "iceBlockCount",
+  "iceCounts",
   "blockLockCount",
   "pullPinCount",
   "bombCount",
+  "bombCounts",
   "movingCount",
 ] as const;
 
-export const CSV_FORMAT_EXAMPLE = `name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,blockLockCount,pullPinCount,bombCount,movingCount
-"Simple Level",10,10,Normal,"Red,Blue,Green",60,random,3,"3,4,5",2,1,0,2,0,0
-"Medium Challenge",12,12,Hard,"Red,Blue,Green,Yellow",100,symmetric,4,"4,5,6,7",3,2,1,3,1,0
-"Hard Puzzle",15,15,"Super Hard","Red,Blue,Green,Yellow,Purple",150,random,5,"5,6,7,8,9",4,3,2,4,2,1
-"Pipe Focus",8,8,Normal,"Red,Blue",40,symmetric,5,"2,3,4,5,6",0,0,0,0,0,0
+export const CSV_FORMAT_EXAMPLE = `name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,iceCounts,blockLockCount,pullPinCount,bombCount,bombCounts,movingCount
+"Simple Level",10,10,Normal,"Red,Blue,Green",60,random,3,"3,4,5",2,1,"2,3",0,2,0,"2,3",0
+"Medium Challenge",12,12,Hard,"Red,Blue,Green,Yellow",100,symmetric,4,"4,5,6,7",3,2,"2,3",1,3,1,"2,3,4",0
+"Hard Puzzle",15,15,"Super Hard","Red,Blue,Green,Yellow,Purple",150,random,5,"5,6,7,8,9",4,3,"2,3,4",2,4,2,"2,3,4,5",1
+"Pipe Focus",8,8,Normal,"Red,Blue",40,symmetric,5,"2,3,4,5,6",0,0,"",0,0,0,"",0
 "Element Mix",12,12,Hard,"Red,Blue,Green,Yellow",120,random,2,"4,5",3,2,1,2,1,1`;
 
 export const CSV_FORMAT_DOCUMENTATION = `
@@ -356,6 +358,14 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
             config.elements["IceBlock"] = iceBlockCount;
           }
           break;
+        case "iceCounts":
+          if (value && value !== '""' && value !== "") {
+            config.iceCounts = value
+              .replace(/"/g, "")
+              .split(",")
+              .map((n) => parseInt(n.trim()) || 2);
+          }
+          break;
         case "blockLockCount":
           const blockLockCount = parseInt(value) || 0;
           if (blockLockCount > 0) {
@@ -375,6 +385,14 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           if (bombCount > 0) {
             config.elements = config.elements || {};
             config.elements["Bomb"] = bombCount;
+          }
+          break;
+        case "bombCounts":
+          if (value && value !== '""' && value !== "") {
+            config.bombCounts = value
+              .replace(/"/g, "")
+              .split(",")
+              .map((n) => parseInt(n.trim()) || 2);
           }
           break;
         case "movingCount":
@@ -415,4 +433,66 @@ export function downloadCSVTemplate() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Convert configs back to CSV format
+ */
+export function configsToCSV(configs: CSVLevelConfig[]): string {
+  const headers = CSV_HEADERS.join(",");
+  const rows = configs.map((config) => {
+    const row = CSV_HEADERS.map((header) => {
+      switch (header) {
+        case "name":
+          return `"${config.name || ""}"`;
+        case "width":
+          return config.width?.toString() || "10";
+        case "height":
+          return config.height?.toString() || "10";
+        case "difficulty":
+          return config.difficulty || "Normal";
+        case "selectedColors":
+          return `"${config.selectedColors?.join(",") || "Red,Blue,Green"}"`;
+        case "blockCount":
+          return config.blockCount?.toString() || "30";
+        case "generationMode":
+          return config.generationMode || "random";
+        case "pipeCount":
+          return (config.elements?.Pipe || 0).toString();
+        case "pipeBlockCounts":
+          return config.pipeBlockCounts && config.pipeBlockCounts.length > 0
+            ? `"${config.pipeBlockCounts.join(",")}"`
+            : '""';
+        case "barrelCount":
+          return (config.elements?.Barrel || 0).toString();
+        case "iceBlockCount":
+          return (config.elements?.IceBlock || 0).toString();
+        case "iceCounts":
+          return config.iceCounts && config.iceCounts.length > 0
+            ? `"${config.iceCounts.join(",")}"`
+            : '""';
+        case "blockLockCount":
+          return (
+            config.elements?.BlockLock ||
+            config.elements?.["Block Lock"] ||
+            0
+          ).toString();
+        case "pullPinCount":
+          return (config.elements?.PullPin || 0).toString();
+        case "bombCount":
+          return (config.elements?.Bomb || 0).toString();
+        case "bombCounts":
+          return config.bombCounts && config.bombCounts.length > 0
+            ? `"${config.bombCounts.join(",")}"`
+            : '""';
+        case "movingCount":
+          return (config.elements?.Moving || 0).toString();
+        default:
+          return "";
+      }
+    });
+    return row.join(",");
+  });
+
+  return [headers, ...rows].join("\n");
 }

@@ -11,6 +11,12 @@ export interface LevelConfig {
   pipeCount?: number; // Number of pipes to generate
   pipeBlockCount?: number; // Default number of blocks inside each pipe
   pipeBlockCounts?: number[]; // Individual block counts for each pipe
+
+  // Bomb configuration
+  bombCounts?: number[]; // Individual counts for each bomb (1-3 power each)
+
+  // Ice configuration
+  iceCounts?: number[]; // Individual counts for each ice block (1-3 hits each)
 }
 
 export interface BoardCell {
@@ -26,9 +32,21 @@ export interface BoardCell {
   // For Block Lock system: lock ID and key ID
   lockId?: string; // For Lock elements
   keyId?: string; // For Key elements (matches with lockId)
+  lockPairNumber?: number; // Display number for lock-key pairs (1, 2, 3, etc.)
+
   // For Pull Pin element: direction and gate configuration
   pullPinDirection?: "up" | "down" | "left" | "right";
   pullPinGateSize?: number; // Number of empty cells (1-3) in front of the pin
+
+  // For Ice Block element: remaining count
+  iceCount?: number; // Number of hits needed to break ice
+
+  // For Bomb element: explosion radius or count
+  bombCount?: number; // Explosion power or remaining uses
+
+  // For Moving element: direction and movement configuration
+  movingDirection?: "up" | "down" | "left" | "right";
+  movingDistance?: number; // How many cells it can move
 }
 
 export interface Container {

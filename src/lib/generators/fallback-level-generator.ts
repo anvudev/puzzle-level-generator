@@ -824,9 +824,11 @@ export class FallbackLevelGenerator {
 
     // If it's a Block Lock, we need to place both Lock and Key
     if (elementType === "BlockLock" || elementType === "Block Lock") {
-      // Generate unique lock ID
-      const lockId = `lock_${index + 1}`;
+      // Generate unique lock ID and pair number
+      const pairNumber = index + 1;
+      const lockId = `lock_${pairNumber}`;
       board[pos.y][pos.x].lockId = lockId;
+      board[pos.y][pos.x].lockPairNumber = pairNumber;
 
       // Find a suitable position for the Key (must be on normal block)
       const normalBlockPositions = [];
@@ -854,6 +856,7 @@ export class FallbackLevelGenerator {
         const keyPos = normalBlockPositions[0];
         board[keyPos.y][keyPos.x].element = "Key";
         board[keyPos.y][keyPos.x].keyId = lockId;
+        board[keyPos.y][keyPos.x].lockPairNumber = pairNumber;
         return true;
       } else {
         board[pos.y][pos.x].element = null;
@@ -883,6 +886,51 @@ export class FallbackLevelGenerator {
         return true;
       } else {
         // If no valid direction, don't place pull pin element
+        board[pos.y][pos.x].element = null;
+        return false;
+      }
+    }
+
+    // If it's an Ice Block, assign count from config
+    if (elementType === "IceBlock") {
+      let iceCount = 2; // default
+      if (config.iceCounts && config.iceCounts.length > index) {
+        iceCount = config.iceCounts[index];
+      } else {
+        iceCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 hits fallback
+      }
+      board[pos.y][pos.x].iceCount = iceCount;
+      return true;
+    }
+
+    // If it's a Bomb, assign count from config
+    if (elementType === "Bomb") {
+      let bombCount = 2; // default
+      if (config.bombCounts && config.bombCounts.length > index) {
+        bombCount = config.bombCounts[index];
+      } else {
+        bombCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 power fallback
+      }
+      board[pos.y][pos.x].bombCount = bombCount;
+      return true;
+    }
+
+    // If it's a Moving element, assign direction pointing to color blocks
+    if (elementType === "Moving") {
+      const validDirections = LevelGeneratorUtils.getValidMovingDirections(
+        pos.x,
+        pos.y,
+        board,
+        config
+      );
+
+      if (validDirections.length > 0) {
+        board[pos.y][pos.x].movingDirection =
+          validDirections[Math.floor(Math.random() * validDirections.length)];
+        board[pos.y][pos.x].movingDistance = Math.floor(Math.random() * 3) + 3; // 3-5 cells
+        return true;
+      } else {
+        // If no valid direction, don't place moving element
         board[pos.y][pos.x].element = null;
         return false;
       }

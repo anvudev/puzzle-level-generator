@@ -203,7 +203,8 @@ export class LevelGeneratorUtils {
   }
 
   /**
-   * Get valid directions where a Pull Pin can create a gate
+   * Get valid directions where a Pull Pin can point to color blocks
+   * Must have 1-3 empty blocks before reaching color blocks
    */
   static getValidPullPinDirections(
     x: number,
@@ -220,41 +221,54 @@ export class LevelGeneratorUtils {
     ];
 
     for (const { dir, dx, dy } of directions) {
-      // Check if we can create a gate (1-3 empty cells) in this direction
-      let canCreateGate = true;
-      const maxGateSize = 3;
+      let emptyBlockCount = 0;
+      let foundColorBlock = false;
+      let currentX = x + dx;
+      let currentY = y + dy;
 
-      for (let i = 1; i <= maxGateSize; i++) {
-        const targetX = x + dx * i;
-        const targetY = y + dy * i;
+      // First, count empty blocks (1-3 required)
+      while (
+        currentX >= 0 &&
+        currentX < config.width &&
+        currentY >= 0 &&
+        currentY < config.height &&
+        emptyBlockCount < 3
+      ) {
+        const cell = board[currentY][currentX];
 
-        // Check if target position is within bounds
-        if (
-          targetX >= 0 &&
-          targetX < config.width &&
-          targetY >= 0 &&
-          targetY < config.height
-        ) {
-          const targetCell = board[targetY][targetX];
-
-          // Pull Pin gate requires empty space
-          if (targetCell.type !== "empty") {
-            // If we hit a block before creating at least 1 gate cell, this direction is invalid
-            if (i === 1) {
-              canCreateGate = false;
-            }
-            break;
-          }
+        if (cell.type === "empty") {
+          emptyBlockCount++;
+          currentX += dx;
+          currentY += dy;
         } else {
-          // If we go out of bounds before creating at least 1 gate cell, this direction is invalid
-          if (i === 1) {
-            canCreateGate = false;
-          }
           break;
         }
       }
 
-      if (canCreateGate) {
+      // Must have at least 1 empty block before color blocks
+      if (emptyBlockCount >= 1 && emptyBlockCount <= 3) {
+        // Now check if there are color blocks after the gap
+        while (
+          currentX >= 0 &&
+          currentX < config.width &&
+          currentY >= 0 &&
+          currentY < config.height
+        ) {
+          const cell = board[currentY][currentX];
+
+          // If we find a color block (not element), this direction is valid
+          if (cell.type === "block" && cell.color && !cell.element) {
+            foundColorBlock = true;
+            break;
+          }
+
+          // If we hit another element or more empty space, continue looking
+          currentX += dx;
+          currentY += dy;
+        }
+      }
+
+      if (foundColorBlock && emptyBlockCount >= 1 && emptyBlockCount <= 3) {
         validDirections.push(dir);
       }
     }
@@ -344,5 +358,53 @@ export class LevelGeneratorUtils {
     }
 
     return lockInfo.length > 0 ? lockInfo : undefined;
+  }
+
+  /**
+   * Get valid directions where a Moving element can move (minimum 3 color blocks ahead)
+   */
+  static getValidMovingDirections(
+    x: number,
+    y: number,
+    board: BoardCell[][],
+    config: LevelConfig
+  ): Array<"up" | "down" | "left" | "right"> {
+    const validDirections: Array<"up" | "down" | "left" | "right"> = [];
+    const directions = [
+      { dir: "up" as const, dx: 0, dy: -1 },
+      { dir: "down" as const, dx: 0, dy: 1 },
+      { dir: "left" as const, dx: -1, dy: 0 },
+      { dir: "right" as const, dx: 1, dy: 0 },
+    ];
+
+    for (const { dir, dx, dy } of directions) {
+      let colorBlockCount = 0;
+      let currentX = x + dx;
+      let currentY = y + dy;
+
+      // Count consecutive color blocks in this direction
+      while (
+        currentX >= 0 &&
+        currentX < config.width &&
+        currentY >= 0 &&
+        currentY < config.height
+      ) {
+        const cell = board[currentY][currentX];
+        if (cell.type === "block" && cell.color && !cell.element) {
+          colorBlockCount++;
+        } else {
+          break; // Stop at first non-color block
+        }
+        currentX += dx;
+        currentY += dy;
+      }
+
+      // Valid if there are at least 3 color blocks ahead
+      if (colorBlockCount >= 3) {
+        validDirections.push(dir);
+      }
+    }
+
+    return validDirections;
   }
 }

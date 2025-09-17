@@ -154,7 +154,68 @@ export function LevelPreview({
       <LevelInfoCard level={level} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BoardPreview level={level} onLevelUpdate={onLevelUpdate} />
+        <div className="space-y-4">
+          <BoardPreview level={level} onLevelUpdate={onLevelUpdate} />
+          {/* Pipe Contents */}
+          {level.pipeInfo && level.pipeInfo.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Nội dung Pipe ({level.pipeInfo?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {level.pipeInfo && level.pipeInfo.length > 0 && (
+                  <div className="space-y-3">
+                    {level.pipeInfo.map((pipe) => (
+                      <div key={pipe.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {pipe.id.toUpperCase()}
+                            </span>
+                            <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md">
+                              <span className="text-sm font-bold text-blue-600">
+                                {pipe.direction === "up" && "⬆️"}
+                                {pipe.direction === "down" && "⬇️"}
+                                {pipe.direction === "left" && "⬅️"}
+                                {pipe.direction === "right" && "➡️"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {pipe.direction === "up" && "UP"}
+                                {pipe.direction === "down" && "DOWN"}
+                                {pipe.direction === "left" && "LEFT"}
+                                {pipe.direction === "right" && "RIGHT"}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            ({pipe.position.x}, {pipe.position.y})
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-8 gap-1">
+                          {pipe.contents.map((color, index) => (
+                            <div
+                              key={index}
+                              className="w-4 h-4 rounded border border-border"
+                              style={{
+                                backgroundColor:
+                                  GAME_COLORS[
+                                    color as keyof typeof GAME_COLORS
+                                  ],
+                              }}
+                              title={`${color} (${index + 1})`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Right Panel */}
         <div className="space-y-4">
@@ -225,65 +286,6 @@ export function LevelPreview({
             </Card>
           )}
 
-          {/* Pipe Contents */}
-          {level.pipeInfo && level.pipeInfo.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Nội dung Pipe ({level.pipeInfo?.length || 0})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {level.pipeInfo && level.pipeInfo.length > 0 && (
-                  <div className="space-y-3">
-                    {level.pipeInfo.map((pipe) => (
-                      <div key={pipe.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
-                              {pipe.id.toUpperCase()}
-                            </span>
-                            <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md">
-                              <span className="text-sm font-bold text-blue-600">
-                                {pipe.direction === "up" && "⬆️"}
-                                {pipe.direction === "down" && "⬇️"}
-                                {pipe.direction === "left" && "⬅️"}
-                                {pipe.direction === "right" && "➡️"}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {pipe.direction === "up" && "UP"}
-                                {pipe.direction === "down" && "DOWN"}
-                                {pipe.direction === "left" && "LEFT"}
-                                {pipe.direction === "right" && "RIGHT"}
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            ({pipe.position.x}, {pipe.position.y})
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-8 gap-1">
-                          {pipe.contents.map((color, index) => (
-                            <div
-                              key={index}
-                              className="w-4 h-4 rounded border border-border"
-                              style={{
-                                backgroundColor:
-                                  GAME_COLORS[
-                                    color as keyof typeof GAME_COLORS
-                                  ],
-                              }}
-                              title={`${color} (${index + 1})`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
           {/* Containers */}
           <Card>
             <CardHeader>

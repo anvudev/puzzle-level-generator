@@ -24,6 +24,42 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [editingCount, setEditingCount] = useState<{
+    row: number;
+    col: number;
+    type: "ice" | "bomb";
+  } | null>(null);
+
+  const handleCountClick = (row: number, col: number, type: "ice" | "bomb") => {
+    const newCount = prompt(
+      `Enter new ${type} count (1-20):`,
+      type === "ice"
+        ? level.board[row][col].iceCount?.toString()
+        : level.board[row][col].bombCount?.toString()
+    );
+
+    if (newCount && !isNaN(Number(newCount))) {
+      const count = Math.max(1, Math.min(20, Number(newCount)));
+      const newBoard = level.board.map((boardRow, r) =>
+        boardRow.map((cell, c) => {
+          if (r === row && c === col) {
+            return {
+              ...cell,
+              [type === "ice" ? "iceCount" : "bombCount"]: count,
+            };
+          }
+          return cell;
+        })
+      );
+
+      if (onLevelUpdate) {
+        onLevelUpdate({
+          ...level,
+          board: newBoard,
+        });
+      }
+    }
+  };
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -181,6 +217,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
               const isDragging = draggedCell?.index === index;
               const isDragOver = dragOverIndex === index;
               const canDrag = isDragMode && cell.type !== "empty";
+              const row = Math.floor(index / level.config.width);
+              const col = index % level.config.width;
 
               return (
                 <div
@@ -246,10 +284,79 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                           {cell.pullPinDirection === "right" && "🔱➡️"}
                         </span>
                       ) : cell.element === "Key" ? (
-                        // For Key element, show key icon
-                        <span className="text-yellow-400 drop-shadow-md text-3xl">
-                          🗝️
-                        </span>
+                        // For Key element, show key icon with pair number
+                        <div className="relative">
+                          <span className="text-yellow-400 drop-shadow-md text-3xl">
+                            🗝️
+                          </span>
+                          {cell.lockPairNumber && (
+                            <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                              {cell.lockPairNumber}
+                            </span>
+                          )}
+                        </div>
+                      ) : cell.element === "BlockLock" ||
+                        cell.element === "Block Lock" ? (
+                        // For Lock element, show lock icon with pair number
+                        <div className="relative">
+                          <span className="text-red-400 drop-shadow-md text-3xl">
+                            🔒
+                          </span>
+                          {cell.lockPairNumber && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                              {cell.lockPairNumber}
+                            </span>
+                          )}
+                        </div>
+                      ) : cell.element === "IceBlock" ? (
+                        // For Ice element, show ice icon with count
+                        <div className="relative">
+                          <span className="text-blue-300 drop-shadow-md text-3xl">
+                            🧊
+                          </span>
+                          {cell.iceCount && (
+                            <span
+                              className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-blue-600 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCountClick(row, col, "ice");
+                              }}
+                              title="Click to edit ice count"
+                            >
+                              {cell.iceCount}
+                            </span>
+                          )}
+                        </div>
+                      ) : cell.element === "Bomb" ? (
+                        // For Bomb element, show bomb icon with count
+                        <div className="relative">
+                          <span className="text-red-500 drop-shadow-md text-3xl">
+                            💣
+                          </span>
+                          {cell.bombCount && (
+                            <span
+                              className="absolute -bottom-1 -right-1 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-red-700 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCountClick(row, col, "bomb");
+                              }}
+                              title="Click to edit bomb count"
+                            >
+                              {cell.bombCount}
+                            </span>
+                          )}
+                        </div>
+                      ) : cell.element === "Moving" ? (
+                        // For Moving element, show directional arrow
+                        <div className="relative">
+                          <span className="text-purple-400 drop-shadow-md text-2xl">
+                            {cell.movingDirection === "up" && "🔄⬆️"}
+                            {cell.movingDirection === "down" && "🔄⬇️"}
+                            {cell.movingDirection === "left" && "🔄⬅️"}
+                            {cell.movingDirection === "right" && "🔄➡️"}
+                            {!cell.movingDirection && "🔄"}
+                          </span>
+                        </div>
                       ) : (
                         // For other elements, show icon
                         <span className="text-3xl text-white ">
