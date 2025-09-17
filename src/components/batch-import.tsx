@@ -432,19 +432,39 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
           {/* CSV Format Info */}
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Định dạng CSV:</h4>
-            <div className="text-sm text-blue-700 mb-2">
-              <pre className="whitespace-pre-wrap">
-                {CSV_FORMAT_DOCUMENTATION}
-              </pre>
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-blue-600" />
+              <h4 className="font-medium text-blue-900">
+                Hướng dẫn định dạng CSV
+              </h4>
             </div>
-            <details className="text-sm text-blue-600">
-              <summary className="cursor-pointer hover:text-blue-800">
+
+            <details className="text-sm text-blue-600 mb-3 group">
+              <summary className="cursor-pointer hover:text-blue-800 font-medium flex items-center gap-2 p-2 rounded hover:bg-blue-100 transition-colors">
+                <span className="transform transition-transform group-open:rotate-90">
+                  ▶
+                </span>
+                Xem chi tiết định dạng CSV
+              </summary>
+              <div className="mt-2 text-blue-700 animate-in slide-in-from-top-2 duration-200">
+                <pre className="whitespace-pre-wrap bg-white p-3 border rounded text-xs shadow-sm">
+                  {CSV_FORMAT_DOCUMENTATION}
+                </pre>
+              </div>
+            </details>
+
+            <details className="text-sm text-blue-600 group">
+              <summary className="cursor-pointer hover:text-blue-800 font-medium flex items-center gap-2 p-2 rounded hover:bg-blue-100 transition-colors">
+                <span className="transform transition-transform group-open:rotate-90">
+                  ▶
+                </span>
                 Xem ví dụ template
               </summary>
-              <pre className="mt-2 p-2 bg-white border rounded text-xs overflow-x-auto">
-                {CSV_FORMAT_EXAMPLE}
-              </pre>
+              <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
+                <pre className="p-3 bg-white border rounded text-xs overflow-x-auto shadow-sm">
+                  {CSV_FORMAT_EXAMPLE}
+                </pre>
+              </div>
             </details>
           </div>
         </CardContent>
