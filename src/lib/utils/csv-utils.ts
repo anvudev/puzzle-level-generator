@@ -242,8 +242,6 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
   }
 
   const headers = parseCSVLine(lines[0]).map((h) => h.trim());
-  console.log("📋 CSV Headers:", headers);
-  console.log("📋 Expected Headers:", CSV_HEADERS);
 
   const configs: CSVLevelConfig[] = [];
   const allErrors: string[] = [];
@@ -266,7 +264,6 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
 
     headers.forEach((header, index) => {
       const value = values[index];
-      console.log(`🔍 Processing ${header}: "${value}"`);
       switch (header) {
         case "name":
           config.name = value || `Level ${i}`;
@@ -347,11 +344,9 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           break;
         case "barrelCount":
           const barrelCount = parseInt(value) || 0;
-          console.log(`🔍 barrelCount: ${barrelCount}, value: "${value}"`);
           if (barrelCount > 0) {
             config.elements = config.elements || {};
             config.elements["Barrel"] = barrelCount;
-            console.log(`✅ Added Barrel: ${barrelCount}`);
           }
           break;
         case "iceBlockCount":
@@ -377,13 +372,9 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           break;
         case "bombCount":
           const bombCount = parseInt(value) || 0;
-          console.log(`🔍 bombCount: ${bombCount}, value: "${value}"`);
           if (bombCount > 0) {
             config.elements = config.elements || {};
             config.elements["Bomb"] = bombCount;
-            console.log(`✅ Added Bomb: ${bombCount}`);
-          } else {
-            console.log(`❌ Skipped Bomb (count: ${bombCount})`);
           }
           break;
         case "movingCount":
@@ -394,14 +385,6 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
           }
           break;
       }
-    });
-
-    // Debug parsed config
-    console.log("🔧 Parsed config:", {
-      name: config.name,
-      elements: config.elements,
-      pipeCount: config.pipeCount,
-      pipeBlockCounts: config.pipeBlockCounts,
     });
 
     // Validate the config

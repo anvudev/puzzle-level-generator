@@ -29,27 +29,22 @@ const safeJsonParse = (str: string | null): unknown => {
 const loadDataFromSources = (): ImportedLevelConfig[] => {
   // Priority: globalCache > localStorage > sessionStorage
   if (globalCache !== null && globalCache.length > 0) {
-    console.log("🔄 Loading from global cache:", globalCache.length, "items");
     return globalCache;
   }
 
   // Try localStorage first
   const localData = safeJsonParse(localStorage.getItem(STORAGE_KEY));
   if (localData && Array.isArray(localData) && localData.length > 0) {
-    console.log("💾 Loading from localStorage:", localData.length, "items");
     return localData;
   }
-
   // Fallback to sessionStorage
   const sessionData = safeJsonParse(
     sessionStorage.getItem(SESSION_STORAGE_KEY)
   );
   if (sessionData && Array.isArray(sessionData) && sessionData.length > 0) {
-    console.log("📄 Loading from sessionStorage:", sessionData.length, "items");
     return sessionData;
   }
 
-  console.log("📭 No data found in any storage");
   return [];
 };
 
@@ -90,15 +85,9 @@ export function useBatchImportStorage() {
             } as ImportedLevelConfig;
           });
 
-        console.log(
-          "✅ Successfully loaded:",
-          deserializedConfigs.length,
-          "configs"
-        );
         globalCache = deserializedConfigs; // Update global cache
         return deserializedConfigs;
-      } catch (error) {
-        console.error("❌ Failed to load batch import data:", error);
+      } catch {
         return [];
       }
     }
@@ -109,7 +98,6 @@ export function useBatchImportStorage() {
   // Update global cache whenever state changes
   useEffect(() => {
     globalCache = importedConfigs;
-    console.log("🔄 Updated global cache:", importedConfigs.length, "items");
   }, [importedConfigs]);
 
   // Load from localStorage on mount (only if global cache is empty)
@@ -121,7 +109,6 @@ export function useBatchImportStorage() {
 
     // This effect should only run if we need to refresh from localStorage
     // when global cache is somehow out of sync
-    console.log("🔍 Checking storage sync on mount");
   }, []);
 
   // Save to localStorage whenever data changes (debounced for performance)
@@ -153,17 +140,7 @@ export function useBatchImportStorage() {
           SESSION_STORAGE_KEY,
           JSON.stringify(serializedConfigs)
         );
-        console.log(
-          "💾 Saved to localStorage & sessionStorage:",
-          importedConfigs.length,
-          "items"
-        );
-      } catch (error) {
-        console.error(
-          "❌ Failed to save batch import data to localStorage:",
-          error
-        );
-      }
+      } catch {}
     }, 100); // 100ms debounce
 
     // Cleanup timeout on unmount
@@ -175,17 +152,14 @@ export function useBatchImportStorage() {
   }, [importedConfigs]);
 
   const addConfigs = useCallback((configs: ImportedLevelConfig[]) => {
-    console.log("➕ Adding configs:", configs.length);
     setImportedConfigs((prev) => {
       const newConfigs = [...prev, ...configs];
-      console.log("📊 Total configs after add:", newConfigs.length);
       return newConfigs;
     });
   }, []);
 
   const updateConfig = useCallback(
     (id: string, updates: Partial<ImportedLevelConfig>) => {
-      console.log("🔄 Updating config:", id, updates);
       setImportedConfigs((prev) =>
         prev.map((config) =>
           config.id === id ? { ...config, ...updates } : config
@@ -196,24 +170,16 @@ export function useBatchImportStorage() {
   );
 
   const deleteConfig = useCallback((id: string) => {
-    console.log("🗑️ Deleting config:", id);
     setImportedConfigs((prev) => prev.filter((config) => config.id !== id));
   }, []);
 
   const clearAll = useCallback(() => {
-    console.log("🗑️ Clearing all batch import data");
     setImportedConfigs([]);
     globalCache = []; // Clear global cache too
     try {
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
-      console.log("💾 Cleared localStorage & sessionStorage");
-    } catch (error) {
-      console.error(
-        "❌ Failed to clear batch import data from storage:",
-        error
-      );
-    }
+    } catch {}
   }, []);
 
   const getConfig = useCallback(
@@ -241,20 +207,8 @@ export function useBatchImportStorage() {
 
   // Debug function to check storage state
   const debugStorage = useCallback(() => {
-    console.log("🔍 Debug Storage State:");
-    console.log("- importedConfigs.length:", importedConfigs.length);
-    console.log("- globalCache.length:", globalCache?.length || 0);
-    console.log(
-      "- localStorage item:",
-      localStorage.getItem(STORAGE_KEY)?.length || 0,
-      "chars"
-    );
-    console.log(
-      "- sessionStorage item:",
-      sessionStorage.getItem(SESSION_STORAGE_KEY)?.length || 0,
-      "chars"
-    );
-  }, [importedConfigs]);
+    // Debug storage state (logs removed for production)
+  }, []);
 
   return {
     importedConfigs,

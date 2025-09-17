@@ -77,32 +77,12 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     deleteConfig: deleteStoredConfig,
     clearAll: clearAllStored,
     getStats,
-    debugStorage,
   } = useBatchImportStorage();
-
-  // Debug localStorage state
-  console.log(
-    "🔍 BatchImport render - importedConfigs:",
-    importedConfigs.length
-  );
-
-  // Additional debug logging
-  React.useEffect(() => {
-    console.log("🔧 BatchImport mounted/updated");
-    debugStorage();
-  }, [debugStorage]);
-
-  React.useEffect(() => {
-    console.log("📊 importedConfigs changed:", importedConfigs.length);
-  }, [importedConfigs.length]);
 
   // Prevent data loss on unmount
   React.useEffect(() => {
     return () => {
-      console.log(
-        "🚪 BatchImport unmounting, current data:",
-        importedConfigs.length
-      );
+      // Cleanup on unmount
     };
   }, [importedConfigs.length]);
 
@@ -169,13 +149,8 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
     try {
       const csvText = await selectedFile.text();
-      console.log("📄 CSV text:", csvText.substring(0, 200) + "...");
-
       const configs = parseCSV(csvText);
-      console.log("📋 Parsed configs:", configs);
-
       addConfigs(configs);
-      console.log("💾 Added to storage, total configs:", configs.length);
 
       setSelectedFile(null);
       if (fileInputRef.current) {
@@ -195,19 +170,10 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     const config = importedConfigs.find((c) => c.id === configId);
     if (!config) return;
 
-    console.log("🔧 Generating level for config:", config);
     updateStoredConfig(configId, { status: "generating" });
 
     try {
       const level = await generateLevel(config);
-      console.log("✅ Generated level:", level);
-      console.log(
-        "🎨 Board colors sample:",
-        level.board
-          .flat()
-          .slice(0, 10)
-          .map((c) => ({ type: c.type, color: c.color }))
-      );
 
       updateStoredConfig(configId, {
         status: "generated",
@@ -283,7 +249,6 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
   };
 
   const clearAll = () => {
-    console.log("🗑️ Clearing all batch import data");
     clearAllStored();
     setUploadError(null);
     setSelectedFile(null);
