@@ -20,6 +20,7 @@ import { BatchImport } from "./batch-import";
 import { DEFAULT_CONFIG } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
 import { useLevelHistory } from "@/lib/hooks/use-level-history";
+import { refillLevel } from "@/lib/utils/level-utils";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 import { Header } from "./header/header";
 import { BlankPreview } from "./preview/blankPreview";
@@ -66,6 +67,15 @@ export function PuzzleLevelGenerator() {
   const handleRegenerate = () => {
     if (generatedLevel) {
       generateLevel(generatedLevel.config);
+    }
+  };
+
+  const handleReFill = () => {
+    if (generatedLevel) {
+      console.log("🔄 ReFilling level:", generatedLevel.id);
+      const refilledLevel = refillLevel(generatedLevel);
+      console.log("✅ ReFilled level created:", refilledLevel.id);
+      setGeneratedLevel(refilledLevel);
     }
   };
 
@@ -150,6 +160,7 @@ export function PuzzleLevelGenerator() {
               level={generatedLevel}
               onLevelUpdate={handleLevelUpdate}
               onRegenerate={handleRegenerate}
+              onReFill={handleReFill}
               onSave={handleSaveLevel}
             />
           ) : (

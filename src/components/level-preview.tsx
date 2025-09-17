@@ -19,6 +19,7 @@ interface LevelPreviewProps {
   onLevelUpdate?: (updatedLevel: GeneratedLevel) => void;
   onRegenerate?: () => void;
   onSave?: (level: GeneratedLevel, name?: string) => string;
+  onReFill?: () => void;
 }
 
 export function LevelPreview({
@@ -26,6 +27,7 @@ export function LevelPreview({
   onLevelUpdate,
   onRegenerate,
   onSave,
+  onReFill,
 }: LevelPreviewProps) {
   const [saveName, setSaveName] = React.useState("");
   const [showSaveInput, setShowSaveInput] = React.useState(false);
@@ -157,7 +159,11 @@ export function LevelPreview({
         {/* Right Panel */}
         <div className="space-y-4">
           {/* Level Actions */}
-          <LevelActions level={level} onRegenerate={onRegenerate} />
+          <LevelActions
+            level={level}
+            onRegenerate={onRegenerate}
+            onReFill={onReFill}
+          />
 
           {/* Level Validator */}
           <LevelValidator level={level} />

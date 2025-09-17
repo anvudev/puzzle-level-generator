@@ -12,15 +12,26 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Download, Copy, RefreshCw, CheckCircle } from "lucide-react";
+import {
+  Download,
+  Copy,
+  RefreshCw,
+  CheckCircle,
+  RotateCcw,
+} from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 
 interface LevelActionsProps {
   level: GeneratedLevel;
   onRegenerate?: () => void;
+  onReFill?: () => void;
 }
 
-export function LevelActions({ level, onRegenerate }: LevelActionsProps) {
+export function LevelActions({
+  level,
+  onRegenerate,
+  onReFill,
+}: LevelActionsProps) {
   const [copied, setCopied] = useState(false);
 
   const getExportData = () => {
@@ -60,17 +71,31 @@ export function LevelActions({ level, onRegenerate }: LevelActionsProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Quick Actions */}
-        {onRegenerate && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRegenerate}
-            className="flex items-center gap-2 w-full"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Regenerate
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {onRegenerate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRegenerate}
+              className="flex items-center gap-2 flex-1"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Regenerate
+            </Button>
+          )}
+
+          {onReFill && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReFill}
+              className="flex items-center gap-2 flex-1"
+            >
+              <RotateCcw className="w-4 h-4" />
+              ReFill
+            </Button>
+          )}
+        </div>
 
         {/* Export Options */}
         <div className="flex gap-2">
