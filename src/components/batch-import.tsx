@@ -52,6 +52,8 @@ import {
   type ImportedLevelConfig,
 } from "@/lib/hooks/use-batch-import-storage";
 import { GenerateBoard, GenerateBoardSmall } from "@/lib/utils/boardGenerate";
+import { REALM } from "@/config/game-constants";
+import { kvSet, kvDel, kvDelAll, kvGetAll } from "@/app/api/clients";
 
 interface BatchImportProps {
   onSaveLevel?: (level: GeneratedLevel, name?: string) => string;
@@ -81,10 +83,30 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
   // Prevent data loss on unmount
   React.useEffect(() => {
+    // Initial sync from remote storage if local is empty
+    (async () => {
+      if (importedConfigs.length === 0) {
+        try {
+          const remote = (await kvGetAll(
+            REALM.COLL_IMPORT
+          )) as ImportedLevelConfig[];
+          if (Array.isArray(remote) && remote.length > 0) {
+            addConfigs(
+              remote
+                .filter((r) => r && r.id)
+                .map((r) => ({ ...r, status: r.status || "pending" }))
+            );
+          }
+        } catch {
+          // ignore
+        }
+      }
+    })();
+
     return () => {
       // Cleanup on unmount
     };
-  }, [importedConfigs.length]);
+  }, [importedConfigs.length, addConfigs]);
 
   const validateFile = (file: File) => {
     if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
@@ -151,6 +173,10 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
       const csvText = await selectedFile.text();
       const configs = parseCSV(csvText);
       addConfigs(configs);
+      // Persist each imported config remotely
+      for (const cfg of configs) {
+        kvSet(REALM.COLL_IMPORT, cfg.id, cfg);
+      }
 
       setSelectedFile(null);
       if (fileInputRef.current) {
@@ -171,21 +197,39 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     if (!config) return;
 
     updateStoredConfig(configId, { status: "generating" });
+    try {
+      const current = importedConfigs.find((c) => c.id === configId);
+      if (current)
+        kvSet(REALM.COLL_IMPORT, current.id, {
+          ...current,
+          status: "generating",
+        });
+    } catch {}
 
     try {
       const level = await generateLevel(config);
 
-      updateStoredConfig(configId, {
+      const updated = {
         status: "generated",
         generatedLevel: level,
         error: undefined,
-      });
+      } as const;
+      updateStoredConfig(configId, updated);
+      try {
+        const curr = importedConfigs.find((c) => c.id === configId);
+        if (curr) kvSet(REALM.COLL_IMPORT, curr.id, { ...curr, ...updated });
+      } catch {}
     } catch (error) {
       console.error("❌ Error generating level:", error);
-      updateStoredConfig(configId, {
+      const errored = {
         status: "error",
         error: error instanceof Error ? error.message : "Lỗi tạo level",
-      });
+      } as const;
+      updateStoredConfig(configId, errored);
+      try {
+        const curr = importedConfigs.find((c) => c.id === configId);
+        if (curr) kvSet(REALM.COLL_IMPORT, curr.id, { ...curr, ...errored });
+      } catch {}
     }
   };
 
@@ -246,10 +290,16 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
   const deleteConfig = (configId: string) => {
     deleteStoredConfig(configId);
+    try {
+      kvDel(REALM.COLL_IMPORT, configId);
+    } catch {}
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
     clearAllStored();
+    try {
+      await kvDelAll(REALM.COLL_IMPORT);
+    } catch {}
     setUploadError(null);
     setSelectedFile(null);
     setSavedLevels(new Set());
