@@ -280,13 +280,13 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     } catch {}
     setUploadError(null);
     setSelectedFile(null);
-    setSavedLevels(new Set());
-    setIsSavingAll(false);
-    setIsDragOver(false);
-    setImportedConfigs([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+
+    setTimeout(() => {
+      setSavedLevels(new Set());
+      setIsSavingAll(false);
+      setIsDragOver(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }, 500);
   };
 
   const handleDownloadTemplate = () => {
