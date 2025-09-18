@@ -1,7 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { GeneratedLevel } from "@/config/game-types";
+import {
+  kvCreate,
+  kvDel,
+  kvDelAll,
+  kvGet,
+  kvGetAll,
+  kvSet,
+} from "@/app/api/clients";
+import { REALM } from "@/config/game-constants";
 
 export interface SavedLevel {
   id: string;
@@ -11,43 +20,43 @@ export interface SavedLevel {
   updatedAt: string;
 }
 
+export interface SavedLevelList {
+  data: SavedLevel[];
+}
+
 const STORAGE_KEY = "puzzle-level-history";
 
 export function useLevelHistory() {
   const [savedLevels, setSavedLevels] = useState<SavedLevel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
-  // Load saved levels from localStorage on mount
+  // Load saved levels from Realm (kv store) on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setSavedLevels(Array.isArray(parsed) ? parsed : []);
-      }
-    } catch (error) {
-      console.error("Failed to load saved levels:", error);
-      setSavedLevels([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Save levels to localStorage whenever savedLevels changes
-  useEffect(() => {
-    if (!isLoading) {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+    const load = async () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLevels));
-      } catch (error) {
-        console.error("Failed to save levels to localStorage:", error);
+        const stored = await kvGetAll(REALM.COLL_HISTORY);
+        setSavedLevels(stored);
+      } catch {
+        setSavedLevels([]);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, [savedLevels, isLoading]);
+    };
+    void load();
+  }, []);
 
   const saveLevel = (level: GeneratedLevel, name?: string) => {
     const now = new Date().toISOString();
-    const defaultName = `Level ${new Date().toLocaleDateString("vi-VN")} ${new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
-    
+    const defaultName = `Level ${new Date().toLocaleDateString(
+      "vi-VN"
+    )} ${new Date().toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+
     const savedLevel: SavedLevel = {
       id: `level_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: name || defaultName,
@@ -55,15 +64,19 @@ export function useLevelHistory() {
       createdAt: now,
       updatedAt: now,
     };
-
-    setSavedLevels(prev => [savedLevel, ...prev]);
+    setSavedLevels([savedLevel, ...savedLevels]);
+    kvCreate(REALM.COLL_HISTORY, "history", savedLevel);
     return savedLevel.id;
   };
 
-  const updateLevel = (id: string, updates: Partial<Pick<SavedLevel, "name" | "level">>) => {
-    setSavedLevels(prev => 
-      prev.map(saved => 
-        saved.id === id 
+  const updateLevel = (
+    id: string,
+    updates: Partial<Pick<SavedLevel, "name" | "level">>
+  ) => {
+    kvSet(REALM.COLL_HISTORY, id, updates);
+    setSavedLevels((prev) =>
+      prev.map((saved) =>
+        saved.id === id
           ? { ...saved, ...updates, updatedAt: new Date().toISOString() }
           : saved
       )
@@ -71,15 +84,17 @@ export function useLevelHistory() {
   };
 
   const deleteLevel = (id: string) => {
-    setSavedLevels(prev => prev.filter(saved => saved.id !== id));
+    kvDel(REALM.COLL_HISTORY, id);
+    setSavedLevels((prev) => prev.filter((saved) => saved.id !== id));
   };
 
   const clearHistory = () => {
+    kvDelAll(REALM.COLL_HISTORY);
     setSavedLevels([]);
   };
 
   const getLevelById = (id: string) => {
-    return savedLevels.find(saved => saved.id === id);
+    return savedLevels.find((saved) => saved.id === id);
   };
 
   const duplicateLevel = (id: string) => {
@@ -93,7 +108,8 @@ export function useLevelHistory() {
         createdAt: now,
         updatedAt: now,
       };
-      setSavedLevels(prev => [duplicated, ...prev]);
+      kvCreate(REALM.COLL_HISTORY, "history", duplicated);
+      setSavedLevels((prev) => [duplicated, ...prev]);
       return duplicated.id;
     }
     return null;

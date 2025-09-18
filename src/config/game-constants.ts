@@ -85,3 +85,10 @@ export const AI_GENERATION_CONFIG = {
   // Số lần retry khi AI fail
   AI_RETRY_COUNT: 1,
 } as const;
+
+export const REALM = {
+  APP_ID: "application-0-tnebttj",
+  DB_NAME: "Puzzle",
+  COLL_HISTORY: "history",
+  COLL_IMPORT: "import",
+};

@@ -108,10 +108,6 @@ export function refillLevel(level: GeneratedLevel): GeneratedLevel {
     originalColorCounts[color] = (originalColorCounts[color] || 0) + 1;
   });
 
-  console.log("🎨 ReFill - Original colors:", blockColors);
-  console.log("📊 ReFill - Original color counts:", originalColorCounts);
-  console.log("📍 ReFill - Block positions:", blockPositions.length);
-
   // Shuffle the colors array
   const shuffledColors = [...blockColors];
   for (let i = shuffledColors.length - 1; i > 0; i--) {
