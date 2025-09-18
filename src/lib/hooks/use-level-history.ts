@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { GeneratedLevel } from "@/config/game-types";
-import {
-  kvCreate,
-  kvDel,
-  kvDelAll,
-  kvGet,
-  kvGetAll,
-  kvSet,
-} from "@/app/api/clients";
+import { kvCreate, kvDel, kvDelAll, kvGetAll, kvSet } from "@/app/api/clients";
 import { REALM } from "@/config/game-constants";
 
 export interface SavedLevel {
@@ -24,7 +17,7 @@ export interface SavedLevelList {
   data: SavedLevel[];
 }
 
-const STORAGE_KEY = "puzzle-level-history";
+// const STORAGE_KEY = "puzzle-level-history";
 
 export function useLevelHistory() {
   const [savedLevels, setSavedLevels] = useState<SavedLevel[]>([]);

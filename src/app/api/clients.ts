@@ -4,8 +4,7 @@ import * as Realm from "realm-web";
 
 const APP_ID = REALM.APP_ID; // vd: "myapp-abcde"
 const DB_NAME = REALM.DB_NAME;
-const COLL_HISTORY = REALM.COLL_HISTORY;
-const COLL_IMPORT = REALM.COLL_IMPORT;
+// Collection names are provided by callers via function arguments
 
 let app: Realm.App | null = null;
 
@@ -45,8 +44,8 @@ export async function kvGetAll(collection: string) {
   const docs = await coll.find({ ownerId: user.id });
   return docs.map((d) => d.value);
 }
-
 // SET: upsert key/value
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function kvSet(collection: string, key: string, value: any) {
   const app = await getApp();
   const user = app.currentUser ?? (await loginAnonymous());
@@ -66,7 +65,11 @@ export async function kvSet(collection: string, key: string, value: any) {
 }
 
 //CREATE: tạo 1 key/value
-export async function kvCreate(collection: string, key: string, value: any) {
+export async function kvCreate<T extends { id: string }>(
+  collection: string,
+  key: string,
+  value: T
+) {
   const app = await getApp();
   const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
@@ -88,16 +91,12 @@ export async function kvListKeys(collection: string) {
 
 // DEL: xoá 1 key
 export async function kvDel(collection: string, key: string) {
-  const app = await getApp();
-  const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
   await coll.deleteOne({ "value.id": key });
 }
 
 // DEL: xoá all key
 export async function kvDelAll(collection: string) {
-  const app = await getApp();
-  const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
   await coll.deleteMany({});
 }

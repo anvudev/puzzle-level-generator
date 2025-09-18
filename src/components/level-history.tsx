@@ -4,11 +4,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -57,7 +57,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   const [editingName, setEditingName] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [search, setSearch] = useState("");
-  const [showTips, setShowTips] = useState(false);
   const handleRename = (level: SavedLevel) => {
     setEditingName(level.id);
     setNewName(level.name);

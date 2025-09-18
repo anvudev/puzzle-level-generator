@@ -24,11 +24,6 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [editingCount, setEditingCount] = useState<{
-    row: number;
-    col: number;
-    type: "ice" | "bomb";
-  } | null>(null);
 
   const handleCountClick = (row: number, col: number, type: "ice" | "bomb") => {
     const newCount = prompt(

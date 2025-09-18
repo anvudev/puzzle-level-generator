@@ -39,7 +39,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { GeneratedLevel } from "@/config/game-types";
-import { GAME_COLORS } from "@/config/game-constants";
+// import { GAME_COLORS } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
 import {
   parseCSVToConfigs,
