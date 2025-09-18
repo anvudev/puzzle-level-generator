@@ -36,7 +36,6 @@ export class FallbackLevelGenerator {
       difficultyScore: LevelGeneratorUtils.calculateDifficultyScore(config),
       solvable: true, // Fallback algorithm ensures connectivity so it's solvable
       timestamp: new Date(),
-      aiReasoning: reason,
       pipeInfo,
       lockInfo,
     };

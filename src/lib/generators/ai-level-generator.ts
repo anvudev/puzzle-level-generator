@@ -153,7 +153,6 @@ export class AILevelGenerator {
         difficultyScore: LevelGeneratorUtils.calculateDifficultyScore(config),
         solvable: levelData.solvable || false,
         timestamp: new Date(),
-        aiReasoning: levelData.reasoning || "Được tạo bởi Gemini AI",
         pipeInfo: pipeInfo,
         lockInfo: lockInfo,
       };

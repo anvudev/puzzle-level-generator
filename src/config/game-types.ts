@@ -66,7 +66,6 @@ export interface GeneratedLevel {
   difficultyScore: number;
   solvable: boolean;
   timestamp: Date;
-  aiReasoning?: string;
   // Pipe information for UI display
   pipeInfo?: Array<{
     id: string;

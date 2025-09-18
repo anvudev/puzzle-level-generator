@@ -64,6 +64,16 @@ export async function kvSet(collection: string, key: string, value: any) {
   );
 }
 
+//update IMPORT CONFIG
+export async function kvUpdateImportConfig(
+  collection: string,
+  key: string,
+  value: any
+) {
+  const coll = await getCollection(collection);
+  await coll.updateOne({ "value.id": key }, { $set: { value: value } });
+}
+
 //CREATE: tạo 1 key/value
 export async function kvCreate<T extends { id: string }>(
   collection: string,

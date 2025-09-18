@@ -144,7 +144,6 @@ export function refillLevel(level: GeneratedLevel): GeneratedLevel {
     id: `refill-${Date.now()}`,
     board: newBoard,
     timestamp: new Date(),
-    aiReasoning: `ReFilled from level ${level.id} - shuffled ${blockColors.length} block colors while preserving layout and elements`,
   };
 
   return newLevel;

@@ -26,11 +26,11 @@ export const CSV_HEADERS = [
 ] as const;
 
 export const CSV_FORMAT_EXAMPLE = `name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,iceCounts,blockLockCount,pullPinCount,bombCount,bombCounts,movingCount
-"Simple Level",10,10,Normal,"Red,Blue,Green",60,random,3,"3,4,5",2,1,"2,3",0,2,0,"2,3",0
-"Medium Challenge",12,12,Hard,"Red,Blue,Green,Yellow",100,symmetric,4,"4,5,6,7",3,2,"2,3",1,3,1,"2,3,4",0
-"Hard Puzzle",15,15,"Super Hard","Red,Blue,Green,Yellow,Purple",150,random,5,"5,6,7,8,9",4,3,"2,3,4",2,4,2,"2,3,4,5",1
-"Pipe Focus",8,8,Normal,"Red,Blue",40,symmetric,5,"2,3,4,5,6",0,0,"",0,0,0,"",0
-"Element Mix",12,12,Hard,"Red,Blue,Green,Yellow",120,random,2,"4,5",3,2,1,2,1,1`;
+"Test1",9,10,Normal,"Red,Blue,Green",60,random,2,"3,4",2,1,"5",0,0,1,"8",0
+"Test2",9,10,Hard,"Red,Blue,Green,Yellow",54,symmetric,3,"4,5,6",3,2,"2,3",1,3,1,"2",0
+"Test3",9,10,"Super Hard","Red,Blue,Green,Yellow,Purple",72,symmetric,4,"5,6,7,8",4,3,"2,3,4",2,4,2,"2,3",1
+"Test4",9,10,Normal,"Red,Blue",40,symmetric,3,"2,3,4",2,0,"",0,0,0,"",0
+"Test5",9,10,Hard,"Red,Blue,Green,Yellow",48,symmetric,2,"4,5",3,2,"4,5",2,1,1,0,0`;
 
 export const CSV_FORMAT_DOCUMENTATION = `
 CSV Format Documentation:

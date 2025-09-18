@@ -53,7 +53,14 @@ import {
 } from "@/lib/hooks/use-batch-import-storage";
 import { GenerateBoard, GenerateBoardSmall } from "@/lib/utils/boardGenerate";
 import { REALM } from "@/config/game-constants";
-import { kvSet, kvDel, kvDelAll, kvGetAll } from "@/app/api/clients";
+import {
+  kvSet,
+  kvDel,
+  kvDelAll,
+  kvGetAll,
+  kvCreate,
+  kvUpdateImportConfig,
+} from "@/app/api/clients";
 
 interface BatchImportProps {
   onSaveLevel?: (level: GeneratedLevel, name?: string) => string;
@@ -79,6 +86,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     deleteConfig: deleteStoredConfig,
     clearAll: clearAllStored,
     getStats,
+    setImportedConfigs,
   } = useBatchImportStorage();
 
   // Prevent data loss on unmount
@@ -87,16 +95,8 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     (async () => {
       if (importedConfigs.length === 0) {
         try {
-          const remote = (await kvGetAll(
-            REALM.COLL_IMPORT
-          )) as ImportedLevelConfig[];
-          if (Array.isArray(remote) && remote.length > 0) {
-            addConfigs(
-              remote
-                .filter((r) => r && r.id)
-                .map((r) => ({ ...r, status: r.status || "pending" }))
-            );
-          }
+          const remote = await kvGetAll(REALM.COLL_IMPORT);
+          setImportedConfigs(remote);
         } catch {
           // ignore
         }
@@ -107,6 +107,8 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
       // Cleanup on unmount
     };
   }, [importedConfigs.length, addConfigs]);
+
+  console.log(importedConfigs);
 
   const validateFile = (file: File) => {
     if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
@@ -160,6 +162,8 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
       ...config,
       id: `import-${Date.now()}-${index}`,
       status: "pending" as const,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }));
   };
 
@@ -168,14 +172,14 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
     setIsUploading(true);
     setUploadError(null);
-
     try {
       const csvText = await selectedFile.text();
       const configs = parseCSV(csvText);
+      console.log(configs);
       addConfigs(configs);
       // Persist each imported config remotely
       for (const cfg of configs) {
-        kvSet(REALM.COLL_IMPORT, cfg.id, cfg);
+        kvCreate(REALM.COLL_IMPORT, cfg.id, cfg);
       }
 
       setSelectedFile(null);
@@ -196,41 +200,15 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     const config = importedConfigs.find((c) => c.id === configId);
     if (!config) return;
 
-    updateStoredConfig(configId, { status: "generating" });
-    try {
-      const current = importedConfigs.find((c) => c.id === configId);
-      if (current)
-        kvSet(REALM.COLL_IMPORT, current.id, {
-          ...current,
-          status: "generating",
-        });
-    } catch {}
+    const level = await generateLevel(config);
 
-    try {
-      const level = await generateLevel(config);
-
-      const updated = {
-        status: "generated",
-        generatedLevel: level,
-        error: undefined,
-      } as const;
-      updateStoredConfig(configId, updated);
-      try {
-        const curr = importedConfigs.find((c) => c.id === configId);
-        if (curr) kvSet(REALM.COLL_IMPORT, curr.id, { ...curr, ...updated });
-      } catch {}
-    } catch (error) {
-      console.error("❌ Error generating level:", error);
-      const errored = {
-        status: "error",
-        error: error instanceof Error ? error.message : "Lỗi tạo level",
-      } as const;
-      updateStoredConfig(configId, errored);
-      try {
-        const curr = importedConfigs.find((c) => c.id === configId);
-        if (curr) kvSet(REALM.COLL_IMPORT, curr.id, { ...curr, ...errored });
-      } catch {}
-    }
+    const updated = {
+      status: "generated",
+      generatedLevel: level,
+      error: undefined,
+    } as const;
+    updateStoredConfig(configId, updated);
+    kvUpdateImportConfig(REALM.COLL_IMPORT, configId, updated);
   };
 
   const generateAllLevels = async () => {
@@ -246,9 +224,9 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
   const saveLevel = (configId: string) => {
     const config = importedConfigs.find((c) => c.id === configId);
-    if (!config?.generatedLevel || !onSaveLevel) return;
+    if (!config || !onSaveLevel) return;
 
-    onSaveLevel(config.generatedLevel, config.name);
+    onSaveLevel(config.generatedLevel!, config.name);
 
     // Mark as saved with visual feedback
     setSavedLevels((prev) => new Set(prev).add(configId));
@@ -305,6 +283,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     setSavedLevels(new Set());
     setIsSavingAll(false);
     setIsDragOver(false);
+    setImportedConfigs([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -521,6 +500,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
       </Card>
 
       {/* Imported Levels Preview */}
+
       {importedConfigs.length > 0 && (
         <Card>
           <CardHeader>
@@ -536,12 +516,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                     >
                       {getStats().pending} chờ
                     </Badge>
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-blue-50 text-blue-700 border-blue-300"
-                    >
-                      {getStats().generating} đang tạo
-                    </Badge>
+
                     <Badge
                       variant="outline"
                       className="text-xs bg-green-50 text-green-700 border-green-300"
@@ -622,246 +597,239 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {importedConfigs.map((config) => (
-                <Card key={config.id} className="border-2">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      {/* Thumbnail */}
-                      <div className="flex-shrink-0">
-                        <div className="w-24 h-24 border-2 border-gray-200 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-                          {config.status === "generated" &&
-                          config.generatedLevel ? (
-                            <GenerateBoardSmall
-                              board={config.generatedLevel.board}
-                              width={config.generatedLevel.config.width}
-                              height={config.generatedLevel.config.height}
-                            />
-                          ) : config.status === "generating" ? (
-                            <div className="text-blue-500 text-xs text-center">
-                              <Zap className="w-6 h-6 mx-auto mb-1 animate-pulse" />
-                              Đang tạo...
-                            </div>
-                          ) : config.status === "error" ? (
-                            <div className="text-red-500 text-xs text-center">
-                              <AlertCircle className="w-6 h-6 mx-auto mb-1" />
-                              Lỗi
-                            </div>
-                          ) : (
-                            <div className="text-gray-400 text-xs text-center">
-                              <Grid3X3 className="w-6 h-6 mx-auto mb-1" />
-                              Chưa tạo
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg truncate">
-                              {config.name}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge variant="outline" className="text-xs">
-                                <Grid3X3 className="w-3 h-3 mr-1" />
-                                {config.width}×{config.height}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                <Palette className="w-3 h-3 mr-1" />
-                                {config.selectedColors?.length || 0} màu
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                🧩 {config.blockCount || 0} block
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {config.difficulty || "Normal"}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {config.generationMode === "symmetric"
-                                  ? "🔄 Đối xứng"
-                                  : "🎲 Ngẫu nhiên"}
-                              </Badge>
-                              {(config.pipeCount || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  ⬆️ {config.pipeCount} pipe
-                                </Badge>
-                              )}
-                              {(config.elements?.["Barrel"] || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  📦 {config.elements?.["Barrel"]} barrel
-                                </Badge>
-                              )}
-                              {(config.elements?.["IceBlock"] || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  🧊 {config.elements?.["IceBlock"]} ice
-                                </Badge>
-                              )}
-                              {(config.elements?.["BlockLock"] ||
-                                config.elements?.["Block Lock"] ||
-                                0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  🔒{" "}
-                                  {config.elements?.["BlockLock"] ||
-                                    config.elements?.["Block Lock"]}{" "}
-                                  lock
-                                </Badge>
-                              )}
-                              {(config.elements?.["PullPin"] || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  🔱 {config.elements?.["PullPin"]} pull pin
-                                </Badge>
-                              )}
-                              {(config.elements?.["Bomb"] || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  💣 {config.elements?.["Bomb"]} bomb
-                                </Badge>
-                              )}
-                              {(config.elements?.["Moving"] || 0) > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  🔄 {config.elements?.["Moving"]} moving
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {config.status === "pending" && (
-                              <Badge
-                                variant="outline"
-                                className="text-yellow-600 border-yellow-300"
-                              >
-                                Chờ tạo
-                              </Badge>
-                            )}
-                            {config.status === "generating" && (
-                              <Badge
-                                variant="outline"
-                                className="text-blue-600 border-blue-300"
-                              >
-                                Đang tạo
-                              </Badge>
-                            )}
-                            {config.status === "generated" && (
-                              <Badge
-                                variant="outline"
-                                className="text-green-600 border-green-300"
-                              >
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Hoàn thành
-                              </Badge>
-                            )}
-                            {config.status === "error" && (
-                              <Badge
-                                variant="outline"
-                                className="text-red-600 border-red-300"
-                              >
-                                <AlertCircle className="w-3 h-3 mr-1" />
+              {importedConfigs.map((config) => {
+                // console.log(config);
+                return (
+                  <Card key={config.id} className="border-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        {/* Thumbnail */}
+                        <div className="flex-shrink-0">
+                          <div className="w-24 h-24 border-2 border-gray-200 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+                            {config.status === "generated" &&
+                            config.generatedLevel ? (
+                              <GenerateBoardSmall
+                                board={config.generatedLevel.board}
+                                width={config.generatedLevel.config.width}
+                                height={config.generatedLevel.config.height}
+                              />
+                            ) : config.status === "error" ? (
+                              <div className="text-red-500 text-xs text-center">
+                                <AlertCircle className="w-6 h-6 mx-auto mb-1" />
                                 Lỗi
-                              </Badge>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400 text-xs text-center">
+                                <Grid3X3 className="w-6 h-6 mx-auto mb-1" />
+                                Chưa tạo
+                              </div>
                             )}
                           </div>
                         </div>
 
-                        {/* Error Message */}
-                        {config.error && (
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg truncate">
+                                {config.name}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  <Grid3X3 className="w-3 h-3 mr-1" />
+                                  {config.width}×{config.height}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  <Palette className="w-3 h-3 mr-1" />
+                                  {config.selectedColors?.length || 0} màu
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  🧩 {config.blockCount || 0} block
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {config.difficulty || "Normal"}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {config.generationMode === "symmetric"
+                                    ? "🔄 Đối xứng"
+                                    : "🎲 Ngẫu nhiên"}
+                                </Badge>
+                                {(config.pipeCount || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    ⬆️ {config.pipeCount} pipe
+                                  </Badge>
+                                )}
+                                {(config.elements?.["Barrel"] || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    📦 {config.elements?.["Barrel"]} barrel
+                                  </Badge>
+                                )}
+                                {(config.elements?.["IceBlock"] || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    🧊 {config.elements?.["IceBlock"]} ice
+                                  </Badge>
+                                )}
+                                {(config.elements?.["BlockLock"] ||
+                                  config.elements?.["Block Lock"] ||
+                                  0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    🔒{" "}
+                                    {config.elements?.["BlockLock"] ||
+                                      config.elements?.["Block Lock"]}{" "}
+                                    lock
+                                  </Badge>
+                                )}
+                                {(config.elements?.["PullPin"] || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    🔱 {config.elements?.["PullPin"]} pull pin
+                                  </Badge>
+                                )}
+                                {(config.elements?.["Bomb"] || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    💣 {config.elements?.["Bomb"]} bomb
+                                  </Badge>
+                                )}
+                                {(config.elements?.["Moving"] || 0) > 0 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    🔄 {config.elements?.["Moving"]} moving
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {config.status === "pending" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-yellow-600 border-yellow-300"
+                                >
+                                  Chờ tạo
+                                </Badge>
+                              )}
+
+                              {config.status === "generated" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-green-600 border-green-300"
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Hoàn thành
+                                </Badge>
+                              )}
+                              {config.status === "error" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-red-600 border-red-300"
+                                >
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                  Lỗi
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Error Message */}
+                          {/* {config.error && (
                           <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
                             {config.error}
                           </div>
-                        )}
+                        )} */}
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          {config.status === "pending" ||
-                          config.status === "error" ? (
-                            <Button
-                              size="sm"
-                              onClick={() => generateLevelForConfig(config.id)}
-                            >
-                              <Zap className="w-4 h-4 mr-1" />
-                              Tạo level
-                            </Button>
-                          ) : config.status === "generated" &&
-                            config.generatedLevel ? (
-                            <>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button size="sm" variant="outline">
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Xem
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle>{config.name}</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="w-full max-w-md mx-auto border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
-                                      <GenerateBoard
-                                        board={config.generatedLevel.board}
-                                        width={
-                                          config.generatedLevel.config.width
-                                        }
-                                        height={
-                                          config.generatedLevel.config.height
-                                        }
-                                      />
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-
-                              {onEditLevel && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    onEditLevel(config.generatedLevel!)
-                                  }
-                                >
-                                  <Edit3 className="w-4 h-4 mr-1" />
-                                  Sửa
-                                </Button>
-                              )}
-
+                          {/* Actions */}
+                          <div className="flex items-center gap-2">
+                            {config.status === "pending" ||
+                            config.status === "error" ? (
                               <Button
                                 size="sm"
-                                onClick={() => saveLevel(config.id)}
-                                className={
-                                  savedLevels.has(config.id)
-                                    ? "bg-green-600 hover:bg-green-700 text-white"
-                                    : ""
+                                onClick={() =>
+                                  generateLevelForConfig(config.id)
                                 }
                               >
-                                {savedLevels.has(config.id) ? (
-                                  <>
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Đã lưu
-                                  </>
-                                ) : (
-                                  <>
-                                    <Save className="w-4 h-4 mr-1" />
-                                    Lưu
-                                  </>
-                                )}
+                                <Zap className="w-4 h-4 mr-1" />
+                                Tạo level
                               </Button>
-                            </>
-                          ) : null}
+                            ) : config.status === "generated" &&
+                              config.generatedLevel ? (
+                              <>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button size="sm" variant="outline">
+                                      <Eye className="w-4 h-4 mr-1" />
+                                      Xem
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle>{config.name}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="w-full max-w-md mx-auto border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <GenerateBoard
+                                          board={config.generatedLevel.board}
+                                          width={
+                                            config.generatedLevel.config.width
+                                          }
+                                          height={
+                                            config.generatedLevel.config.height
+                                          }
+                                        />
+                                      </div>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
 
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteConfig(config.id)}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Xóa
-                          </Button>
+                                {onEditLevel && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      onEditLevel(config.generatedLevel!)
+                                    }
+                                  >
+                                    <Edit3 className="w-4 h-4 mr-1" />
+                                    Sửa
+                                  </Button>
+                                )}
+
+                                <Button
+                                  size="sm"
+                                  onClick={() => saveLevel(config.id)}
+                                  className={
+                                    savedLevels.has(config.id)
+                                      ? "bg-green-600 hover:bg-green-700 text-white"
+                                      : ""
+                                  }
+                                >
+                                  {savedLevels.has(config.id) ? (
+                                    <>
+                                      <CheckCircle className="w-4 h-4 mr-1" />
+                                      Đã lưu
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Save className="w-4 h-4 mr-1" />
+                                      Lưu
+                                    </>
+                                  )}
+                                </Button>
+                              </>
+                            ) : null}
+
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => deleteConfig(config.id)}
+                              className="text-red-600 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Xóa
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
