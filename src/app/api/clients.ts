@@ -41,7 +41,7 @@ export async function kvGetAll(collection: string) {
   const app = await getApp();
   const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
-  const docs = await coll.find({ ownerId: user.id });
+  const docs = await coll.find({});
   return docs.map((d) => d.value);
 }
 // SET: upsert key/value
@@ -70,22 +70,15 @@ export async function kvCreate<T extends { id: string }>(
   key: string,
   value: T
 ) {
-  const app = await getApp();
-  const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
-  await coll.insertOne({ ownerId: user.id, key, value, updatedAt: new Date() });
+  await coll.insertOne({ key, value, updatedAt: new Date() });
   return value;
 }
 
 // LIST: liệt kê tất cả key của user
 export async function kvListKeys(collection: string) {
-  const app = await getApp();
-  const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
-  const docs = await coll.find(
-    { ownerId: user.id },
-    { projection: { key: 1 } }
-  );
+  const docs = await coll.find({ projection: { key: 1 } });
   return docs.map((d) => d.key);
 }
 
