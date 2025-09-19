@@ -265,7 +265,7 @@ export function ElementsSection({
                             <Input
                               type="number"
                               min="1"
-                              max="5"
+                              max="8"
                               value={
                                 (config.iceCounts && config.iceCounts[index]) ||
                                 2
