@@ -10,6 +10,7 @@ import { LevelInfoCard } from "./preview/level-info-card";
 import { BoardPreview } from "./preview/board-preview";
 import { LevelValidator } from "./preview/level-validator";
 import { LevelActions } from "./preview/level-actions";
+import { ColorBarChart } from "@/components/preview/color-bar-chart";
 import type { GeneratedLevel } from "@/config/game-types";
 import { GAME_COLORS, ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
@@ -156,6 +157,10 @@ export function LevelPreview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
           <BoardPreview level={level} onLevelUpdate={onLevelUpdate} />
+
+          {/* Color Bar Chart */}
+          <ColorBarChart level={level} />
+
           {/* Pipe Contents */}
           {level.pipeInfo && level.pipeInfo.length > 0 && (
             <Card>

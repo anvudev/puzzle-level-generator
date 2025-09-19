@@ -159,6 +159,47 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     }
   };
 
+  const handlePipeClick = (index: number) => {
+    if (!onLevelUpdate) return;
+
+    const row = Math.floor(index / level.config.width);
+    const col = index % level.config.width;
+    const cell = level.board[row][col];
+
+    if (cell.element === "Pipe") {
+      // Cycle through directions: up -> right -> down -> left -> up
+      const directions: Array<"up" | "down" | "left" | "right"> = [
+        "up",
+        "right",
+        "down",
+        "left",
+      ];
+      const currentIndex = directions.indexOf(cell.pipeDirection || "up");
+      const nextDirection = directions[(currentIndex + 1) % directions.length];
+
+      // Update the board with new direction
+      const newBoard = level.board.map((boardRow, rowIndex) =>
+        boardRow.map((boardCell, colIndex) => {
+          if (rowIndex === row && colIndex === col) {
+            return {
+              ...boardCell,
+              pipeDirection: nextDirection,
+            };
+          }
+          return boardCell;
+        })
+      );
+
+      // Update the level
+      const updatedLevel = {
+        ...level,
+        board: newBoard,
+      };
+
+      onLevelUpdate(updatedLevel);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -225,7 +266,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       ? "ring-2 ring-primary ring-offset-2"
                       : ""
                   } ${
-                    cell.element === "PullPin" && !isDragMode
+                    (cell.element === "PullPin" || cell.element === "Pipe") &&
+                    !isDragMode
                       ? "cursor-pointer hover:ring-2 hover:ring-blue-400"
                       : ""
                   }`}
@@ -254,8 +296,12 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
                   onClick={() => {
-                    if (!isDragMode && cell.element === "PullPin") {
-                      handlePullPinClick(index);
+                    if (!isDragMode) {
+                      if (cell.element === "PullPin") {
+                        handlePullPinClick(index);
+                      } else if (cell.element === "Pipe") {
+                        handlePipeClick(index);
+                      }
                     }
                   }}
                 >
