@@ -61,6 +61,7 @@ export const ELEMENT_TYPES = {
 export const DIFFICULTY_LEVELS = ["Normal", "Hard", "Super Hard"] as const;
 
 export const DEFAULT_CONFIG = {
+  name: "Level",
   width: 9,
   height: 10,
   blockCount: 27,
