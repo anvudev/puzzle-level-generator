@@ -108,8 +108,6 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     };
   }, [importedConfigs.length, addConfigs]);
 
-  console.log(importedConfigs);
-
   const validateFile = (file: File) => {
     if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
       setUploadError("Vui lòng chọn file CSV hợp lệ");
@@ -175,7 +173,6 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     try {
       const csvText = await selectedFile.text();
       const configs = parseCSV(csvText);
-      console.log(configs);
       addConfigs(configs);
       // Persist each imported config remotely
       for (const cfg of configs) {
@@ -598,9 +595,11 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
           <CardContent>
             <div className="grid gap-4">
               {importedConfigs.map((config) => {
-                // console.log(config);
                 return (
-                  <Card key={config.id} className="border-2">
+                  <Card
+                    key={config.generatedLevel?.id || config.id}
+                    className="border-2"
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
                         {/* Thumbnail */}
@@ -632,64 +631,112 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg truncate">
-                                {config.name}
+                                {config.name ||
+                                  config.generatedLevel?.config?.name}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
                                   <Grid3X3 className="w-3 h-3 mr-1" />
-                                  {config.width}×{config.height}
+                                  {config.generatedLevel?.config?.width ||
+                                    config.width}
+                                  x
+                                  {config.generatedLevel?.config?.height ||
+                                    config.height}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
                                   <Palette className="w-3 h-3 mr-1" />
-                                  {config.selectedColors?.length || 0} màu
+                                  {config.generatedLevel?.config?.selectedColors
+                                    ?.length ||
+                                    config.selectedColors?.length ||
+                                    0}{" "}
+                                  màu
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  🧩 {config.blockCount || 0} block
+                                  🧩{" "}
+                                  {config.generatedLevel?.config?.blockCount ||
+                                    config.blockCount ||
+                                    0}{" "}
+                                  block
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  {config.difficulty || "Normal"}
+                                  {config.generatedLevel?.config?.difficulty ||
+                                    config.difficulty ||
+                                    "Normal"}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  {config.generationMode === "symmetric"
+                                  {config.generatedLevel?.config
+                                    ?.generationMode === "symmetric"
                                     ? "🔄 Đối xứng"
                                     : "🎲 Ngẫu nhiên"}
                                 </Badge>
-                                {(config.pipeCount || 0) > 0 && (
+                                {(config.pipeCount ||
+                                  config.generatedLevel?.pipeInfo?.length ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    ⬆️ {config.pipeCount} pipe
+                                    ⬆️{" "}
+                                    {config.generatedLevel?.pipeInfo?.length ||
+                                      config.pipeCount ||
+                                      0}{" "}
+                                    pipe
                                   </Badge>
                                 )}
-                                {(config.elements?.["Barrel"] || 0) > 0 && (
+                                {(config.elements?.["Barrel"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "Barrel"
+                                  ] ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     📦 {config.elements?.["Barrel"]} barrel
                                   </Badge>
                                 )}
-                                {(config.elements?.["IceBlock"] || 0) > 0 && (
+                                {(config.elements?.["IceBlock"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "IceBlock"
+                                  ] ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     🧊 {config.elements?.["IceBlock"]} ice
                                   </Badge>
                                 )}
                                 {(config.elements?.["BlockLock"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "BlockLock"
+                                  ] ||
                                   config.elements?.["Block Lock"] ||
                                   0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     🔒{" "}
                                     {config.elements?.["BlockLock"] ||
+                                      config.generatedLevel?.config?.elements?.[
+                                        "BlockLock"
+                                      ] ||
                                       config.elements?.["Block Lock"]}{" "}
                                     lock
                                   </Badge>
                                 )}
-                                {(config.elements?.["PullPin"] || 0) > 0 && (
+                                {(config.elements?.["PullPin"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "PullPin"
+                                  ] ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     🔱 {config.elements?.["PullPin"]} pull pin
                                   </Badge>
                                 )}
-                                {(config.elements?.["Bomb"] || 0) > 0 && (
+                                {(config.elements?.["Bomb"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "Bomb"
+                                  ] ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     💣 {config.elements?.["Bomb"]} bomb
                                   </Badge>
                                 )}
-                                {(config.elements?.["Moving"] || 0) > 0 && (
+                                {(config.elements?.["Moving"] ||
+                                  config.generatedLevel?.config?.elements?.[
+                                    "Moving"
+                                  ] ||
+                                  0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
                                     🔄 {config.elements?.["Moving"]} moving
                                   </Badge>

@@ -1,4 +1,5 @@
 export interface LevelConfig {
+  name: string;
   width: number;
   height: number;
   blockCount: number;
