@@ -12,6 +12,7 @@ import {
   copyToClipboard,
 } from "@/lib/utils/export-utils";
 import { formatLevelForExport, generateCSVRow } from "@/lib/utils/level-utils";
+import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface ExportPanelProps {
   level: GeneratedLevel | null;
@@ -19,6 +20,9 @@ interface ExportPanelProps {
 
 export function ExportPanel({ level }: ExportPanelProps) {
   const [copied, setCopied] = useState(false);
+
+  // Get custom bar order from store
+  const { getBarOrder } = useColorBarStore();
 
   if (!level) {
     return (
@@ -36,18 +40,31 @@ export function ExportPanel({ level }: ExportPanelProps) {
     );
   }
 
+  // Helper function to get custom bars from store
+  const getCustomBars = () => {
+    // First get default bars
+    const defaultData = formatLevelForExport(level);
+    const defaultBars = defaultData.colorBarChart.bars;
+
+    // Then get custom order from store
+    return getBarOrder(defaultBars, level.id);
+  };
+
   const exportJSON = () => {
-    const data = formatLevelForExport(level);
+    const customBars = getCustomBars();
+    const data = formatLevelForExport(level, customBars);
     downloadJSON(data, `${level.id}.json`);
   };
 
   const exportCSV = () => {
-    const csv = generateCSVRow(level);
+    const customBars = getCustomBars();
+    const csv = generateCSVRow(level, customBars);
     downloadCSV(csv, `${level.id}.csv`);
   };
 
   const handleCopyToClipboard = async () => {
-    const data = formatLevelForExport(level);
+    const customBars = getCustomBars();
+    const data = formatLevelForExport(level, customBars);
     const success = await copyToClipboard(JSON.stringify(data, null, 2));
 
     if (success) {
@@ -170,6 +187,8 @@ export function ExportPanel({ level }: ExportPanelProps) {
                 containers: level.containers,
                 difficultyScore: level.difficultyScore,
                 solvable: level.solvable,
+                colorBarChart: formatLevelForExport(level, getCustomBars())
+                  .colorBarChart,
               },
               null,
               2

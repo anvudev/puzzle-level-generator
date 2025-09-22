@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GeneratedLevel } from "@/config/game-types";
 import { GAME_COLORS } from "@/config/game-constants";
+import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface ColorBarChartProps {
   level: GeneratedLevel;
@@ -13,10 +14,7 @@ interface ColorBarChartProps {
 
 interface BarData {
   barIndex: number;
-  blocks: Array<{
-    color: string;
-    position: number;
-  }>;
+  color: string;
 }
 
 interface ColorSummary {
@@ -102,11 +100,11 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
 
     if (colorGroup.length > 0) {
       // Lấy tối đa 3 blocks cùng màu cho thanh này
-      const barBlocks = colorGroup.splice(0, 3);
+      colorGroup.splice(0, 3);
 
       bars.push({
         barIndex: barIndex,
-        blocks: barBlocks,
+        color: currentColor,
       });
 
       barIndex++;
@@ -145,23 +143,24 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
 export function ColorBarChart({ level }: ColorBarChartProps) {
   // Sử dụng useMemo để cache kết quả và tránh infinite loop
   const analysisResult = useMemo(() => analyzeColorsFromBoard(level), [level]);
+  const { bars: initialBars } = analysisResult;
 
-  const { bars: initialBars, colorSummary, totalBlocks } = analysisResult;
+  // Color bar store để lưu thứ tự đã sắp xếp
+  const { setCustomBarOrder, getBarOrder } = useColorBarStore();
 
   // State để quản lý thứ tự thanh có thể kéo thả
   const [bars, setBars] = useState<BarData[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
-  // Cập nhật bars khi initialBars thay đổi - chỉ khi thực sự khác nhau
+  // Cập nhật bars khi initialBars thay đổi - sử dụng custom order nếu có
   useEffect(() => {
-    setBars(initialBars);
-  }, [initialBars]);
+    const orderedBars = getBarOrder(initialBars, level.id);
+    setBars(orderedBars);
+  }, [initialBars, level.id, getBarOrder]);
 
   // Xử lý drag & drop
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
-    setIsDragging(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", index.toString());
   };
@@ -196,16 +195,19 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
     newBars[dropIndex].barIndex = dropIndex + 1;
 
     setBars(newBars);
+    // Lưu thứ tự mới vào store để export có thể sử dụng
+    setCustomBarOrder(newBars, level.id);
     setDraggedIndex(null);
   };
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
-    setIsDragging(false);
   };
 
   const handleReset = () => {
     setBars(initialBars);
+    // Xóa custom order khỏi store để về thứ tự gốc
+    setCustomBarOrder(initialBars, level.id);
   };
 
   if (bars.length === 0) {
@@ -267,33 +269,15 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
                   }`}
                   style={{
                     backgroundColor:
-                      bar.blocks.length > 0
-                        ? GAME_COLORS[
-                            bar.blocks[0].color as keyof typeof GAME_COLORS
-                          ]
-                        : "#f3f4f6",
+                      GAME_COLORS[bar.color as keyof typeof GAME_COLORS] ||
+                      "#f3f4f6",
                     width: "48px",
                     height: "32px",
-                    background:
-                      bar.blocks.length > 1
-                        ? `linear-gradient(to right, ${bar.blocks
-                            .map(
-                              (block) =>
-                                GAME_COLORS[
-                                  block.color as keyof typeof GAME_COLORS
-                                ]
-                            )
-                            .join(", ")})`
-                        : GAME_COLORS[
-                            bar.blocks[0]?.color as keyof typeof GAME_COLORS
-                          ] || "#f3f4f6",
                   }}
-                  title={`Thanh ${bar.barIndex}: ${bar.blocks
-                    .map((b) => b.color)
-                    .join(", ")} - Kéo vào thanh khác để đổi chỗ`}
+                  title={`Thanh ${bar.barIndex}: ${bar.color} - Kéo vào thanh khác để đổi chỗ`}
                 >
                   <span className="text-xs font-bold text-white drop-shadow-sm">
-                    {bar.blocks.length}
+                    {bar.color.slice(0, 1)}
                   </span>
                   {/* Số thứ tự thanh */}
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-800 text-white text-[10px] rounded-full flex items-center justify-center border border-white">
