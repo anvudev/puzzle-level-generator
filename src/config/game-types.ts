@@ -21,7 +21,7 @@ export interface LevelConfig {
 }
 
 export interface BoardCell {
-  type: "empty" | "block";
+  type: "empty" | "block" | "wall";
   color: string | null;
   element: string | null;
   // For pipe element: contains colors inside the pipe

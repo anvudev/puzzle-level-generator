@@ -53,6 +53,21 @@ export function useLevelGenerator() {
     return true;
   }, []);
 
+  const convertEmptyToWall = useCallback(
+    (level: GeneratedLevel): GeneratedLevel => {
+      return {
+        ...level,
+        board: level.board.map((row) =>
+          row.map((cell) => ({
+            ...cell,
+            type: cell.type === "empty" ? "wall" : cell.type,
+          }))
+        ),
+      };
+    },
+    []
+  );
+
   const adjustLevelToMeetStats = useCallback(
     (level: GeneratedLevel): GeneratedLevel | null => {
       const board = level.board.map((row) => row.map((cell) => ({ ...cell })));
@@ -255,8 +270,10 @@ export function useLevelGenerator() {
             const level = await GeminiLevelGenerator.generateLevel(config);
             lastLevel = level;
             if (isLevelValid(level)) {
-              setGeneratedLevel(level);
-              return level;
+              // Auto-convert empty cells to walls after successful generation
+              const levelWithWalls = convertEmptyToWall(level);
+              setGeneratedLevel(levelWithWalls);
+              return levelWithWalls;
             }
 
             // Nếu chưa valid và chưa hết lượt thì tiếp tục thử
@@ -274,11 +291,15 @@ export function useLevelGenerator() {
         if (lastLevel) {
           const adjusted = adjustLevelToMeetStats(lastLevel);
           if (adjusted) {
-            setGeneratedLevel(adjusted);
-            return adjusted;
+            // Auto-convert empty cells to walls for adjusted level
+            const adjustedWithWalls = convertEmptyToWall(adjusted);
+            setGeneratedLevel(adjustedWithWalls);
+            return adjustedWithWalls;
           }
-          setGeneratedLevel(lastLevel);
-          return lastLevel;
+          // Auto-convert empty cells to walls for fallback level
+          const lastLevelWithWalls = convertEmptyToWall(lastLevel);
+          setGeneratedLevel(lastLevelWithWalls);
+          return lastLevelWithWalls;
         }
 
         // Không tạo được level nào -> ném lỗi cuối cùng (nếu có) hoặc tạo lỗi chung

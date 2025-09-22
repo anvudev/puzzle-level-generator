@@ -23,7 +23,9 @@ export const GenerateBoard = ({ board, width, height }: GenerateBoardProps) => {
           className="rounded text-3xl border border-gray-200 flex items-center justify-center"
           style={{
             backgroundColor:
-              cell.type === "block"
+              cell.type === "wall"
+                ? ""
+                : cell.type === "block"
                 ? cell.color
                   ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS] ||
                     "#f3f4f6"

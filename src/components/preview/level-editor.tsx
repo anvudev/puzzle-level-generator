@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { GAME_COLORS } from "@/config/game-constants";
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
+import { getElementIcon } from "@/lib/utils/level-utils";
 
 interface LevelEditorProps {
   level: GeneratedLevel;
@@ -45,7 +46,7 @@ interface LevelEditorProps {
 
 export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedTool, setSelectedTool] = useState<
-    "add" | "remove" | "color" | "pipe" | "pullpin"
+    "add" | "remove" | "color" | "pipe" | "pullpin" | "wall"
   >("add");
   const [selectedColor, setSelectedColor] = useState<string>("Red");
   const [selectedPipeDirection, setSelectedPipeDirection] = useState<
@@ -84,6 +85,9 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
         case "5":
           setSelectedTool("pullpin");
           break;
+        case "6":
+          setSelectedTool("wall");
+          break;
         case "Escape":
           setIsEditorOpen(false);
           break;
@@ -98,6 +102,11 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
     const newBoard = [...level.board];
     const cell = newBoard[rowIndex][colIndex];
 
+    // Prevent other tools from modifying wall cells
+    if (cell.type === "wall" && selectedTool !== "wall") {
+      return;
+    }
+
     switch (selectedTool) {
       case "add":
         // Add block
@@ -111,12 +120,14 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
         break;
 
       case "remove":
-        // Remove block
-        newBoard[rowIndex][colIndex] = {
-          type: "empty",
-          color: null,
-          element: null,
-        };
+        // Remove block (but not walls)
+        if (cell.type !== "wall") {
+          newBoard[rowIndex][colIndex] = {
+            type: "empty",
+            color: null,
+            element: null,
+          };
+        }
         break;
 
       case "color":
@@ -177,6 +188,23 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
           };
         }
         break;
+
+      case "wall":
+        // Toggle between empty and wall
+        if (cell.type === "empty") {
+          newBoard[rowIndex][colIndex] = {
+            type: "wall",
+            color: null,
+            element: null,
+          };
+        } else if (cell.type === "wall") {
+          newBoard[rowIndex][colIndex] = {
+            type: "empty",
+            color: null,
+            element: null,
+          };
+        }
+        break;
     }
 
     // Update level
@@ -225,15 +253,15 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const getDirectionIcon = (direction: string) => {
     switch (direction) {
       case "up":
-        return <ArrowUp className="w-4 h-4" />;
+        return "⬆️";
       case "down":
-        return <ArrowDown className="w-4 h-4" />;
+        return "⬇️";
       case "left":
-        return <ArrowLeft className="w-4 h-4" />;
+        return "⬅️";
       case "right":
-        return <ArrowRight className="w-4 h-4" />;
+        return "➡️";
       default:
-        return <ArrowUp className="w-4 h-4" />;
+        return "⬆️";
     }
   };
 
@@ -303,6 +331,14 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     className="flex items-center gap-2"
                   >
                     🔱 Pull Pin
+                  </Button>
+                  <Button
+                    variant={selectedTool === "wall" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTool("wall")}
+                    className="flex items-center gap-2"
+                  >
+                    🧱 Wall
                   </Button>
                 </div>
 
@@ -520,6 +556,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   {selectedTool === "remove" && "Xóa block"}
                   {selectedTool === "color" && "Đổi màu"}
                   {selectedTool === "pipe" && "Sửa pipe"}
+                  {selectedTool === "wall" && "Chỉnh sửa tường"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -538,7 +575,9 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                           className="aspect-square rounded border border-border flex items-center justify-center text-xs font-bold cursor-pointer hover:scale-105 transition-transform"
                           style={{
                             backgroundColor:
-                              cell.element === "Pipe"
+                              cell.type === "wall"
+                                ? ""
+                                : cell.element === "Pipe"
                                 ? "#6b7280"
                                 : cell.element === "PullPin"
                                 ? "#8B4513"
@@ -562,9 +601,11 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                           {cell.element === "Pipe" && cell.pipeDirection && (
                             <Popover>
                               <PopoverTrigger asChild>
-                                <div className="flex flex-col items-center w-full h-full justify-center">
-                                  {getDirectionIcon(cell.pipeDirection)}
-                                  <span className="text-[8px] mt-1">
+                                <div className="flex flex-col items-center w-full h-full justify-center ">
+                                  <span className="text-xl">
+                                    {getDirectionIcon(cell.pipeDirection)}
+                                  </span>
+                                  <span className="text-sm">
                                     {cell.pipeContents?.length || 0}
                                   </span>
                                 </div>
@@ -614,8 +655,13 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                               </PopoverContent>
                             </Popover>
                           )}
+                          {cell.type === "wall" && (
+                            <span className="text-3xl opacity-30">🧱</span>
+                          )}
                           {cell.element && cell.element !== "Pipe" && (
-                            <span className="text-[8px]">{cell.element}</span>
+                            <span className="text-3xl">
+                              {getElementIcon(cell.element)}
+                            </span>
                           )}
                         </div>
                       ))

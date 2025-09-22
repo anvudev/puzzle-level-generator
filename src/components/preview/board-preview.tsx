@@ -252,7 +252,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
             {level.board.flat().map((cell, index) => {
               const isDragging = draggedCell?.index === index;
               const isDragOver = dragOverIndex === index;
-              const canDrag = isDragMode && cell.type !== "empty";
+              const canDrag =
+                isDragMode && cell.type !== "empty" && cell.type !== "wall";
               const row = Math.floor(index / level.config.width);
               const col = index % level.config.width;
 
@@ -273,7 +274,9 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   }`}
                   style={{
                     backgroundColor:
-                      cell.element === "Pipe"
+                      cell.type === "wall"
+                        ? "" // Dark gray for wall cells
+                        : cell.element === "Pipe"
                         ? "" // Gray color for pipe blocks (dead blocks)
                         : cell.element === "PullPin"
                         ? "#fff" // Brown color for pull pin blocks (barrier)
@@ -406,13 +409,13 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       )}
                     </div>
                   )}
-                  {cell.type === "empty"
-                    ? ""
-                    : cell.element === "Pipe"
-                    ? "PIPE"
-                    : cell.element === "PullPin"
-                    ? "PIN"
-                    : cell.color?.charAt(0) || ""}
+                  {cell.type === "wall" ? (
+                    <span className="text-3xl text-white opacity-30">🧱</span>
+                  ) : (
+                    <span className="text-white">
+                      {cell.color?.charAt(0) || ""}
+                    </span>
+                  )}
                   {canDrag && (
                     <div className="absolute inset-0 bg-black/10 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                       <Move className="w-3 h-3 text-white drop-shadow-lg" />

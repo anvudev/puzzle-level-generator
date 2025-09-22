@@ -58,6 +58,13 @@ export function PuzzleLevelGenerator() {
   const { generatedLevel, isGenerating, generateLevel, setGeneratedLevel } =
     useLevelGenerator();
 
+  console.log("🔄 Generated level:", {
+    generatedLevel,
+    isGenerating,
+    generateLevel,
+    setGeneratedLevel,
+  });
+
   const { saveLevel } = useLevelHistory();
 
   const handleLevelUpdate = (updatedLevel: GeneratedLevel) => {
