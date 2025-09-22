@@ -20,6 +20,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
+import { formatLevelForExport } from "@/lib/utils/level-utils";
+import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface LevelActionsProps {
   level: GeneratedLevel;
@@ -34,8 +36,23 @@ export function LevelActions({
 }: LevelActionsProps) {
   const [copied, setCopied] = useState(false);
 
+  // Get custom bar order from store
+  const { getBarOrder } = useColorBarStore();
+
+  // Helper function to get custom bars from store
+  const getCustomBars = () => {
+    // First get default bars
+    const defaultData = formatLevelForExport(level);
+    const defaultBars = defaultData.colorBarChart.bars;
+
+    // Then get custom order from store
+    return getBarOrder(defaultBars, level.id);
+  };
+
   const getExportData = () => {
-    return JSON.stringify(level, null, 2);
+    const customBars = getCustomBars();
+    const data = formatLevelForExport(level, customBars);
+    return JSON.stringify(data, null, 2);
   };
 
   const handleCopy = async () => {
