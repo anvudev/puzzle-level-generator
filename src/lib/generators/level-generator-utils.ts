@@ -204,7 +204,7 @@ export class LevelGeneratorUtils {
 
   /**
    * Get valid directions where a Pull Pin can point to color blocks
-   * Must have 1-3 empty blocks before reaching color blocks
+   * RELAXED LOGIC: Just need to point towards any blocks (not necessarily with gaps)
    */
   static getValidPullPinDirections(
     x: number,
@@ -221,55 +221,23 @@ export class LevelGeneratorUtils {
     ];
 
     for (const { dir, dx, dy } of directions) {
-      let emptyBlockCount = 0;
-      let foundColorBlock = false;
-      let currentX = x + dx;
-      let currentY = y + dy;
+      const targetX = x + dx;
+      const targetY = y + dy;
 
-      // First, count empty blocks (1-3 required)
-      while (
-        currentX >= 0 &&
-        currentX < config.width &&
-        currentY >= 0 &&
-        currentY < config.height &&
-        emptyBlockCount < 3
+      // Check if target position is within bounds
+      if (
+        targetX >= 0 &&
+        targetX < config.width &&
+        targetY >= 0 &&
+        targetY < config.height
       ) {
-        const cell = board[currentY][currentX];
+        const targetCell = board[targetY][targetX];
 
-        if (cell.type === "empty") {
-          emptyBlockCount++;
-          currentX += dx;
-          currentY += dy;
-        } else {
-          break;
+        // RELAXED LOGIC: PullPin can point towards any block or empty space
+        // This makes PullPin much easier to place
+        if (targetCell.type === "block" || targetCell.type === "empty") {
+          validDirections.push(dir);
         }
-      }
-
-      // Must have at least 1 empty block before color blocks
-      if (emptyBlockCount >= 1 && emptyBlockCount <= 3) {
-        // Now check if there are color blocks after the gap
-        while (
-          currentX >= 0 &&
-          currentX < config.width &&
-          currentY >= 0 &&
-          currentY < config.height
-        ) {
-          const cell = board[currentY][currentX];
-
-          // If we find a color block (not element), this direction is valid
-          if (cell.type === "block" && cell.color && !cell.element) {
-            foundColorBlock = true;
-            break;
-          }
-
-          // If we hit another element or more empty space, continue looking
-          currentX += dx;
-          currentY += dy;
-        }
-      }
-
-      if (foundColorBlock && emptyBlockCount >= 1 && emptyBlockCount <= 3) {
-        validDirections.push(dir);
       }
     }
 

@@ -23,7 +23,6 @@ export function ElementsSection({
     } else {
       elements[elementType] = count;
     }
-
     // Special handling for Pipe element
     if (elementType === "Pipe") {
       const newPipeCount = count; // Use the exact count from input

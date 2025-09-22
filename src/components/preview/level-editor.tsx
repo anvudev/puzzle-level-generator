@@ -322,7 +322,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {level.config.selectedColors.map((color) => (
+                        {Object.keys(GAME_COLORS).map((color) => (
                           <SelectItem key={color} value={color}>
                             <div className="flex items-center gap-2">
                               <div

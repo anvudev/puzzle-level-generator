@@ -100,15 +100,11 @@ export function PuzzleLevelGenerator() {
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-500 p-8 text-white shadow-2xl">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative z-10">
-          <Header
-            handleGenerateLevel={handleGenerateLevel}
-            isGenerating={isGenerating}
-          />
-        </div>
-      </div>
+      <Header
+        handleGenerateLevel={handleGenerateLevel}
+        isGenerating={isGenerating}
+        isShowButton={true}
+      />
 
       <div className="lg:hidden">
         <Button
