@@ -5,7 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GAME_COLORS } from "@/config/game-constants";
+// Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
 import { RotateCcw, Move } from "lucide-react";
@@ -281,7 +281,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         : cell.element === "PullPin"
                         ? "#fff" // Brown color for pull pin blocks (barrier)
                         : cell.color
-                        ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS]
+                        ? level.config.colorMapping[cell.color] || "#f3f4f6"
                         : "#f3f4f6",
                     color:
                       cell.element === "Pipe"
@@ -413,7 +413,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                     <span className="text-3xl text-white opacity-30">🧱</span>
                   ) : (
                     <span className="text-white">
-                      {cell.color?.charAt(0) || ""}
+                      {cell.color?.replace("color_", "")}
                     </span>
                   )}
                   {canDrag && (

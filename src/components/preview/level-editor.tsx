@@ -35,7 +35,7 @@ import {
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
-import { GAME_COLORS } from "@/config/game-constants";
+// Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
 
@@ -48,7 +48,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedTool, setSelectedTool] = useState<
     "add" | "remove" | "color" | "pipe" | "pullpin" | "wall"
   >("add");
-  const [selectedColor, setSelectedColor] = useState<string>("Red");
+  const [selectedColor, setSelectedColor] = useState<string>("color_1");
   const [selectedPipeDirection, setSelectedPipeDirection] = useState<
     "up" | "down" | "left" | "right"
   >("up");
@@ -358,19 +358,18 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.keys(GAME_COLORS).map((color) => (
+                        {level.config.selectedColors.map((color) => (
                           <SelectItem key={color} value={color}>
                             <div className="flex items-center gap-2">
                               <div
                                 className="w-4 h-4 rounded border"
                                 style={{
                                   backgroundColor:
-                                    GAME_COLORS[
-                                      color as keyof typeof GAME_COLORS
-                                    ],
+                                    level.config.colorMapping[color] ||
+                                    "#f3f4f6",
                                 }}
                               />
-                              {color}
+                              {color.replace("color_", "")}
                             </div>
                           </SelectItem>
                         ))}
@@ -529,7 +528,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                             key={color}
                             className="flex items-center justify-between text-sm"
                           >
-                            <span>{color}:</span>
+                            <span>{color.replace("color_", "")}:</span>
                             <Badge
                               variant={
                                 count % 3 === 0 ? "default" : "destructive"
@@ -582,9 +581,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                 : cell.element === "PullPin"
                                 ? "#8B4513"
                                 : cell.color
-                                ? GAME_COLORS[
-                                    cell.color as keyof typeof GAME_COLORS
-                                  ]
+                                ? level.config.colorMapping[cell.color] ||
+                                  "#f3f4f6"
                                 : "#f3f4f6",
                             color:
                               cell.element === "Pipe"
@@ -592,12 +590,16 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                 : cell.element === "PullPin"
                                 ? "#fff"
                                 : cell.color &&
-                                  ["Yellow", "White"].includes(cell.color)
+                                  ["color_4", "color_12"].includes(cell.color) // Yellow, White
                                 ? "#000"
                                 : "#fff",
                           }}
                           onClick={() => handleCellClick(rowIndex, colIndex)}
                         >
+                          {" "}
+                          {cell.color && (
+                            <span>{cell.color.replace("color_", "")}</span>
+                          )}
                           {cell.element === "Pipe" && cell.pipeDirection && (
                             <Popover>
                               <PopoverTrigger asChild>
@@ -622,12 +624,12 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                             className="w-6 h-6 rounded border border-border flex items-center justify-center text-xs"
                                             style={{
                                               backgroundColor:
-                                                GAME_COLORS[
-                                                  color as keyof typeof GAME_COLORS
-                                                ],
+                                                level.config.colorMapping[
+                                                  color
+                                                ] || "#f3f4f6",
                                               color: [
-                                                "Yellow",
-                                                "White",
+                                                "color_4", // Yellow
+                                                "color_12", // White
                                               ].includes(color)
                                                 ? "#000"
                                                 : "#fff",
@@ -743,12 +745,11 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                   className="w-4 h-4 rounded border"
                                   style={{
                                     backgroundColor:
-                                      GAME_COLORS[
-                                        colorOption as keyof typeof GAME_COLORS
-                                      ],
+                                      level.config.colorMapping[colorOption] ||
+                                      "#f3f4f6",
                                   }}
                                 />
-                                {colorOption}
+                                {colorOption.replace("color_", "")}
                               </div>
                             </SelectItem>
                           ))}

@@ -611,6 +611,9 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                                 board={config.generatedLevel.board}
                                 width={config.generatedLevel.config.width}
                                 height={config.generatedLevel.config.height}
+                                colorMapping={
+                                  config.generatedLevel.config.colorMapping
+                                }
                               />
                             ) : config.status === "error" ? (
                               <div className="text-red-500 text-xs text-center">
@@ -817,6 +820,10 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                                           }
                                           height={
                                             config.generatedLevel.config.height
+                                          }
+                                          colorMapping={
+                                            config.generatedLevel.config
+                                              .colorMapping
                                           }
                                         />
                                       </div>

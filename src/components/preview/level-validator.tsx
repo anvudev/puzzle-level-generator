@@ -244,7 +244,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
                 key={color}
                 className="flex items-center justify-between text-sm"
               >
-                <span>{color}:</span>
+                <span>{color.replace("color_", "")}:</span>
                 <Badge variant={count % 3 === 0 ? "default" : "destructive"}>
                   {count} {count % 3 === 0 ? "✓" : "✗"}
                 </Badge>

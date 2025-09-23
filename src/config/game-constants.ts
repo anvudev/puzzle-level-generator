@@ -1,3 +1,20 @@
+// Color mapping system - colors are now referenced by index
+export const COLOR_MAPPING = {
+  color_1: "#ff0000", // Red
+  color_2: "#0000ff", // Blue
+  color_3: "#00ff00", // Green
+  color_4: "#ffff00", // Yellow
+  color_5: "#ff9900", // Orange
+  color_6: "#9900ff", // Purple
+  color_7: "#ff00ff", // Pink
+  color_8: "#00ffff", // Cyan
+  color_9: "#4a86e8", // Light Blue
+  color_10: "#876670", // Brown
+  color_11: "#b7b7b7", // Grey
+  color_12: "#ffffff", // White
+} as const;
+
+// Legacy color names mapping (for backward compatibility during transition)
 export const GAME_COLORS = {
   Brown: "#876670",
   Red: "#ff0000",
@@ -12,6 +29,11 @@ export const GAME_COLORS = {
   Grey: "#b7b7b7",
   White: "#ffffff",
 } as const;
+
+// Available color keys for selection
+export const AVAILABLE_COLORS = Object.keys(COLOR_MAPPING) as Array<
+  keyof typeof COLOR_MAPPING
+>;
 
 export const ELEMENT_TYPES = {
   Barrel: {
@@ -66,7 +88,12 @@ export const DEFAULT_CONFIG = {
   height: 10,
   blockCount: 27,
   colorCount: 3,
-  selectedColors: ["Red", "Blue", "Green"],
+  selectedColors: ["color_1", "color_2", "color_3"],
+  colorMapping: {
+    color_1: COLOR_MAPPING.color_1,
+    color_2: COLOR_MAPPING.color_2,
+    color_3: COLOR_MAPPING.color_3,
+  },
   generationMode: "random" as const,
   elements: {},
   difficulty: "Normal" as const,

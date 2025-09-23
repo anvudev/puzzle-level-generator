@@ -12,8 +12,16 @@ describe("CSV Matrix Export - Simple Test", () => {
       height: board.length,
       blockCount: 10,
       colorCount: 3,
-      selectedColors: ["Red", "Blue", "Green"],
+      selectedColors: ["color_1", "color_2", "color_3", "color_4"],
+      colorMapping: {
+        color_1: "#ff0000",
+        color_2: "#0000ff",
+        color_3: "#00ff00",
+        color_4: "#ffff00",
+      },
+      generationMode: "random" as const,
       elements: { Pipe: 2 },
+      difficulty: "Normal" as const,
     },
     board,
     containers: [],
@@ -25,11 +33,11 @@ describe("CSV Matrix Export - Simple Test", () => {
     const board: BoardCell[][] = [
       [
         { type: "wall", color: null, element: null },
-        { type: "block", color: "Red", element: null },
+        { type: "block", color: "color_1", element: null },
       ],
       [
         { type: "empty", color: null, element: null },
-        { type: "block", color: "Blue", element: null },
+        { type: "block", color: "color_2", element: null },
       ],
     ];
 
@@ -57,7 +65,7 @@ describe("CSV Matrix Export - Simple Test", () => {
           element: "Pipe",
           pipeDirection: "right",
           pipeSize: 3,
-          pipeContents: ["Red", "Light Blue", "Green"],
+          pipeContents: ["color_1", "color_2", "color_3"],
         },
       ],
     ];
@@ -70,7 +78,7 @@ describe("CSV Matrix Export - Simple Test", () => {
     expect(lines).toHaveLength(1);
 
     // Parse the JSON from the cell
-    const cellJson = lines[0].replace(/^"|"$/g, '').replace(/""/g, '"');
+    const cellJson = lines[0].replace(/^"|"$/g, "").replace(/""/g, '"');
     const cellData = JSON.parse(cellJson);
 
     expect(cellData).toEqual({
@@ -79,7 +87,7 @@ describe("CSV Matrix Export - Simple Test", () => {
       element: "Pipe",
       pipeDirection: "right",
       pipeSize: 3,
-      pipeContents: ["Red", "Light Blue", "Green"],
+      pipeContents: ["color_1", "color_2", "color_3"],
     });
 
     console.log("Pipe CSV Output:");
@@ -92,24 +100,24 @@ describe("CSV Matrix Export - Simple Test", () => {
     const board: BoardCell[][] = [
       [
         { type: "wall", color: null, element: null },
-        { type: "block", color: "Red", element: null },
+        { type: "block", color: "color_1", element: null },
         { type: "empty", color: null, element: null },
       ],
       [
-        { type: "block", color: "Blue", element: null },
+        { type: "block", color: "color_2", element: null },
         {
           type: "block",
           color: null,
           element: "Pipe",
           pipeDirection: "down",
           pipeSize: 2,
-          pipeContents: ["Green", "Yellow"],
+          pipeContents: ["color_3", "color_4"],
         },
         { type: "wall", color: null, element: null },
       ],
       [
         { type: "empty", color: null, element: null },
-        { type: "block", color: "Green", element: null },
+        { type: "block", color: "color_3", element: null },
         { type: "wall", color: null, element: null },
       ],
     ];
@@ -133,7 +141,7 @@ describe("CSV Matrix Export - Simple Test", () => {
 
     // Test parsing the pipe cell (row 1, col 1)
     const row1Cells = lines[1].split('","');
-    const pipeCellJson = row1Cells[1].replace(/^"|"$/g, '').replace(/""/g, '"');
+    const pipeCellJson = row1Cells[1].replace(/^"|"$/g, "").replace(/""/g, '"');
     const pipeCellData = JSON.parse(pipeCellJson);
 
     expect(pipeCellData).toEqual({
@@ -142,7 +150,7 @@ describe("CSV Matrix Export - Simple Test", () => {
       element: "Pipe",
       pipeDirection: "down",
       pipeSize: 2,
-      pipeContents: ["Green", "Yellow"],
+      pipeContents: ["color_3", "color_4"],
     });
   });
 });

@@ -1,14 +1,23 @@
 import { BoardCell } from "@/config/game-types";
 import { getElementIcon, getPipeIcon } from "./level-utils";
-import { GAME_COLORS } from "@/config/game-constants";
+import { COLOR_MAPPING } from "@/config/game-constants";
 
 interface GenerateBoardProps {
   board: BoardCell[][];
   width: number;
   height: number;
+  colorMapping?: Record<string, string>; // Optional color mapping
 }
 
-export const GenerateBoard = ({ board, width, height }: GenerateBoardProps) => {
+export const GenerateBoard = ({
+  board,
+  width,
+  height,
+  colorMapping,
+}: GenerateBoardProps) => {
+  // Use provided colorMapping or fallback to COLOR_MAPPING
+  const colors = colorMapping || COLOR_MAPPING;
+
   return (
     <div
       className="w-full aspect-square grid gap-1 p-2"
@@ -27,8 +36,7 @@ export const GenerateBoard = ({ board, width, height }: GenerateBoardProps) => {
                 ? ""
                 : cell.type === "block"
                 ? cell.color
-                  ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS] ||
-                    "#f3f4f6"
+                  ? (colors as Record<string, string>)[cell.color] || "#f3f4f6"
                   : ""
                 : "#f9fafb",
           }}
@@ -47,7 +55,11 @@ export const GenerateBoardSmall = ({
   board,
   width,
   height,
+  colorMapping,
 }: GenerateBoardProps) => {
+  // Use provided colorMapping or fallback to COLOR_MAPPING
+  const colors = colorMapping || COLOR_MAPPING;
+
   return (
     <div
       className="w-full h-full grid gap-0.5 p-1"
@@ -64,8 +76,7 @@ export const GenerateBoardSmall = ({
             backgroundColor:
               cell.type === "block"
                 ? cell.color
-                  ? GAME_COLORS[cell.color as keyof typeof GAME_COLORS] ||
-                    "#f3f4f6"
+                  ? (colors as Record<string, string>)[cell.color] || "#f3f4f6"
                   : "#e5e7eb"
                 : "#f9fafb",
             fontSize: "6px",

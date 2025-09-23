@@ -12,7 +12,12 @@ describe("Level Generator Tests", () => {
       height: 10,
       blockCount: 27,
       colorCount: 3,
-      selectedColors: ["Red", "Blue", "Green"],
+      selectedColors: ["color_1", "color_2", "color_3"],
+      colorMapping: {
+        color_1: "#ff0000",
+        color_2: "#0000ff",
+        color_3: "#00ff00",
+      },
       generationMode: "random",
       elements: {},
       difficulty: "Normal",

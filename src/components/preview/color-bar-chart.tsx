@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GeneratedLevel } from "@/config/game-types";
-import { GAME_COLORS } from "@/config/game-constants";
+// Removed GAME_COLORS import - now using colorMapping from level config
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface ColorBarChartProps {
@@ -269,15 +269,14 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
                   }`}
                   style={{
                     backgroundColor:
-                      GAME_COLORS[bar.color as keyof typeof GAME_COLORS] ||
-                      "#f3f4f6",
+                      level.config.colorMapping[bar.color] || "#f3f4f6",
                     width: "48px",
                     height: "32px",
                   }}
                   title={`Thanh ${bar.barIndex}: ${bar.color} - Kéo vào thanh khác để đổi chỗ`}
                 >
                   <span className="text-xs font-bold text-white drop-shadow-sm">
-                    {bar.color.slice(0, 1)}
+                    {bar.color.replace("color_", "")}
                   </span>
                   {/* Số thứ tự thanh */}
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-800 text-white text-[10px] rounded-full flex items-center justify-center border border-white">

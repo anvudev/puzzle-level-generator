@@ -12,7 +12,7 @@ import { LevelValidator } from "./preview/level-validator";
 import { LevelActions } from "./preview/level-actions";
 import { ColorBarChart } from "@/components/preview/color-bar-chart";
 import type { GeneratedLevel } from "@/config/game-types";
-import { GAME_COLORS, ELEMENT_TYPES } from "@/config/game-constants";
+import { ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
 
 interface LevelPreviewProps {
@@ -205,9 +205,7 @@ export function LevelPreview({
                               className="w-4 h-4 rounded border border-border"
                               style={{
                                 backgroundColor:
-                                  GAME_COLORS[
-                                    color as keyof typeof GAME_COLORS
-                                  ],
+                                  level.config.colorMapping[color] || "#f3f4f6",
                               }}
                               title={`${color} (${index + 1})`}
                             />
@@ -248,10 +246,12 @@ export function LevelPreview({
                       className="w-4 h-4 rounded border border-border"
                       style={{
                         backgroundColor:
-                          GAME_COLORS[colorName as keyof typeof GAME_COLORS],
+                          level.config.colorMapping[colorName] || "#f3f4f6",
                       }}
                     />
-                    <span className="text-sm">{colorName}</span>
+                    <span className="text-sm">
+                      {colorName.replace("color_", "")}
+                    </span>
                   </div>
                 ))}
               </div>
