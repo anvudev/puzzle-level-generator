@@ -1,6 +1,7 @@
 import { BoardCell } from "@/config/game-types";
 import { getElementIcon, getPipeIcon } from "./level-utils";
 import { COLOR_MAPPING } from "@/config/game-constants";
+import { elementGenerate, styleDecorator } from "./styleDecoration";
 
 interface GenerateBoardProps {
   board: BoardCell[][];
@@ -30,21 +31,9 @@ export const GenerateBoard = ({
         <div
           key={index}
           className="rounded text-3xl border border-gray-200 flex items-center justify-center"
-          style={{
-            backgroundColor:
-              cell.type === "wall"
-                ? ""
-                : cell.type === "block"
-                ? cell.color
-                  ? (colors as Record<string, string>)[cell.color] || "#f3f4f6"
-                  : ""
-                : "#f9fafb",
-          }}
+          style={styleDecorator(cell)}
         >
-          {cell.element === "Pipe" && getPipeIcon(cell.pipeDirection || "up")}
-          {cell.element &&
-            cell.element !== "Pipe" &&
-            getElementIcon(cell.element)}
+          {elementGenerate(cell)}
         </div>
       ))}
     </div>
@@ -85,10 +74,10 @@ export const GenerateBoardSmall = ({
             justifyContent: "center",
           }}
         >
-          {cell.element === "Pipe" && getPipeIcon(cell.pipeDirection || "up")}
+          {/* {cell.element === "Pipe" && getPipeIcon(cell.pipeDirection || "up")}
           {cell.element &&
             cell.element !== "Pipe" &&
-            getElementIcon(cell.element)}
+            getElementIcon(cell.element)} */}
         </div>
       ))}
     </div>

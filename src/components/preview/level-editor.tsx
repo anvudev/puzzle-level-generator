@@ -39,6 +39,8 @@ import {
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
 
+import { blockStyleDecorator } from "@/lib/utils/styleDecoration";
+
 interface LevelEditorProps {
   level: GeneratedLevel;
   onLevelUpdate: (updatedLevel: GeneratedLevel) => void;
@@ -568,105 +570,93 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     }}
                   >
                     {level.board.map((row, rowIndex) =>
-                      row.map((cell, colIndex) => (
-                        <div
-                          key={`${rowIndex}-${colIndex}`}
-                          className="aspect-square rounded border border-border flex items-center justify-center text-xs font-bold cursor-pointer hover:scale-105 transition-transform"
-                          style={{
-                            backgroundColor:
-                              cell.type === "wall"
-                                ? ""
-                                : cell.element === "Pipe"
-                                ? "#6b7280"
-                                : cell.element === "PullPin"
-                                ? "#8B4513"
-                                : cell.color
-                                ? level.config.colorMapping[cell.color] ||
-                                  "#f3f4f6"
-                                : "#f3f4f6",
-                            color:
-                              cell.element === "Pipe"
-                                ? "#fff"
-                                : cell.element === "PullPin"
-                                ? "#fff"
-                                : cell.color &&
-                                  ["color_4", "color_12"].includes(cell.color) // Yellow, White
-                                ? "#000"
-                                : "#fff",
-                          }}
-                          onClick={() => handleCellClick(rowIndex, colIndex)}
-                        >
-                          {" "}
-                          {cell.color && (
-                            <span>{cell.color.replace("color_", "")}</span>
-                          )}
-                          {cell.element === "Pipe" && cell.pipeDirection && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <div className="flex flex-col items-center w-full h-full justify-center ">
-                                  <span className="text-xl">
-                                    {getDirectionIcon(cell.pipeDirection)}
-                                  </span>
-                                  <span className="text-sm">
-                                    {cell.pipeContents?.length || 0}
-                                  </span>
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-80">
-                                <div className="space-y-3">
-                                  <h4 className="font-medium">Pipe Contents</h4>
-                                  <div className="space-y-2">
-                                    <div className="flex flex-wrap gap-1">
-                                      {cell.pipeContents?.map(
-                                        (color, index) => (
-                                          <div
-                                            key={index}
-                                            className="w-6 h-6 rounded border border-border flex items-center justify-center text-xs"
-                                            style={{
-                                              backgroundColor:
-                                                level.config.colorMapping[
-                                                  color
-                                                ] || "#f3f4f6",
-                                              color: [
-                                                "color_4", // Yellow
-                                                "color_12", // White
-                                              ].includes(color)
-                                                ? "#000"
-                                                : "#fff",
-                                            }}
-                                          >
-                                            {index + 1}
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      onClick={() => {
-                                        setEditingPipe({
-                                          row: rowIndex,
-                                          col: colIndex,
-                                          contents: cell.pipeContents || [],
-                                        });
-                                      }}
+                      row.map((cell, colIndex) => {
+                        return (
+                          <div
+                            key={`${rowIndex}-${colIndex}`}
+                            className="aspect-square rounded border border-border flex items-center justify-center text-xs font-bold cursor-pointer hover:scale-105 transition-transform"
+                            style={blockStyleDecorator(cell)}
+                            onClick={() => handleCellClick(rowIndex, colIndex)}
+                          >
+                            {" "}
+                            {cell.element === "Pipe" && cell.pipeDirection && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div className="flex flex-col items-center w-full h-full justify-center ">
+                                    <span
+                                      className="text-4xl relative
+                                    "
                                     >
-                                      Edit Contents
-                                    </Button>
+                                      {getDirectionIcon(cell.pipeDirection)}
+                                    </span>
+                                    <span className="text-sm text-white absolute bottom-50% right-50% translate-x-1/2 translate-y-1/2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+                                      {cell.pipeContents?.length || 0}
+                                    </span>
                                   </div>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )}
-                          {cell.type === "wall" && (
-                            <span className="text-3xl opacity-30">🧱</span>
-                          )}
-                          {cell.element && cell.element !== "Pipe" && (
-                            <span className="text-3xl">
-                              {getElementIcon(cell.element)}
-                            </span>
-                          )}
-                        </div>
-                      ))
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                  <div className="space-y-3">
+                                    <h4 className="font-medium">
+                                      Pipe Contents
+                                    </h4>
+                                    <div className="space-y-2">
+                                      <div className="flex flex-wrap gap-1">
+                                        {cell.pipeContents?.map(
+                                          (color, index) => (
+                                            <div
+                                              key={index}
+                                              className="w-6 h-6 rounded border border-border flex items-center justify-center text-xs"
+                                              style={{
+                                                backgroundColor:
+                                                  level.config.colorMapping[
+                                                    color
+                                                  ] || "#f3f4f6",
+                                                color: [
+                                                  "color_4", // Yellow
+                                                  "color_12", // White
+                                                ].includes(color)
+                                                  ? "#000"
+                                                  : "#fff",
+                                              }}
+                                            >
+                                              {index + 1}
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        onClick={() => {
+                                          setEditingPipe({
+                                            row: rowIndex,
+                                            col: colIndex,
+                                            contents: cell.pipeContents || [],
+                                          });
+                                        }}
+                                      >
+                                        Edit Contents
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                            {cell.type === "wall" && (
+                              <span className="text-3xl opacity-30">🧱</span>
+                            )}
+                            {cell.type == "block" && !cell.element && (
+                              <span className="text-sm font-medium text-white">
+                                {cell.color?.replace("color_", "")}
+                              </span>
+                            )}
+                            {cell.element && cell.element !== "Pipe" && (
+                              <span className="text-3xl">
+                                {getElementIcon(cell.element)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 </div>

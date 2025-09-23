@@ -11,6 +11,7 @@ import { getElementIcon } from "@/lib/utils/level-utils";
 import { RotateCcw, Move } from "lucide-react";
 import { LevelEditor } from "./level-editor";
 import { LevelHelp } from "./level-help";
+import { blockStyleDecorator } from "@/lib/utils/styleDecoration";
 
 interface BoardPreviewProps {
   level: GeneratedLevel;
@@ -272,26 +273,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       ? "cursor-pointer hover:ring-2 hover:ring-blue-400"
                       : ""
                   }`}
-                  style={{
-                    backgroundColor:
-                      cell.type === "wall"
-                        ? "" // Dark gray for wall cells
-                        : cell.element === "Pipe"
-                        ? "" // Gray color for pipe blocks (dead blocks)
-                        : cell.element === "PullPin"
-                        ? "#fff" // Brown color for pull pin blocks (barrier)
-                        : cell.color
-                        ? level.config.colorMapping[cell.color] || "#f3f4f6"
-                        : "#f3f4f6",
-                    color:
-                      cell.element === "Pipe"
-                        ? "#fff" // White text for pipe blocks
-                        : cell.element === "PullPin"
-                        ? "#fff" // White text for pull pin blocks
-                        : cell.color && ["Yellow", "White"].includes(cell.color)
-                        ? "#000"
-                        : "#fff",
-                  }}
+                  style={blockStyleDecorator(cell)}
                   draggable={canDrag}
                   onDragStart={(e) => handleDragStart(e, cell, index)}
                   onDragOver={(e) => handleDragOver(e, index)}

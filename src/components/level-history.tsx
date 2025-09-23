@@ -33,10 +33,11 @@ import {
   useLevelHistory,
   type SavedLevel,
 } from "@/lib/hooks/use-level-history";
-import { GAME_COLORS } from "@/config/game-constants";
+// Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel } from "@/config/game-types";
 import { getElementIcon, getPipeIcon } from "@/lib/utils/level-utils";
 import { AlertDialogUI } from "./alert/alert";
+import { elementGenerate } from "@/lib/utils/styleDecoration";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -228,9 +229,9 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                     backgroundColor:
                                       cell.type === "block"
                                         ? cell.color
-                                          ? GAME_COLORS[
-                                              cell.color as keyof typeof GAME_COLORS
-                                            ] || "#f3f4f6"
+                                          ? savedLevel.level.config
+                                              .colorMapping[cell.color] ||
+                                            "#f3f4f6"
                                           : "#e5e7eb"
                                         : "#f9fafb",
                                     fontSize: "6px",
@@ -354,30 +355,28 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                   >
                                     {savedLevel.level.board
                                       .flat()
-                                      .map((cell, index) => (
-                                        <div
-                                          key={index}
-                                          className="rounded text-3xl border border-gray-200 flex items-center justify-center"
-                                          style={{
-                                            backgroundColor:
-                                              cell.type === "block"
-                                                ? cell.color
-                                                  ? GAME_COLORS[
-                                                      cell.color as keyof typeof GAME_COLORS
-                                                    ] || "#f3f4f6"
-                                                  : ""
-                                                : "#f9fafb",
-                                          }}
-                                        >
-                                          {cell.element === "Pipe" &&
-                                            getPipeIcon(
-                                              cell.pipeDirection || "up"
-                                            )}
-                                          {cell.element &&
-                                            cell.element !== "Pipe" &&
-                                            getElementIcon(cell.element)}
-                                        </div>
-                                      ))}
+                                      .map((cell, index) => {
+                                        console.log(cell);
+                                        return (
+                                          <div
+                                            key={index}
+                                            className="rounded text-3xl border border-gray-200 flex items-center justify-center"
+                                            style={{
+                                              backgroundColor:
+                                                cell.type === "block"
+                                                  ? cell.color
+                                                    ? savedLevel.level.config
+                                                        .colorMapping[
+                                                        cell.color
+                                                      ] || "#f3f4f6"
+                                                    : ""
+                                                  : "#f9fafb",
+                                            }}
+                                          >
+                                            {elementGenerate(cell)}
+                                          </div>
+                                        );
+                                      })}
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

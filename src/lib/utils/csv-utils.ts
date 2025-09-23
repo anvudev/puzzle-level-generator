@@ -1,5 +1,5 @@
 import type { LevelConfig } from "@/config/game-types";
-import { DEFAULT_CONFIG } from "@/config/game-constants";
+import { DEFAULT_CONFIG, COLOR_MAPPING } from "@/config/game-constants";
 
 export interface CSVLevelConfig extends LevelConfig {
   name: string;
@@ -26,11 +26,11 @@ export const CSV_HEADERS = [
 ] as const;
 
 export const CSV_FORMAT_EXAMPLE = `name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,iceCounts,blockLockCount,pullPinCount,bombCount,bombCounts,movingCount
-"Test1",9,10,Normal,"Red,Blue,Green",60,random,2,"3,4",2,1,"5",0,0,1,"8",0
-"Test2",9,10,Hard,"Red,Blue,Green,Yellow",54,symmetric,3,"4,5,6",3,2,"2,3",1,3,1,"2",0
-"Test3",9,10,"Super Hard","Red,Blue,Green,Yellow,Purple",72,symmetric,4,"5,6,7,8",4,3,"2,3,4",2,4,2,"2,3",1
-"Test4",9,10,Normal,"Red,Blue",40,symmetric,3,"2,3,4",2,0,"",0,0,0,"",0
-"Test5",9,10,Hard,"Red,Blue,Green,Yellow",48,symmetric,2,"4,5",3,2,"4,5",2,1,1,0,0`;
+"Test1",9,10,Normal,"color_1,color_2,color_3",60,random,2,"3,4",2,1,"5",0,0,1,"8",0
+"Test2",9,10,Hard,"color_1,color_2,color_3,color_4",54,symmetric,3,"4,5,6",3,2,"2,3",1,3,1,"2",0
+"Test3",9,10,"Super Hard","color_1,color_2,color_3,color_4,color_6",72,symmetric,4,"5,6,7,8",4,3,"2,3,4",2,4,2,"2,3",1
+"Test4",9,10,Normal,"color_1,color_2",40,symmetric,3,"2,3,4",2,0,"",0,0,0,"",0
+"Test5",9,10,Hard,"color_1,color_2,color_3,color_4",48,symmetric,2,"4,5",3,2,"4,5",2,1,1,0,0`;
 
 export const CSV_FORMAT_DOCUMENTATION = `
 CSV Format Documentation:
@@ -40,7 +40,7 @@ Required Columns:
 - width: Chiều rộng board (5-20)
 - height: Chiều cao board (5-20)
 - difficulty: Độ khó (Normal/Hard/Super Hard)
-- selectedColors: Màu sắc sử dụng, cách nhau bởi dấu phẩy (Red,Blue,Green,Yellow,Purple)
+- selectedColors: Màu sắc sử dụng, cách nhau bởi dấu phẩy (color_1,color_2,color_3,color_4,color_6)
 - blockCount: Tổng số block trong level (10-400)
 - generationMode: Chế độ tạo level (random/symmetric)
 - pipeCount: Số lượng pipe (0-20)
@@ -120,6 +120,19 @@ export function validateCSVConfig(
     errors.push(`Dòng ${lineNumber}: Phải có ít nhất 1 màu`);
   } else {
     const validColors = [
+      "color_1",
+      "color_2",
+      "color_3",
+      "color_4",
+      "color_5",
+      "color_6",
+      "color_7",
+      "color_8",
+      "color_9",
+      "color_10",
+      "color_11",
+      "color_12",
+      // Legacy support for old color names
       "red",
       "blue",
       "green",
@@ -297,21 +310,25 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
               .map((c) => c.trim())
               .filter((c) => c);
 
-            // Normalize color names (capitalize first letter)
+            // Convert legacy color names to color index system
             const normalizedColors = colors.map((color) => {
               const lower = color.toLowerCase();
-              if (lower === "red") return "Red";
-              if (lower === "blue") return "Blue";
-              if (lower === "green") return "Green";
-              if (lower === "yellow") return "Yellow";
-              if (lower === "purple") return "Purple";
-              if (lower === "brown") return "Brown";
-              if (lower === "orange") return "Orange";
-              if (lower === "cyan") return "Cyan";
-              if (lower === "light blue") return "Light Blue";
-              if (lower === "pink") return "Pink";
-              if (lower === "grey") return "Grey";
-              if (lower === "white") return "White";
+              // If already in color_X format, keep it
+              if (color.startsWith("color_")) return color;
+
+              // Convert legacy color names to color index
+              if (lower === "red") return "color_1";
+              if (lower === "blue") return "color_2";
+              if (lower === "green") return "color_3";
+              if (lower === "yellow") return "color_4";
+              if (lower === "orange") return "color_5";
+              if (lower === "purple") return "color_6";
+              if (lower === "pink") return "color_7";
+              if (lower === "cyan") return "color_8";
+              if (lower === "light blue") return "color_9";
+              if (lower === "brown") return "color_10";
+              if (lower === "grey") return "color_11";
+              if (lower === "white") return "color_12";
               return color; // Keep original if no match
             });
 
@@ -405,6 +422,17 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
       }
     });
 
+    // Create colorMapping for the selected colors
+    if (config.selectedColors) {
+      config.colorMapping = {};
+      config.selectedColors.forEach((colorKey) => {
+        if (COLOR_MAPPING[colorKey as keyof typeof COLOR_MAPPING]) {
+          config.colorMapping![colorKey] =
+            COLOR_MAPPING[colorKey as keyof typeof COLOR_MAPPING];
+        }
+      });
+    }
+
     // Validate the config
     const errors = validateCSVConfig(config, i + 1);
     if (errors.length > 0) {
@@ -452,7 +480,9 @@ export function configsToCSV(configs: CSVLevelConfig[]): string {
         case "difficulty":
           return config.difficulty || "Normal";
         case "selectedColors":
-          return `"${config.selectedColors?.join(",") || "Red,Blue,Green"}"`;
+          return `"${
+            config.selectedColors?.join(",") || "color_1,color_2,color_3"
+          }"`;
         case "blockCount":
           return config.blockCount?.toString() || "30";
         case "generationMode":
