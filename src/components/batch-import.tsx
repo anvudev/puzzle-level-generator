@@ -61,6 +61,7 @@ import {
   kvCreate,
   kvUpdateImportConfig,
 } from "@/app/api/clients";
+import { getDifficultyColor, getElementIcon } from "@/lib/utils/level-utils";
 
 interface BatchImportProps {
   onSaveLevel?: (level: GeneratedLevel, name?: string) => string;
@@ -595,6 +596,11 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
           <CardContent>
             <div className="grid gap-4">
               {importedConfigs.map((config) => {
+                console.log(config);
+                const configLevel = config.generatedLevel?.config || config;
+                const generationMode =
+                  config.generatedLevel?.config?.generationMode ||
+                  config.generationMode;
                 return (
                   <Card
                     key={config.generatedLevel?.id || config.id}
@@ -609,11 +615,9 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                             config.generatedLevel ? (
                               <GenerateBoardSmall
                                 board={config.generatedLevel.board}
-                                width={config.generatedLevel.config.width}
-                                height={config.generatedLevel.config.height}
-                                colorMapping={
-                                  config.generatedLevel.config.colorMapping
-                                }
+                                width={configLevel.width}
+                                height={configLevel.height}
+                                colorMapping={configLevel.colorMapping}
                               />
                             ) : config.status === "error" ? (
                               <div className="text-red-500 text-xs text-center">
@@ -634,114 +638,79 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg truncate">
-                                {config.name ||
-                                  config.generatedLevel?.config?.name}
+                                {configLevel.name}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <Badge variant="outline" className="text-xs">
                                   <Grid3X3 className="w-3 h-3 mr-1" />
-                                  {config.generatedLevel?.config?.width ||
-                                    config.width}
-                                  x
-                                  {config.generatedLevel?.config?.height ||
-                                    config.height}
+                                  {configLevel.width}x{configLevel.height}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
                                   <Palette className="w-3 h-3 mr-1" />
-                                  {config.generatedLevel?.config?.selectedColors
-                                    ?.length ||
-                                    config.selectedColors?.length ||
-                                    0}{" "}
-                                  màu
+                                  {configLevel.selectedColors?.length} màu
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  🧩{" "}
-                                  {config.generatedLevel?.config?.blockCount ||
-                                    config.blockCount ||
-                                    0}{" "}
-                                  block
+                                  🧩 {configLevel.blockCount} block
+                                </Badge>
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs text-white ${getDifficultyColor(
+                                    configLevel.difficulty || "Normal"
+                                  )}`}
+                                >
+                                  {configLevel.difficulty || "Normal"}
                                 </Badge>
                                 <Badge variant="outline" className="text-xs">
-                                  {config.generatedLevel?.config?.difficulty ||
-                                    config.difficulty ||
-                                    "Normal"}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {config.generatedLevel?.config
-                                    ?.generationMode === "symmetric"
+                                  {generationMode === "symmetric"
                                     ? "🔄 Đối xứng"
                                     : "🎲 Ngẫu nhiên"}
                                 </Badge>
-                                {(config.pipeCount ||
-                                  config.generatedLevel?.pipeInfo?.length ||
-                                  0) > 0 && (
+                                {(configLevel.pipeCount || 0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    ⬆️{" "}
-                                    {config.generatedLevel?.pipeInfo?.length ||
-                                      config.pipeCount ||
-                                      0}{" "}
-                                    pipe
+                                    ⬆️ {configLevel.pipeCount || 0} Pipe
                                   </Badge>
                                 )}
-                                {(config.elements?.["Barrel"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "Barrel"
-                                  ] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["Barrel"] || 0) >
+                                  0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    📦 {config.elements?.["Barrel"]} barrel
+                                    📦 {configLevel.elements?.["Barrel"] || 0}{" "}
+                                    Barrel
                                   </Badge>
                                 )}
-                                {(config.elements?.["IceBlock"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "IceBlock"
-                                  ] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["IceBlock"] || 0) >
+                                  0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    🧊 {config.elements?.["IceBlock"]} ice
+                                    {getElementIcon("IceBlock")}{" "}
+                                    {configLevel.elements?.["IceBlock"] || 0}{" "}
+                                    Ice
                                   </Badge>
                                 )}
-                                {(config.elements?.["BlockLock"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "BlockLock"
-                                  ] ||
-                                  config.elements?.["Block Lock"] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["BlockLock"] || 0) >
+                                  0 && (
                                   <Badge variant="outline" className="text-xs">
                                     🔒{" "}
-                                    {config.elements?.["BlockLock"] ||
-                                      config.generatedLevel?.config?.elements?.[
-                                        "BlockLock"
-                                      ] ||
-                                      config.elements?.["Block Lock"]}{" "}
-                                    lock
+                                    {configLevel.elements?.["BlockLock"] || 0}{" "}
+                                    Lock
                                   </Badge>
                                 )}
-                                {(config.elements?.["PullPin"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "PullPin"
-                                  ] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["PullPin"] || 0) >
+                                  0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    🔱 {config.elements?.["PullPin"]} pull pin
+                                    🔱 {configLevel.elements?.["PullPin"] || 0}{" "}
+                                    Pull Pin
                                   </Badge>
                                 )}
-                                {(config.elements?.["Bomb"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "Bomb"
-                                  ] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["Bomb"] || 0) > 0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    💣 {config.elements?.["Bomb"]} bomb
+                                    💣 {configLevel.elements?.["Bomb"] || 0}{" "}
+                                    Bomb
                                   </Badge>
                                 )}
-                                {(config.elements?.["Moving"] ||
-                                  config.generatedLevel?.config?.elements?.[
-                                    "Moving"
-                                  ] ||
-                                  0) > 0 && (
+                                {(configLevel.elements?.["Moving"] || 0) >
+                                  0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    🔄 {config.elements?.["Moving"]} moving
+                                    🔄 {configLevel.elements?.["Moving"] || 0}{" "}
+                                    moving
                                   </Badge>
                                 )}
                               </div>
