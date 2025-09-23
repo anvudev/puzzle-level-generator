@@ -11,7 +11,10 @@ import {
   downloadCSV,
   copyToClipboard,
 } from "@/lib/utils/export-utils";
-import { formatLevelForExport, generateCSVRow } from "@/lib/utils/level-utils";
+import {
+  formatLevelForExport,
+  generateCSVMatrix,
+} from "@/lib/utils/level-utils";
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface ExportPanelProps {
@@ -57,8 +60,7 @@ export function ExportPanel({ level }: ExportPanelProps) {
   };
 
   const exportCSV = () => {
-    const customBars = getCustomBars();
-    const csv = generateCSVRow(level, customBars);
+    const csv = generateCSVMatrix(level);
     downloadCSV(csv, `${level.id}.csv`);
   };
 

@@ -144,7 +144,7 @@ export class AILevelGenerator {
       }
 
       const level: GeneratedLevel = {
-        id: `ai_level_${Date.now()}`,
+        id: `level_${Date.now()}`,
         config: { ...config },
         board: levelData.board || FallbackLevelGenerator.generateBoard(config),
         containers:

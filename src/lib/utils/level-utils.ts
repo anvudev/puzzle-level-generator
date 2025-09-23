@@ -130,54 +130,62 @@ export function formatLevelForExport(
   };
 }
 
-export function generateCSVRow(
-  level: GeneratedLevel,
-  customBars?: BarData[]
-): string {
-  // Analyze color bar data for CSV export
-  const colorBarAnalysis = analyzeColorsFromBoard(level);
+export function generateCSVMatrix(level: GeneratedLevel): string {
+  const rows: string[] = [];
 
-  // Use custom bars if provided, otherwise use default
-  const barsToExport = customBars || colorBarAnalysis.bars;
+  // Iterate through each row in the board matrix
+  for (let row = 0; row < level.board.length; row++) {
+    const csvRow: string[] = [];
 
-  const headers = [
-    "ID",
-    "Width",
-    "Height",
-    "BlockCount",
-    "ColorCount",
-    "Colors",
-    "Elements",
-    "DifficultyScore",
-    "Solvable",
-    "Timestamp",
-    // Color Bar Chart data - simplified
-    "BarSequence",
-  ];
+    // Iterate through each column in this row
+    for (let col = 0; col < level.board[row].length; col++) {
+      const cell = level.board[row][col];
 
-  // Format bar sequence for CSV - simplified format
-  const barSequence = barsToExport
-    .map((bar) => `${bar.barIndex}:${bar.color}`)
-    .join(";");
+      // Create clean cell object (remove undefined properties)
+      const cellData: Record<string, unknown> = {
+        type: cell.type,
+        color: cell.color,
+        element: cell.element,
+      };
 
-  const row = [
-    level.id,
-    level.config.width,
-    level.config.height,
-    level.config.blockCount,
-    level.config.colorCount,
-    level.config.selectedColors.join(";"),
-    Object.entries(level.config.elements)
-      .map(([k, v]) => `${k}:${v}`)
-      .join(";"),
-    level.difficultyScore,
-    level.solvable,
-    level.timestamp.toISOString(),
-    // Color Bar Chart data
-    `"${barSequence}"`,
-  ];
+      // Add optional properties only if they exist
+      if (cell.pipeDirection !== undefined) {
+        cellData.pipeDirection = cell.pipeDirection;
+      }
+      if (cell.pipeSize !== undefined) {
+        cellData.pipeSize = cell.pipeSize;
+      }
+      if (cell.pipeContents !== undefined) {
+        cellData.pipeContents = cell.pipeContents;
+      }
+      if (cell.lockId !== undefined) {
+        cellData.lockId = cell.lockId;
+      }
+      if (cell.keyId !== undefined) {
+        cellData.keyId = cell.keyId;
+      }
+      if (cell.lockPairNumber !== undefined) {
+        cellData.lockPairNumber = cell.lockPairNumber;
+      }
+      if (cell.pullPinDirection !== undefined) {
+        cellData.pullPinDirection = cell.pullPinDirection;
+      }
+      if (cell.pullPinGateSize !== undefined) {
+        cellData.pullPinGateSize = cell.pullPinGateSize;
+      }
+      if (cell.iceCount !== undefined) {
+        cellData.iceCount = cell.iceCount;
+      }
 
-  return [headers.join(","), row.join(",")].join("\n");
+      // Convert to JSON string and escape quotes for CSV
+      const jsonString = JSON.stringify(cellData).replace(/"/g, '""');
+      csvRow.push(`"${jsonString}"`);
+    }
+
+    rows.push(csvRow.join(","));
+  }
+
+  return rows.join("\n");
 }
 
 export function getDifficultyColor(difficulty: string): string {
@@ -277,7 +285,7 @@ export function refillLevel(level: GeneratedLevel): GeneratedLevel {
   // Create new level with same config but new board and timestamp
   const newLevel: GeneratedLevel = {
     ...level,
-    id: `refill-${Date.now()}`,
+    id: `level_${Date.now()}`,
     board: newBoard,
     timestamp: new Date(),
   };

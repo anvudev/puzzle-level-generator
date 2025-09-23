@@ -20,7 +20,10 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
-import { formatLevelForExport } from "@/lib/utils/level-utils";
+import {
+  formatLevelForExport,
+  generateCSVMatrix,
+} from "@/lib/utils/level-utils";
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
 interface LevelActionsProps {
@@ -70,6 +73,22 @@ export function LevelActions({
     const filename = `level-${level.id}.json`;
     const blob = new Blob([data], {
       type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadCSV = () => {
+    const csv = generateCSVMatrix(level);
+    const filename = `level-${level.id}.csv`;
+    const blob = new Blob([csv], {
+      type: "text/csv",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -138,6 +157,15 @@ export function LevelActions({
           >
             <Download className="w-4 h-4" />
             Download JSON
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 flex-1"
+          >
+            <Download className="w-4 h-4" />
+            Download CSV
           </Button>
         </div>
 

@@ -19,22 +19,22 @@ export class FallbackLevelGenerator {
     const board = this.generateBoard(config);
 
     const reason = !AI_GENERATION_CONFIG.ENABLE_AI_GENERATION
-      ? "Fallback level - AI generation bị tắt"
+      ? "Generated level - AI generation bị tắt"
       : AI_GENERATION_CONFIG.FORCE_USE_FALLBACK
-      ? "Fallback level - Bắt buộc sử dụng thuật toán"
-      : "Fallback level - Gemini API không khả dụng";
+      ? "Generated level - Bắt buộc sử dụng thuật toán"
+      : "Generated level - Gemini API không khả dụng";
 
     // Extract pipe and lock information for UI
     const pipeInfo = LevelGeneratorUtils.extractPipeInfo(board, config);
     const lockInfo = LevelGeneratorUtils.extractLockInfo(board, config);
 
     return {
-      id: `fallback_level_${Date.now()}`,
+      id: `level_${Date.now()}`,
       config: { ...config },
       board,
       containers: this.generateContainers(config),
       difficultyScore: LevelGeneratorUtils.calculateDifficultyScore(config),
-      solvable: true, // Fallback algorithm ensures connectivity so it's solvable
+      solvable: true, // Algorithm ensures connectivity so it's solvable
       timestamp: new Date(),
       pipeInfo,
       lockInfo,
@@ -87,7 +87,7 @@ export class FallbackLevelGenerator {
         0
       );
     } else {
-      // Fallback to default calculation
+      // Use default calculation
       const pipeBlocksPerPipe =
         config.pipeBlockCount ||
         LevelGeneratorUtils.getPipeBlockRange(config.difficulty).avg;
@@ -283,7 +283,7 @@ export class FallbackLevelGenerator {
         0
       );
     } else {
-      // Fallback to default calculation
+      // Use default calculation
       const pipeBlocksPerPipe =
         config.pipeBlockCount ||
         LevelGeneratorUtils.getPipeBlockRange(config.difficulty).avg;
@@ -896,7 +896,7 @@ export class FallbackLevelGenerator {
       if (config.iceCounts && config.iceCounts.length > index) {
         iceCount = config.iceCounts[index];
       } else {
-        iceCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 hits fallback
+        iceCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 hits default
       }
       board[pos.y][pos.x].iceCount = iceCount;
       return true;
@@ -908,7 +908,7 @@ export class FallbackLevelGenerator {
       if (config.bombCounts && config.bombCounts.length > index) {
         bombCount = config.bombCounts[index];
       } else {
-        bombCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 power fallback
+        bombCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 power default
       }
       board[pos.y][pos.x].bombCount = bombCount;
       return true;
