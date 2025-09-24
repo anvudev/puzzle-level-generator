@@ -88,7 +88,8 @@ export function LevelActions({
   };
 
   const handleDownloadCSV = () => {
-    const csv = generateCSVMatrix(level);
+    const customBars = getCustomBars();
+    const csv = generateCSVMatrix(level, customBars);
     const filename = `level-${level.id}.csv`;
     const blob = new Blob([csv], {
       type: "text/csv",

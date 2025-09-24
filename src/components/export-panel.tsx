@@ -63,7 +63,8 @@ export function ExportPanel({ level }: ExportPanelProps) {
   };
 
   const exportCSV = () => {
-    const csv = generateCSVMatrix(level);
+    const customBars = getCustomBars();
+    const csv = generateCSVMatrix(level, customBars);
     downloadCSV(csv, `${level.id}.csv`);
   };
 

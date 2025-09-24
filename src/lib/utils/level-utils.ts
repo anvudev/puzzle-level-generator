@@ -161,7 +161,10 @@ export function formatLevelForExport(
   return convertColorsToNumbers(exportData);
 }
 
-export function generateCSVMatrix(level: GeneratedLevel): string {
+export function generateCSVMatrix(
+  level: GeneratedLevel,
+  customBars?: BarData[]
+): string {
   const rows: string[] = [];
 
   // Iterate through each row in the board matrix
@@ -226,6 +229,30 @@ export function generateCSVMatrix(level: GeneratedLevel): string {
 
     rows.push(csvRow.join(","));
   }
+
+  // Add color bar chart data as row 11 (index 10)
+  // Get color bar data
+  const colorBarAnalysis = analyzeColorsFromBoard(level);
+  const barsToExport = customBars || colorBarAnalysis.bars;
+
+  // Extract just the color values in order: [1,3,2,1,3,2,1,3,1]
+  const colorBarArray = barsToExport.map((bar) =>
+    typeof bar.color === "string" ? parseInt(bar.color) || bar.color : bar.color
+  );
+
+  // Create color bar chart row
+  const colorBarRow: string[] = [];
+
+  // First column contains the color bar array
+  const colorBarJson = JSON.stringify(colorBarArray).replace(/"/g, '""');
+  colorBarRow.push(`"${colorBarJson}"`);
+
+  // Fill remaining columns with empty cells to match board width
+  for (let col = 1; col < level.board[0].length; col++) {
+    colorBarRow.push('""');
+  }
+
+  rows.push(colorBarRow.join(","));
 
   return rows.join("\n");
 }
