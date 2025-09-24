@@ -4,8 +4,8 @@ export interface LevelConfig {
   height: number;
   blockCount: number;
   colorCount: number;
-  selectedColors: string[]; // Now contains color_1, color_2, etc.
-  colorMapping: Record<string, string>; // Maps color_1 -> #ff0000, etc.
+  selectedColors: string[]; // Now contains "1", "2", etc.
+  colorMapping: Record<string, string>; // Maps "1" -> #ff0000, etc.
   generationMode: "random" | "symmetric";
   elements: Record<string, number>;
   difficulty: "Normal" | "Hard" | "Super Hard";

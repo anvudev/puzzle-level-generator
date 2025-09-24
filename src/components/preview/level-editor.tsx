@@ -50,7 +50,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedTool, setSelectedTool] = useState<
     "add" | "remove" | "color" | "pipe" | "pullpin" | "wall"
   >("add");
-  const [selectedColor, setSelectedColor] = useState<string>("color_1");
+  const [selectedColor, setSelectedColor] = useState<string>("1");
   const [selectedPipeDirection, setSelectedPipeDirection] = useState<
     "up" | "down" | "left" | "right"
   >("up");
@@ -371,7 +371,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                     "#f3f4f6",
                                 }}
                               />
-                              {color.replace("color_", "")}
+                              {color}
                             </div>
                           </SelectItem>
                         ))}
@@ -530,7 +530,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                             key={color}
                             className="flex items-center justify-between text-sm"
                           >
-                            <span>{color.replace("color_", "")}:</span>
+                            <span>{color}:</span>
                             <Badge
                               variant={
                                 count % 3 === 0 ? "default" : "destructive"
@@ -646,7 +646,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                             )}
                             {cell.type == "block" && !cell.element && (
                               <span className="text-sm font-medium text-white">
-                                {cell.color?.replace("color_", "")}
+                                {cell.color}
                               </span>
                             )}
                             {cell.element && cell.element !== "Pipe" && (
@@ -739,7 +739,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                       "#f3f4f6",
                                   }}
                                 />
-                                {colorOption.replace("color_", "")}
+                                {colorOption}
                               </div>
                             </SelectItem>
                           ))}

@@ -1,7 +1,7 @@
 import type { GeneratedLevel } from "@/config/game-types";
 
 // Simplified interface for color bar chart data
-interface BarData {
+export interface BarData {
   barIndex: number;
   color: string;
 }
@@ -105,6 +105,34 @@ function analyzeColorsFromBoard(level: GeneratedLevel): ColorBarAnalysis {
   };
 }
 
+// Helper function to convert colors to numbers recursively
+function convertColorsToNumbers(obj: unknown): unknown {
+  if (typeof obj === "string" && /^\d+$/.test(obj)) {
+    const num = parseInt(obj);
+    return isNaN(num) ? obj : num;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertColorsToNumbers(item));
+  }
+  if (obj && typeof obj === "object") {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Convert color values but keep keys as strings
+      if (
+        key === "color" ||
+        key === "selectedColors" ||
+        (key === "pipeContents" && Array.isArray(value))
+      ) {
+        converted[key] = convertColorsToNumbers(value);
+      } else {
+        converted[key] = convertColorsToNumbers(value);
+      }
+    }
+    return converted;
+  }
+  return obj;
+}
+
 export function formatLevelForExport(
   level: GeneratedLevel,
   customBars?: BarData[]
@@ -115,7 +143,7 @@ export function formatLevelForExport(
   // Use custom bars if provided, otherwise use default
   const barsToExport = customBars || colorBarAnalysis.bars;
 
-  return {
+  const exportData = {
     id: level.id,
     timestamp: level.timestamp.toISOString(),
     config: level.config,
@@ -128,6 +156,9 @@ export function formatLevelForExport(
       bars: barsToExport,
     },
   };
+
+  // Convert all colors to numbers
+  return convertColorsToNumbers(exportData);
 }
 
 export function generateCSVMatrix(level: GeneratedLevel): string {
@@ -144,7 +175,7 @@ export function generateCSVMatrix(level: GeneratedLevel): string {
       // Create clean cell object (remove undefined properties)
       const cellData: Record<string, unknown> = {
         type: cell.type,
-        color: cell.color,
+        color: cell.color ? parseInt(cell.color) || cell.color : cell.color,
         element: cell.element,
       };
 
@@ -156,7 +187,9 @@ export function generateCSVMatrix(level: GeneratedLevel): string {
         cellData.pipeSize = cell.pipeSize;
       }
       if (cell.pipeContents !== undefined) {
-        cellData.pipeContents = cell.pipeContents;
+        cellData.pipeContents = cell.pipeContents.map(
+          (color) => parseInt(color) || color
+        );
       }
       if (cell.lockId !== undefined) {
         cellData.lockId = cell.lockId;
@@ -175,6 +208,15 @@ export function generateCSVMatrix(level: GeneratedLevel): string {
       }
       if (cell.iceCount !== undefined) {
         cellData.iceCount = cell.iceCount;
+      }
+      if (cell.bombCount !== undefined) {
+        cellData.bombCount = cell.bombCount;
+      }
+      if (cell.movingDirection !== undefined) {
+        cellData.movingDirection = cell.movingDirection;
+      }
+      if (cell.movingDistance !== undefined) {
+        cellData.movingDistance = cell.movingDistance;
       }
 
       // Convert to JSON string and escape quotes for CSV
@@ -209,7 +251,7 @@ export function getElementIcon(elementType: string): string {
     BlockLock: "🔒",
     PullPin: "🔱",
     Bomb: "💣",
-    Moving: "➡️",
+    Moving: "⏫",
     Key: "🔑",
   };
   return icons[elementType] || "⬜";

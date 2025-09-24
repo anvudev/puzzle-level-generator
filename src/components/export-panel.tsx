@@ -14,6 +14,7 @@ import {
 import {
   formatLevelForExport,
   generateCSVMatrix,
+  type BarData,
 } from "@/lib/utils/level-utils";
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
@@ -46,7 +47,9 @@ export function ExportPanel({ level }: ExportPanelProps) {
   // Helper function to get custom bars from store
   const getCustomBars = () => {
     // First get default bars
-    const defaultData = formatLevelForExport(level);
+    const defaultData = formatLevelForExport(level) as {
+      colorBarChart: { bars: BarData[] };
+    };
     const defaultBars = defaultData.colorBarChart.bars;
 
     // Then get custom order from store
@@ -189,8 +192,11 @@ export function ExportPanel({ level }: ExportPanelProps) {
                 containers: level.containers,
                 difficultyScore: level.difficultyScore,
                 solvable: level.solvable,
-                colorBarChart: formatLevelForExport(level, getCustomBars())
-                  .colorBarChart,
+                colorBarChart: (
+                  formatLevelForExport(level, getCustomBars()) as {
+                    colorBarChart: unknown;
+                  }
+                ).colorBarChart,
               },
               null,
               2

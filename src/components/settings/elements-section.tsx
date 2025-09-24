@@ -101,7 +101,7 @@ export function ElementsSection({
                     {elementKey === "block_lock" && "🔒"}
                     {elementKey === "barrier_lock" && "🚧"}
                     {elementKey === "bomb" && "💣"}
-                    {elementKey === "moving" && "🔄"}
+                    {elementKey === "moving" && "⏫"}
                   </span>
                   <div>
                     <h4 className="font-bold text-gray-800 group-hover:text-orange-700 transition-colors">

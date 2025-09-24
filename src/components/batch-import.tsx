@@ -709,7 +709,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                                 {(configLevel.elements?.["Moving"] || 0) >
                                   0 && (
                                   <Badge variant="outline" className="text-xs">
-                                    🔄 {configLevel.elements?.["Moving"] || 0}{" "}
+                                    ⏫ {configLevel.elements?.["Moving"] || 0}{" "}
                                     moving
                                   </Badge>
                                 )}

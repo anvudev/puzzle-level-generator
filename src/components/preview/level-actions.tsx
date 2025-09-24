@@ -23,6 +23,7 @@ import type { GeneratedLevel } from "@/config/game-types";
 import {
   formatLevelForExport,
   generateCSVMatrix,
+  type BarData,
 } from "@/lib/utils/level-utils";
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
 
@@ -45,7 +46,9 @@ export function LevelActions({
   // Helper function to get custom bars from store
   const getCustomBars = () => {
     // First get default bars
-    const defaultData = formatLevelForExport(level);
+    const defaultData = formatLevelForExport(level) as {
+      colorBarChart: { bars: BarData[] };
+    };
     const defaultBars = defaultData.colorBarChart.bars;
 
     // Then get custom order from store

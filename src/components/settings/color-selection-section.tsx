@@ -23,7 +23,7 @@ export function ColorSelectionSection({
     const newColorMapping = { ...config.colorMapping };
     if (selectedColors.includes(colorKey)) {
       newColorMapping[colorKey] =
-        COLOR_MAPPING[colorKey as keyof typeof COLOR_MAPPING];
+        COLOR_MAPPING[parseInt(colorKey) as keyof typeof COLOR_MAPPING];
     } else {
       delete newColorMapping[colorKey];
     }

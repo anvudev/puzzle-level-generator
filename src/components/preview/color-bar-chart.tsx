@@ -276,7 +276,7 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
                   title={`Thanh ${bar.barIndex}: ${bar.color} - Kéo vào thanh khác để đổi chỗ`}
                 >
                   <span className="text-xs font-bold text-white drop-shadow-sm">
-                    {bar.color.replace("color_", "")}
+                    {bar.color}
                   </span>
                   {/* Số thứ tự thanh */}
                   <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-800 text-white text-[10px] rounded-full flex items-center justify-center border border-white">

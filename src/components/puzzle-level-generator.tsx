@@ -72,9 +72,7 @@ export function PuzzleLevelGenerator() {
 
   const handleReFill = () => {
     if (generatedLevel) {
-      console.log("🔄 ReFilling level:", generatedLevel.id);
       const refilledLevel = refillLevel(generatedLevel);
-      console.log("✅ ReFilled level created:", refilledLevel.id);
       setGeneratedLevel(refilledLevel);
     }
   };

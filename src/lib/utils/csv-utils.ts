@@ -26,11 +26,11 @@ export const CSV_HEADERS = [
 ] as const;
 
 export const CSV_FORMAT_EXAMPLE = `name,width,height,difficulty,selectedColors,blockCount,generationMode,pipeCount,pipeBlockCounts,barrelCount,iceBlockCount,iceCounts,blockLockCount,pullPinCount,bombCount,bombCounts,movingCount
-"Test1",9,10,Normal,"color_1,color_2,color_3",60,random,2,"3,4",2,1,"5",0,0,1,"8",0
-"Test2",9,10,Hard,"color_1,color_2,color_3,color_4",54,symmetric,3,"4,5,6",3,2,"2,3",1,3,1,"2",0
-"Test3",9,10,"Super Hard","color_1,color_2,color_3,color_4,color_6",72,symmetric,4,"5,6,7,8",4,3,"2,3,4",2,4,2,"2,3",1
-"Test4",9,10,Normal,"color_1,color_2",40,symmetric,3,"2,3,4",2,0,"",0,0,0,"",0
-"Test5",9,10,Hard,"color_1,color_2,color_3,color_4",48,symmetric,2,"4,5",3,2,"4,5",2,1,1,0,0`;
+"Test1",9,10,Normal,"1,2,3",60,random,2,"3,4",2,1,"5",0,0,1,"8",0
+"Test2",9,10,Hard,"1,2,3,4",54,symmetric,3,"4,5,6",3,2,"2,3",1,3,1,"2",0
+"Test3",9,10,"Super Hard","1,2,3,4,6",72,symmetric,4,"5,6,7,8",4,3,"2,3,4",2,4,2,"2,3",1
+"Test4",9,10,Normal,"1,2",40,symmetric,3,"2,3,4",2,0,"",0,0,0,"",0
+"Test5",9,10,Hard,"1,2,3,4",48,symmetric,2,"4,5",3,2,"4,5",2,1,1,0,0`;
 
 export const CSV_FORMAT_DOCUMENTATION = `
 CSV Format Documentation:
@@ -40,16 +40,16 @@ Required Columns:
 - width: Chiều rộng board (5-20)
 - height: Chiều cao board (5-20)
 - difficulty: Độ khó (Normal/Hard/Super Hard)
-- selectedColors: Màu sắc sử dụng, cách nhau bởi dấu phẩy (color_1,color_2,color_3,color_4,color_6)
-- blockCount: Tổng số block trong level (10-400)
+- selectedColors: Màu sắc sử dụng, cách nhau bởi dấu phẩy (1,2,3,4,6)
+- blockCount: Tổng số block trong level (10-200)
 - generationMode: Chế độ tạo level (random/symmetric)
 - pipeCount: Số lượng pipe (0-20)
 - pipeBlockCounts: Số block riêng cho từng pipe, cách nhau bởi dấu phẩy ("3,4,5")
-- barrelCount: Số lượng barrel - block ẩn màu (0-10)
-- iceBlockCount: Số lượng ice block - block đóng băng (0-10)
+- barrelCount: Số lượng barrel - block ẩn màu (0-30)
+- iceBlockCount: Số lượng ice block - block đóng băng (0-8)
 - blockLockCount: Số lượng block lock - khóa cần chìa (0-5)
 - pullPinCount: Số lượng pull pin - tường có thể phá (0-10)
-- bombCount: Số lượng bomb - đếm ngược (0-3)
+- bombCount: Số lượng bomb - đếm ngược (0-10)
 - movingCount: Số lượng moving - băng chuyền (0-5)
 
 Notes:
@@ -120,18 +120,30 @@ export function validateCSVConfig(
     errors.push(`Dòng ${lineNumber}: Phải có ít nhất 1 màu`);
   } else {
     const validColors = [
-      "color_1",
-      "color_2",
-      "color_3",
-      "color_4",
-      "color_5",
-      "color_6",
-      "color_7",
-      "color_8",
-      "color_9",
-      "color_10",
-      "color_11",
-      "color_12",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
       // Legacy support for old color names
       "red",
       "blue",
@@ -150,6 +162,19 @@ export function validateCSVConfig(
       "Pink",
       "Grey",
       "White",
+      // Legacy color_x format
+      "color_1",
+      "color_2",
+      "color_3",
+      "color_4",
+      "color_5",
+      "color_6",
+      "color_7",
+      "color_8",
+      "color_9",
+      "color_10",
+      "color_11",
+      "color_12",
     ];
     const invalidColors = config.selectedColors.filter(
       (color) => !validColors.includes(color)
@@ -172,9 +197,9 @@ export function validateCSVConfig(
   // Validate block count
   if (
     config.blockCount !== undefined &&
-    (config.blockCount < 10 || config.blockCount > 400)
+    (config.blockCount < 10 || config.blockCount > 200)
   ) {
-    errors.push(`Dòng ${lineNumber}: Block count phải từ 10-400`);
+    errors.push(`Dòng ${lineNumber}: Block count phải từ 10-200`);
   }
 
   // Validate generation mode
@@ -206,12 +231,12 @@ export function validateCSVConfig(
   // Validate all element counts
   const elements = config.elements || {};
 
-  if ((elements["Barrel"] || 0) < 0 || (elements["Barrel"] || 0) > 10) {
-    errors.push(`Dòng ${lineNumber}: Barrel count phải từ 0-10`);
+  if ((elements["Barrel"] || 0) < 0 || (elements["Barrel"] || 0) > 30) {
+    errors.push(`Dòng ${lineNumber}: Barrel count phải từ 0-30`);
   }
 
-  if ((elements["IceBlock"] || 0) < 0 || (elements["IceBlock"] || 0) > 10) {
-    errors.push(`Dòng ${lineNumber}: Ice Block count phải từ 0-10`);
+  if ((elements["IceBlock"] || 0) < 0 || (elements["IceBlock"] || 0) > 8) {
+    errors.push(`Dòng ${lineNumber}: Ice Block count phải từ 0-8`);
   }
 
   if (
@@ -225,8 +250,8 @@ export function validateCSVConfig(
     errors.push(`Dòng ${lineNumber}: Pull Pin count phải từ 0-10`);
   }
 
-  if ((elements["Bomb"] || 0) < 0 || (elements["Bomb"] || 0) > 3) {
-    errors.push(`Dòng ${lineNumber}: Bomb count phải từ 0-3`);
+  if ((elements["Bomb"] || 0) < 0 || (elements["Bomb"] || 0) > 10) {
+    errors.push(`Dòng ${lineNumber}: Bomb count phải từ 0-10`);
   }
 
   if ((elements["Moving"] || 0) < 0 || (elements["Moving"] || 0) > 5) {
@@ -310,26 +335,35 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
               .map((c) => c.trim())
               .filter((c) => c);
 
-            // Convert legacy color names to color index system
-            const normalizedColors = colors.map((color) => {
-              const lower = color.toLowerCase();
-              // If already in color_X format, keep it
-              if (color.startsWith("color_")) return color;
+            // Convert legacy color names to number system
+            const normalizedColors = colors.map((color: string | number) => {
+              const colorStr = String(color);
+              const lower = colorStr.toLowerCase();
 
-              // Convert legacy color names to color index
-              if (lower === "red") return "color_1";
-              if (lower === "blue") return "color_2";
-              if (lower === "green") return "color_3";
-              if (lower === "yellow") return "color_4";
-              if (lower === "orange") return "color_5";
-              if (lower === "purple") return "color_6";
-              if (lower === "pink") return "color_7";
-              if (lower === "cyan") return "color_8";
-              if (lower === "light blue") return "color_9";
-              if (lower === "brown") return "color_10";
-              if (lower === "grey") return "color_11";
-              if (lower === "white") return "color_12";
-              return color; // Keep original if no match
+              // If already a number or string number, convert to string
+              if (typeof color === "number") return color.toString();
+              if (/^\d+$/.test(colorStr)) return colorStr;
+
+              // Convert legacy color_x format to number
+              if (colorStr.startsWith("color_")) {
+                const num = colorStr.replace("color_", "");
+                return num;
+              }
+
+              // Convert legacy color names to numbers
+              if (lower === "red") return "1";
+              if (lower === "blue") return "2";
+              if (lower === "green") return "3";
+              if (lower === "yellow") return "4";
+              if (lower === "orange") return "5";
+              if (lower === "purple") return "6";
+              if (lower === "pink") return "7";
+              if (lower === "cyan") return "8";
+              if (lower === "light blue") return "9";
+              if (lower === "brown") return "10";
+              if (lower === "grey") return "11";
+              if (lower === "white") return "12";
+              return colorStr; // Keep original if no match
             });
 
             config.selectedColors = normalizedColors;
@@ -426,9 +460,13 @@ export function parseCSVToConfigs(csvText: string): CSVLevelConfig[] {
     if (config.selectedColors) {
       config.colorMapping = {};
       config.selectedColors.forEach((colorKey) => {
-        if (COLOR_MAPPING[colorKey as keyof typeof COLOR_MAPPING]) {
+        const numKey = parseInt(colorKey);
+        if (
+          !isNaN(numKey) &&
+          COLOR_MAPPING[numKey as keyof typeof COLOR_MAPPING]
+        ) {
           config.colorMapping![colorKey] =
-            COLOR_MAPPING[colorKey as keyof typeof COLOR_MAPPING];
+            COLOR_MAPPING[numKey as keyof typeof COLOR_MAPPING];
         }
       });
     }
@@ -480,9 +518,7 @@ export function configsToCSV(configs: CSVLevelConfig[]): string {
         case "difficulty":
           return config.difficulty || "Normal";
         case "selectedColors":
-          return `"${
-            config.selectedColors?.join(",") || "color_1,color_2,color_3"
-          }"`;
+          return `"${config.selectedColors?.join(",") || "1,2,3"}"`;
         case "blockCount":
           return config.blockCount?.toString() || "30";
         case "generationMode":

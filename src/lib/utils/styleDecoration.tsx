@@ -24,14 +24,15 @@ export function styleDecorator({
         : element === "PullPin"
         ? ""
         : color
-        ? COLOR_MAPPING[color as keyof typeof COLOR_MAPPING] || "#f3f4f6"
+        ? COLOR_MAPPING[parseInt(color) as keyof typeof COLOR_MAPPING] ||
+          "#f3f4f6"
         : "#f3f4f6",
     color:
       element === "Pipe"
         ? "#fff"
         : element === "PullPin"
         ? "#fff"
-        : color && ["color_4", "color_12"].includes(color) // Yellow, White
+        : color && ["4", "12"].includes(color) // Yellow, White
         ? "#000"
         : "#fff",
   };

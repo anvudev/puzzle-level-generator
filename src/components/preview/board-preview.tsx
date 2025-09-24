@@ -376,10 +376,10 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         // For Moving element, show directional arrow
                         <div className="relative">
                           <span className="text-purple-400 drop-shadow-md text-2xl">
-                            {cell.movingDirection === "up" && "🔄⬆️"}
-                            {cell.movingDirection === "down" && "🔄⬇️"}
-                            {cell.movingDirection === "left" && "🔄⬅️"}
-                            {cell.movingDirection === "right" && "🔄➡️"}
+                            {cell.movingDirection === "up" && "⏫"}
+                            {cell.movingDirection === "down" && "⏬"}
+                            {cell.movingDirection === "left" && "⏪"}
+                            {cell.movingDirection === "right" && "⏩"}
                             {!cell.movingDirection && "🔄"}
                           </span>
                         </div>
@@ -394,9 +394,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   {cell.type === "wall" ? (
                     <span className="text-3xl text-white opacity-30">🧱</span>
                   ) : (
-                    <span className="text-white">
-                      {cell.color?.replace("color_", "")}
-                    </span>
+                    <span className="text-white">{cell.color}</span>
                   )}
                   {canDrag && (
                     <div className="absolute inset-0 bg-black/10 rounded opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">

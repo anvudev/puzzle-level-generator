@@ -249,9 +249,7 @@ export function LevelPreview({
                           level.config.colorMapping[colorName] || "#f3f4f6",
                       }}
                     />
-                    <span className="text-sm">
-                      {colorName.replace("color_", "")}
-                    </span>
+                    <span className="text-sm">{colorName}</span>
                   </div>
                 ))}
               </div>
