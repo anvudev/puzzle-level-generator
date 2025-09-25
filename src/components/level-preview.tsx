@@ -24,6 +24,7 @@ interface LevelPreviewProps {
   onReFill?: () => void;
   isEditMode?: boolean; // New prop to indicate if this is editing an existing level
   onEditModeChange?: (isEditMode: boolean) => void; // Callback to reset edit mode
+  editingSavedLevelId?: string; // ID of the saved level being edited
 }
 
 export function LevelPreview({
@@ -34,6 +35,7 @@ export function LevelPreview({
   onReFill,
   isEditMode = false,
   onEditModeChange,
+  editingSavedLevelId,
 }: LevelPreviewProps) {
   const [saveName, setSaveName] = React.useState("");
   const [showSaveInput, setShowSaveInput] = React.useState(false);
@@ -138,8 +140,12 @@ export function LevelPreview({
               <Button
                 onClick={() => {
                   if (isEditMode) {
-                    // Update existing level
-                    updateLevel(level);
+                    // Update existing level with saved level ID context
+                    if (editingSavedLevelId) {
+                      updateLevel(level, editingSavedLevelId);
+                    } else {
+                      updateLevel(level);
+                    }
 
                     // Show success feedback
                     setIsSaved(true);

@@ -52,7 +52,7 @@ import {
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
-  onEditLevel?: (level: GeneratedLevel) => void;
+  onEditLevel?: (level: GeneratedLevel, savedLevelId: string) => void;
 }
 
 interface SortOption {
@@ -694,8 +694,10 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  console.log("savedLevel", savedLevel);
-                                  return onEditLevel(savedLevel.level);
+                                  return onEditLevel(
+                                    savedLevel.level,
+                                    savedLevel.id
+                                  );
                                 }}
                               >
                                 <Edit3 className="w-4 h-4 mr-1" />

@@ -58,7 +58,7 @@ export function useLevelHistory() {
     })}`;
 
     const savedLevel: SavedLevel = {
-      id: `level_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `level_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       name: name || defaultName,
       level: {
         ...level,
@@ -72,38 +72,58 @@ export function useLevelHistory() {
     return savedLevel.id;
   };
 
-  const updateLevel = (level: GeneratedLevel) => {
-    // Find the original saved level to preserve the name
-    const originalLevel = savedLevels.find(
-      (saved) => saved.level.id === level.id
-    );
-    const originalName = originalLevel?.name || level.config.name;
+  const updateLevel = (level: GeneratedLevel, savedLevelId?: string) => {
+    // Find the original saved level to preserve the name and ID
+    let originalLevel: SavedLevel | undefined;
 
-    const updates = { name: originalName, level };
-    console.log("updates", updates);
+    if (savedLevelId) {
+      // If savedLevelId is provided, find by saved level ID
+      originalLevel = savedLevels.find((saved) => saved.id === savedLevelId);
+    } else {
+      // Fallback: find by level ID (old behavior)
+      originalLevel = savedLevels.find((saved) => saved.level.id === level.id);
+    }
+
+    if (!originalLevel) {
+      console.error(
+        "Original level not found for update. Level ID:",
+        level.id,
+        "Saved Level ID:",
+        savedLevelId
+      );
+      return;
+    }
+
+    const originalName = originalLevel.name || level.config.name;
+
+    // Preserve the original level ID to maintain database consistency
+    const updatedLevel = {
+      ...level,
+      id: originalLevel.level.id, // Keep the original level ID
+    };
+
+    const updates = { name: originalName, level: updatedLevel };
 
     // Update local state
     setSavedLevels((prev) =>
       prev.map((saved) =>
-        saved.level.id === level.id
+        saved.id === originalLevel!.id
           ? {
               ...saved,
               name: originalName,
-              level,
+              level: updatedLevel,
               updatedAt: new Date().toISOString(),
             }
           : saved
       )
     );
-    console.log("savedLevels", updates);
-    kvUpdate(REALM.COLL_HISTORY, level.id, updates);
+    kvUpdate(REALM.COLL_HISTORY, originalLevel.level.id, updates);
   };
 
   const updateLevelName = (
     id: string,
     updates: Partial<Pick<SavedLevel, "name" | "level">>
   ) => {
-    console.log("updates", updates);
     kvSet(REALM.COLL_HISTORY, id, updates);
     setSavedLevels((prev) =>
       prev.map((saved) =>
@@ -133,7 +153,9 @@ export function useLevelHistory() {
     if (original) {
       const now = new Date().toISOString();
       const duplicated: SavedLevel = {
-        id: `level_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `level_${Date.now()}_${Math.random()
+          .toString(36)
+          .substring(2, 11)}`,
         name: `${original.name} (Copy)`,
         level: { ...original.level },
         createdAt: now,

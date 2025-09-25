@@ -104,7 +104,7 @@ export async function kvSet(collection: string, key: string, value: any) {
 export async function kvUpdate(collection: string, key: string, value: any) {
   const coll = await getCollection(collection);
 
-  // For level updates, we need to find by value.level.id since key is "history"
+  // For level updates, we need to find by value.id (savedLevel.id) instead of value.level.id
   const query = { "value.level.id": key };
 
   // Build update object
@@ -122,11 +122,7 @@ export async function kvUpdate(collection: string, key: string, value: any) {
     updateFields["value.level"] = value.level;
   }
 
-  console.log("kvUpdate query:", query);
-  console.log("kvUpdate fields:", updateFields);
-
-  const result = await coll.updateOne(query, { $set: updateFields });
-  console.log("kvUpdate result:", result);
+  await coll.updateOne(query, { $set: updateFields });
 }
 
 //update IMPORT CONFIG
@@ -161,7 +157,7 @@ export async function kvListKeys(collection: string) {
 export async function kvDel(collection: string, key: string) {
   const coll = await getCollection(collection);
   // For level deletion, we need to find by value.level.id since key is "history"
-  await coll.deleteOne({ "value.level.id": key });
+  await coll.deleteOne({ "value.id": key });
 }
 
 // DEL: xoá all key

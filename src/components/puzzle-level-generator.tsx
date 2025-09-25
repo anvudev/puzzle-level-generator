@@ -29,6 +29,9 @@ export function PuzzleLevelGenerator() {
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState("config");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editingSavedLevelId, setEditingSavedLevelId] = useState<
+    string | undefined
+  >();
   const tabContents = [
     {
       icon: <Settings className="w-4 h-4" />,
@@ -86,6 +89,7 @@ export function PuzzleLevelGenerator() {
   const handleLoadLevel = (level: GeneratedLevel) => {
     setGeneratedLevel(level);
     setIsEditMode(false); // Load level is not edit mode
+    setEditingSavedLevelId(undefined); // Clear editing context
     setActiveTab("preview");
   };
 
@@ -93,6 +97,7 @@ export function PuzzleLevelGenerator() {
     try {
       await generateLevel(config);
       setIsEditMode(false); // Reset edit mode for new level
+      setEditingSavedLevelId(undefined); // Clear editing context
       setActiveTab("preview");
     } catch {
       // Handle error silently
@@ -161,6 +166,7 @@ export function PuzzleLevelGenerator() {
               onSave={handleSaveLevel}
               isEditMode={isEditMode}
               onEditModeChange={setIsEditMode}
+              editingSavedLevelId={editingSavedLevelId}
             />
           ) : (
             <BlankPreview
@@ -174,10 +180,10 @@ export function PuzzleLevelGenerator() {
         <TabsContent value="history" className="space-y-6">
           <LevelHistory
             onLoadLevel={handleLoadLevel}
-            onEditLevel={(level) => {
-              console.log("level", level);
+            onEditLevel={(level, savedLevelId) => {
               setGeneratedLevel(level);
               setIsEditMode(true); // Set edit mode when editing from history
+              setEditingSavedLevelId(savedLevelId); // Set the saved level ID context
               setActiveTab("preview");
             }}
           />
@@ -187,6 +193,7 @@ export function PuzzleLevelGenerator() {
           <BatchImport
             onSaveLevel={handleSaveLevel}
             onEditLevel={(level) => {
+              console.log("level", level);
               setGeneratedLevel(level);
               setIsEditMode(true); // Set edit mode when editing from batch import
               setActiveTab("preview");
