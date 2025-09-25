@@ -70,18 +70,14 @@ export function LevelActions({
     };
     console.log("Original data:", data);
 
-    // Function to transpose and format like rangeToString
+    // Function to format board data by rows (left to right, top to bottom)
     const rangeToString = (inputRange: BoardCell[][]) => {
       if (!inputRange || inputRange.length === 0) return "";
 
-      // Transpose mảng để duyệt theo cột
-      const cols = inputRange[0].map((_, colIndex) =>
-        inputRange.map((row) => row[colIndex])
-      );
-
-      // Convert each column: cells in column joined by "|", columns joined by ";"
-      const final = cols
-        .map((col) => col.map((cell) => JSON.stringify(cell)).join("|"))
+      // Duyệt theo hàng từ trái qua phải, từ trên xuống dưới
+      // Convert each row: cells in row joined by "|", rows joined by ";"
+      const final = inputRange
+        .map((row) => row.map((cell) => JSON.stringify(cell)).join("|"))
         .join(";");
 
       return "[" + final + "]";
@@ -106,22 +102,6 @@ export function LevelActions({
       setCopiedTray(true);
       setTimeout(() => setCopiedTray(false), 2000);
     }
-  };
-
-  const handleDownload = () => {
-    const data = getExportData();
-    const filename = `level-${level.id}.json`;
-    const blob = new Blob([data], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   const handleDownloadCSV = () => {
