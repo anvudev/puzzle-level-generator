@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileJson, FileSpreadsheet, Copy } from "lucide-react";
 import { useState } from "react";
-import type { GeneratedLevel } from "@/config/game-types";
+import type { BoardCell, GeneratedLevel } from "@/config/game-types";
 import {
   downloadJSON,
   downloadCSV,
@@ -23,8 +23,8 @@ interface ExportPanelProps {
 }
 
 export function ExportPanel({ level }: ExportPanelProps) {
-  const [copied, setCopied] = useState(false);
-
+  const [copiedBoard, setCopiedBoard] = useState(false);
+  const [copiedTray, setCopiedTray] = useState(false);
   // Get custom bar order from store
   const { getBarOrder } = useColorBarStore();
 
@@ -68,14 +68,48 @@ export function ExportPanel({ level }: ExportPanelProps) {
     downloadCSV(csv, `${level.id}.csv`);
   };
 
-  const handleCopyToClipboard = async () => {
+  const handleCopyBoardData = async () => {
     const customBars = getCustomBars();
-    const data = formatLevelForExport(level, customBars);
-    const success = await copyToClipboard(JSON.stringify(data, null, 2));
+    const data = formatLevelForExport(level, customBars) as {
+      board: BoardCell[][];
+    };
+    console.log("Original data:", data);
+
+    // Function to transpose and format like rangeToString
+    const rangeToString = (inputRange: BoardCell[][]) => {
+      if (!inputRange || inputRange.length === 0) return "";
+
+      // Transpose mảng để duyệt theo cột
+      const cols = inputRange[0].map((_, colIndex) =>
+        inputRange.map((row) => row[colIndex])
+      );
+
+      // Convert each column: cells in column joined by "|", columns joined by ";"
+      const final = cols
+        .map((col) => col.map((cell) => JSON.stringify(cell)).join("|"))
+        .join(";");
+
+      return "[" + final + "]";
+    };
+
+    const boardString = rangeToString(data.board);
+    console.log("Processed board data:", boardString);
+
+    const success = await copyToClipboard(boardString);
 
     if (success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedBoard(true);
+      setTimeout(() => setCopiedBoard(false), 2000);
+    }
+  };
+
+  const handleCopyTrayData = async () => {
+    const customBars = getCustomBars();
+    const data = customBars.map((bar) => bar.color);
+    const success = await copyToClipboard(data.join(","));
+    if (success) {
+      setCopiedTray(true);
+      setTimeout(() => setCopiedTray(false), 2000);
     }
   };
 
@@ -101,12 +135,20 @@ export function ExportPanel({ level }: ExportPanelProps) {
               Xuất CSV
             </Button>
             <Button
-              onClick={handleCopyToClipboard}
+              onClick={handleCopyBoardData}
               variant="outline"
               className="flex items-center gap-2 bg-transparent"
             >
               <Copy className="w-4 h-4" />
-              {copied ? "Đã copy!" : "Copy JSON"}
+              {copiedBoard ? "Đã copy!" : "Copy Board Data"}
+            </Button>
+            <Button
+              onClick={handleCopyTrayData}
+              variant="outline"
+              className="flex items-center gap-2 bg-transparent"
+            >
+              <Copy className="w-4 h-4" />
+              {copiedTray ? "Đã copy!" : "Copy Tray Data"}
             </Button>
           </div>
         </CardContent>

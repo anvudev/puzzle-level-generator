@@ -356,7 +356,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                     {savedLevel.level.board
                                       .flat()
                                       .map((cell, index) => {
-                                        console.log(cell);
                                         return (
                                           <div
                                             key={index}
