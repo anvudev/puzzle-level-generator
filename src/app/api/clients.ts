@@ -38,8 +38,6 @@ export async function kvGet(collection: string, key: string) {
 }
 
 export async function kvGetAll(collection: string) {
-  const app = await getApp();
-  const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
   const docs = await coll.find({});
   return docs.map((d) => d.value);
@@ -105,7 +103,30 @@ export async function kvSet(collection: string, key: string, value: any) {
 
 export async function kvUpdate(collection: string, key: string, value: any) {
   const coll = await getCollection(collection);
-  await coll.updateOne({ key: key }, { $set: { value: value } });
+
+  // For level updates, we need to find by value.level.id since key is "history"
+  const query = { "value.level.id": key };
+
+  // Build update object
+  const updateFields: any = {
+    "value.updatedAt": new Date(),
+  };
+
+  // Add name if provided
+  if (value.name !== undefined) {
+    updateFields["value.name"] = value.name;
+  }
+
+  // Add level if provided
+  if (value.level !== undefined) {
+    updateFields["value.level"] = value.level;
+  }
+
+  console.log("kvUpdate query:", query);
+  console.log("kvUpdate fields:", updateFields);
+
+  const result = await coll.updateOne(query, { $set: updateFields });
+  console.log("kvUpdate result:", result);
 }
 
 //update IMPORT CONFIG
@@ -139,7 +160,8 @@ export async function kvListKeys(collection: string) {
 // DEL: xoá 1 key
 export async function kvDel(collection: string, key: string) {
   const coll = await getCollection(collection);
-  await coll.deleteOne({ key: key });
+  // For level deletion, we need to find by value.level.id since key is "history"
+  await coll.deleteOne({ "value.level.id": key });
 }
 
 // DEL: xoá all key

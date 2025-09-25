@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -77,15 +77,15 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   const [sortBy, setSortBy] = useState<SortOption["value"]>("name-asc");
   const [selectedLevels, setSelectedLevels] = useState<Set<string>>(new Set());
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
-  const [filterElements, setFilterElements] = useState<string>("all");
-  const [downloadFormat, setDownloadFormat] = useState<"csv" | "json">("csv");
+  const [filterElements] = useState<string>("all");
+  const [downloadFormat] = useState<"csv" | "json">("csv");
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
   // Filtered and sorted levels
   const filteredAndSortedLevels = useMemo(() => {
-    let filtered = savedLevels.filter((savedLevel) => {
+    const filtered = savedLevels.filter((savedLevel) => {
       // Search filter
       const matchesSearch = savedLevel.name
         .toLowerCase()
@@ -210,16 +210,14 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
       for (let i = 0; i < selectedLevelData.length; i++) {
         const savedLevel = selectedLevelData[i];
         const level = savedLevel.level;
-        const customBars: any[] = []; // You might want to get this from store
+        const customBars: never[] = []; // Empty array for now
 
         let content: string;
         let mimeType: string;
-        let extension: string;
 
         if (downloadFormat === "csv") {
           content = generateCSVMatrix(level, customBars);
           mimeType = "text/csv";
-          extension = "csv";
         } else {
           const { formatLevelForExport } = await import(
             "@/lib/utils/level-utils"
@@ -227,7 +225,6 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
           const data = formatLevelForExport(level, customBars);
           content = JSON.stringify(data, null, 2);
           mimeType = "application/json";
-          extension = "json";
         }
 
         const blob = new Blob([content], { type: mimeType });
@@ -394,7 +391,15 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                   <div className="flex items-center gap-2">
                     <Select
                       value={sortBy}
-                      onValueChange={(value: any) => setSortBy(value)}
+                      onValueChange={(value: string) =>
+                        setSortBy(
+                          value as
+                            | "name-asc"
+                            | "name-desc"
+                            | "newest"
+                            | "oldest"
+                        )
+                      }
                     >
                       <SelectTrigger className="w-40">
                         <SelectValue placeholder="Sắp xếp" />
