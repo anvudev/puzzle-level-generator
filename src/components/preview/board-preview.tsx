@@ -201,6 +201,47 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     }
   };
 
+  const handleMovingClick = (index: number) => {
+    if (!onLevelUpdate) return;
+
+    const row = Math.floor(index / level.config.width);
+    const col = index % level.config.width;
+    const cell = level.board[row][col];
+
+    if (cell.element === "Moving") {
+      // Cycle through directions: up -> right -> down -> left -> up
+      const directions: Array<"up" | "down" | "left" | "right"> = [
+        "up",
+        "right",
+        "down",
+        "left",
+      ];
+      const currentIndex = directions.indexOf(cell.movingDirection || "up");
+      const nextDirection = directions[(currentIndex + 1) % directions.length];
+
+      // Update the board with new direction
+      const newBoard = level.board.map((boardRow, rowIndex) =>
+        boardRow.map((boardCell, colIndex) => {
+          if (rowIndex === row && colIndex === col) {
+            return {
+              ...boardCell,
+              movingDirection: nextDirection,
+            };
+          }
+          return boardCell;
+        })
+      );
+
+      // Update the level
+      const updatedLevel = {
+        ...level,
+        board: newBoard,
+      };
+
+      onLevelUpdate(updatedLevel);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -268,7 +309,9 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       ? "ring-2 ring-primary ring-offset-2"
                       : ""
                   } ${
-                    (cell.element === "PullPin" || cell.element === "Pipe") &&
+                    (cell.element === "PullPin" ||
+                      cell.element === "Pipe" ||
+                      cell.element === "Moving") &&
                     !isDragMode
                       ? "cursor-pointer hover:ring-2 hover:ring-blue-400"
                       : ""
@@ -286,6 +329,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         handlePullPinClick(index);
                       } else if (cell.element === "Pipe") {
                         handlePipeClick(index);
+                      } else if (cell.element === "Moving") {
+                        handleMovingClick(index);
                       }
                     }
                   }}
@@ -361,7 +406,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                           </span>
                           {cell.bombCount && (
                             <span
-                              className="absolute -bottom-1 -right-1 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-red-700 transition-colors"
+                              className=" -bottom-1 -right-1 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-red-700 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleCountClick(row, col, "bomb");
@@ -374,8 +419,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         </div>
                       ) : cell.element === "Moving" ? (
                         // For Moving element, show directional arrow
-                        <div className="relative">
-                          <span className="text-purple-400 drop-shadow-md text-2xl">
+                        <div className="">
+                          <span className="text-purple-400 drop-shadow-md text-4xl">
                             {cell.movingDirection === "up" && "⏫"}
                             {cell.movingDirection === "down" && "⏬"}
                             {cell.movingDirection === "left" && "⏪"}
