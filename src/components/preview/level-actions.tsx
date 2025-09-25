@@ -19,13 +19,14 @@ import {
   CheckCircle,
   RotateCcw,
 } from "lucide-react";
-import type { GeneratedLevel } from "@/config/game-types";
+import type { BoardCell, GeneratedLevel } from "@/config/game-types";
 import {
   formatLevelForExport,
   generateCSVMatrix,
   type BarData,
 } from "@/lib/utils/level-utils";
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
+import { copyToClipboard } from "@/lib/utils/export-utils";
 
 interface LevelActionsProps {
   level: GeneratedLevel;
@@ -38,7 +39,8 @@ export function LevelActions({
   onRegenerate,
   onReFill,
 }: LevelActionsProps) {
-  const [copied, setCopied] = useState(false);
+  const [copiedBoard, setCopiedBoard] = useState(false);
+  const [copiedTray, setCopiedTray] = useState(false);
 
   // Get custom bar order from store
   const { getBarOrder } = useColorBarStore();
@@ -61,13 +63,48 @@ export function LevelActions({
     return JSON.stringify(data, null, 2);
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(getExportData());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
+  const handleCopyBoardData = async () => {
+    const customBars = getCustomBars();
+    const data = formatLevelForExport(level, customBars) as {
+      board: BoardCell[][];
+    };
+    console.log("Original data:", data);
+
+    // Function to transpose and format like rangeToString
+    const rangeToString = (inputRange: BoardCell[][]) => {
+      if (!inputRange || inputRange.length === 0) return "";
+
+      // Transpose mảng để duyệt theo cột
+      const cols = inputRange[0].map((_, colIndex) =>
+        inputRange.map((row) => row[colIndex])
+      );
+
+      // Convert each column: cells in column joined by "|", columns joined by ";"
+      const final = cols
+        .map((col) => col.map((cell) => JSON.stringify(cell)).join("|"))
+        .join(";");
+
+      return "[" + final + "]";
+    };
+
+    const boardString = rangeToString(data.board);
+    console.log("Processed board data:", boardString);
+
+    const success = await copyToClipboard(boardString);
+
+    if (success) {
+      setCopiedBoard(true);
+      setTimeout(() => setCopiedBoard(false), 2000);
+    }
+  };
+
+  const handleCopyTrayData = async () => {
+    const customBars = getCustomBars();
+    const data = customBars.map((bar) => bar.color);
+    const success = await copyToClipboard(data.join(","));
+    if (success) {
+      setCopiedTray(true);
+      setTimeout(() => setCopiedTray(false), 2000);
     }
   };
 
@@ -142,26 +179,30 @@ export function LevelActions({
           <Button
             variant="outline"
             size="sm"
-            onClick={handleCopy}
+            onClick={handleCopyTrayData}
             className="flex items-center gap-2 flex-1"
           >
-            {copied ? (
+            {copiedTray ? (
               <CheckCircle className="w-4 h-4 text-green-500" />
             ) : (
               <Copy className="w-4 h-4" />
             )}
-            {copied ? "Copied!" : "Copy JSON"}
+            {copiedTray ? "Copied!" : "Copy Tray Data"}
           </Button>
-
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownload}
+            onClick={handleCopyBoardData}
             className="flex items-center gap-2 flex-1"
           >
-            <Download className="w-4 h-4" />
-            Download JSON
+            {copiedBoard ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+            {copiedBoard ? "Copied!" : "Copy Board Data"}
           </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -194,25 +235,6 @@ export function LevelActions({
                 readOnly
                 className="min-h-[400px] font-mono text-sm"
               />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCopy}>
-                  {copied ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy to Clipboard
-                    </>
-                  )}
-                </Button>
-                <Button onClick={handleDownload}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download File
-                </Button>
-              </div>
             </div>
           </DialogContent>
         </Dialog>
