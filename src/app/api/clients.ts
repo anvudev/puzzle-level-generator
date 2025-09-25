@@ -50,18 +50,62 @@ export async function kvSet(collection: string, key: string, value: any) {
   const app = await getApp();
   const user = app.currentUser ?? (await loginAnonymous());
   const coll = await getCollection(collection);
-  await coll.updateOne(
-    { "value.id": key },
-    {
-      $set: {
-        ownerId: user.id,
-        "value.id": key,
-        "value.name": value.name,
-        "value.updatedAt": new Date(),
-      },
-    },
+
+  // First, check if document exists - try different patterns
+  const existingDoc1 = await coll.findOne({ key: key });
+  const existingDoc2 = await coll.findOne({ "value.id": key });
+  const existingDoc3 = await coll.findOne({ "value.level.id": key });
+  console.log(
+    "Existing document by key:",
+    existingDoc1 ? "FOUND" : "NOT FOUND",
+    key
+  );
+  console.log(
+    "Existing document by value.id:",
+    existingDoc2 ? "FOUND" : "NOT FOUND",
+    key
+  );
+  console.log(
+    "Existing document by value.level.id:",
+    existingDoc3 ? "FOUND" : "NOT FOUND",
+    key
+  );
+
+  // Build update object dynamically based on what's provided
+  const updateFields: any = {
+    ownerId: user.id,
+    "value.id": key,
+    "value.updatedAt": new Date(),
+  };
+
+  // Add name if provided
+  if (value.name !== undefined) {
+    updateFields["value.name"] = value.name;
+  }
+
+  // Add level if provided
+  if (value.level !== undefined) {
+    updateFields["value.level"] = value.level;
+  }
+  console.log(
+    "updateFields",
+    { key: key },
+    { $set: updateFields },
     { upsert: true }
   );
+
+  const result = await coll.updateOne(
+    { key: key },
+    { $set: updateFields },
+    { upsert: true }
+  );
+
+  console.log("Update result:", result);
+}
+
+export async function kvUpdate(collection: string, key: string, value: any) {
+  const coll = await getCollection(collection);
+  await coll.updateOne({ key: key }, { $set: { value: value } });
 }
 
 //update IMPORT CONFIG
@@ -95,7 +139,7 @@ export async function kvListKeys(collection: string) {
 // DEL: xoá 1 key
 export async function kvDel(collection: string, key: string) {
   const coll = await getCollection(collection);
-  await coll.deleteOne({ "value.id": key });
+  await coll.deleteOne({ key: key });
 }
 
 // DEL: xoá all key

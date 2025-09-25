@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { GeneratedLevel } from "@/config/game-types";
-import { kvCreate, kvDel, kvDelAll, kvGetAll, kvSet } from "@/app/api/clients";
+import {
+  kvCreate,
+  kvDel,
+  kvDelAll,
+  kvGetAll,
+  kvSet,
+  kvUpdate,
+} from "@/app/api/clients";
 import { REALM } from "@/config/game-constants";
 
 export interface SavedLevel {
@@ -53,7 +60,10 @@ export function useLevelHistory() {
     const savedLevel: SavedLevel = {
       id: `level_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: name || defaultName,
-      level,
+      level: {
+        ...level,
+        config: { ...level.config, name: name || defaultName },
+      },
       createdAt: now,
       updatedAt: now,
     };
@@ -62,10 +72,38 @@ export function useLevelHistory() {
     return savedLevel.id;
   };
 
-  const updateLevel = (
+  const updateLevel = (level: GeneratedLevel) => {
+    // Find the original saved level to preserve the name
+    const originalLevel = savedLevels.find(
+      (saved) => saved.level.id === level.id
+    );
+    const originalName = originalLevel?.name || level.config.name;
+
+    const updates = { name: originalName, level };
+    console.log("updates", updates);
+
+    // Update local state
+    setSavedLevels((prev) =>
+      prev.map((saved) =>
+        saved.level.id === level.id
+          ? {
+              ...saved,
+              name: originalName,
+              level,
+              updatedAt: new Date().toISOString(),
+            }
+          : saved
+      )
+    );
+    console.log("savedLevels", updates);
+    kvUpdate(REALM.COLL_HISTORY, level.id, updates);
+  };
+
+  const updateLevelName = (
     id: string,
     updates: Partial<Pick<SavedLevel, "name" | "level">>
   ) => {
+    console.log("updates", updates);
     kvSet(REALM.COLL_HISTORY, id, updates);
     setSavedLevels((prev) =>
       prev.map((saved) =>
@@ -115,6 +153,7 @@ export function useLevelHistory() {
     updateLevel,
     deleteLevel,
     clearHistory,
+    updateLevelName,
     getLevelById,
     duplicateLevel,
     totalCount: savedLevels.length,

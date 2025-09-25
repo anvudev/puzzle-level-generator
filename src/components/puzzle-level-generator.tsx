@@ -28,6 +28,7 @@ import { BlankPreview } from "./preview/blankPreview";
 export function PuzzleLevelGenerator() {
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
   const [activeTab, setActiveTab] = useState("config");
+  const [isEditMode, setIsEditMode] = useState(false);
   const tabContents = [
     {
       icon: <Settings className="w-4 h-4" />,
@@ -84,12 +85,14 @@ export function PuzzleLevelGenerator() {
 
   const handleLoadLevel = (level: GeneratedLevel) => {
     setGeneratedLevel(level);
+    setIsEditMode(false); // Load level is not edit mode
     setActiveTab("preview");
   };
 
   const handleGenerateLevel = async () => {
     try {
       await generateLevel(config);
+      setIsEditMode(false); // Reset edit mode for new level
       setActiveTab("preview");
     } catch {
       // Handle error silently
@@ -156,6 +159,8 @@ export function PuzzleLevelGenerator() {
               onRegenerate={handleRegenerate}
               onReFill={handleReFill}
               onSave={handleSaveLevel}
+              isEditMode={isEditMode}
+              onEditModeChange={setIsEditMode}
             />
           ) : (
             <BlankPreview
@@ -170,7 +175,9 @@ export function PuzzleLevelGenerator() {
           <LevelHistory
             onLoadLevel={handleLoadLevel}
             onEditLevel={(level) => {
+              console.log("level", level);
               setGeneratedLevel(level);
+              setIsEditMode(true); // Set edit mode when editing from history
               setActiveTab("preview");
             }}
           />
@@ -181,6 +188,7 @@ export function PuzzleLevelGenerator() {
             onSaveLevel={handleSaveLevel}
             onEditLevel={(level) => {
               setGeneratedLevel(level);
+              setIsEditMode(true); // Set edit mode when editing from batch import
               setActiveTab("preview");
             }}
           />

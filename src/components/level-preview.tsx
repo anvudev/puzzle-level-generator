@@ -14,6 +14,7 @@ import { ColorBarChart } from "@/components/preview/color-bar-chart";
 import type { GeneratedLevel } from "@/config/game-types";
 import { ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
+import { useLevelHistory } from "@/lib/hooks/use-level-history";
 
 interface LevelPreviewProps {
   level: GeneratedLevel;
@@ -21,6 +22,8 @@ interface LevelPreviewProps {
   onRegenerate?: () => void;
   onSave?: (level: GeneratedLevel, name?: string) => string;
   onReFill?: () => void;
+  isEditMode?: boolean; // New prop to indicate if this is editing an existing level
+  onEditModeChange?: (isEditMode: boolean) => void; // Callback to reset edit mode
 }
 
 export function LevelPreview({
@@ -29,6 +32,8 @@ export function LevelPreview({
   onRegenerate,
   onSave,
   onReFill,
+  isEditMode = false,
+  onEditModeChange,
 }: LevelPreviewProps) {
   const [saveName, setSaveName] = React.useState("");
   const [showSaveInput, setShowSaveInput] = React.useState(false);
@@ -57,6 +62,7 @@ export function LevelPreview({
     }
   }, [currentLevelId]);
 
+  const { updateLevel } = useLevelHistory();
   const handleSave = () => {
     if (onSave && !isSaved) {
       const name = saveName.trim() || `Level ${new Date().toLocaleString()}`;
@@ -72,7 +78,6 @@ export function LevelPreview({
       setTimeout(() => setShowSuccessMessage(false), 3000);
     }
   };
-
   return (
     <div className="space-y-6">
       {/* Compact Save Level Section */}
@@ -83,7 +88,11 @@ export function LevelPreview({
             <div className="flex items-center gap-2 text-green-700 font-medium animate-in fade-in-0 slide-in-from-left-2 duration-300">
               <div className="flex items-center gap-2 bg-green-100 px-3 py-1 rounded-full border border-green-300">
                 <CheckCircle className="w-4 h-4" />
-                <span className="text-sm">Đã lưu thành công!</span>
+                <span className="text-sm">
+                  {isEditMode
+                    ? "Đã cập nhật thành công!"
+                    : "Đã lưu thành công!"}
+                </span>
               </div>
             </div>
           )}
@@ -121,11 +130,30 @@ export function LevelPreview({
             <div className="flex items-center gap-2 flex-1">
               <div className="flex items-center gap-2 text-green-700">
                 <Save className="w-4 h-4" />
-                <span className="text-sm font-medium">Lưu Level</span>
+                <span className="text-sm font-medium">
+                  {isEditMode ? `Cập nhật: ${level.config.name}` : "Lưu Level"}
+                </span>
               </div>
               <div className="flex-1"></div>
               <Button
-                onClick={() => setShowSaveInput(true)}
+                onClick={() => {
+                  if (isEditMode) {
+                    // Update existing level
+                    updateLevel(level);
+
+                    // Show success feedback
+                    setIsSaved(true);
+                    setShowSuccessMessage(true);
+                    setTimeout(() => {
+                      setShowSuccessMessage(false);
+                      setIsSaved(false); // Reset after showing message
+                      onEditModeChange?.(false); // Reset edit mode after successful update
+                    }, 3000);
+                  } else {
+                    // New level - show save input
+                    setShowSaveInput(true);
+                  }
+                }}
                 size="sm"
                 className={`h-8 ${
                   isSaved
@@ -143,7 +171,7 @@ export function LevelPreview({
                 ) : (
                   <>
                     <Save className="w-3 h-3 mr-1" />
-                    Lưu
+                    {isEditMode ? "Cập nhật" : "Lưu"}
                   </>
                 )}
               </Button>
