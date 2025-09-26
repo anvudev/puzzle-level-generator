@@ -24,11 +24,12 @@ export class FallbackLevelGenerator {
       ? "Generated level - Bắt buộc sử dụng thuật toán"
       : "Generated level - Gemini API không khả dụng";
 
-    // Extract pipe and lock information for UI
+    // Extract pipe, moving, and lock information for UI
     const pipeInfo = LevelGeneratorUtils.extractPipeInfo(board, config);
+    const movingInfo = LevelGeneratorUtils.extractMovingInfo(board, config);
     const lockInfo = LevelGeneratorUtils.extractLockInfo(board, config);
 
-    return {
+    const level: GeneratedLevel = {
       id: `level_${Date.now()}`,
       config: { ...config },
       board,
@@ -37,8 +38,13 @@ export class FallbackLevelGenerator {
       solvable: true, // Algorithm ensures connectivity so it's solvable
       timestamp: new Date(),
       pipeInfo,
+      movingInfo,
       lockInfo,
     };
+
+    // Apply color balance adjustment to ensure all colors are divisible by 3
+    const adjustedLevel = this.adjustLevelToMeetStats(level);
+    return adjustedLevel || level;
   }
 
   /**
@@ -95,6 +101,21 @@ export class FallbackLevelGenerator {
     }
     const lockBlocks = blockLockCount * 2;
 
+    // Calculate total moving blocks from individual moving configurations
+    const movingCount = config.elements.Moving || 0;
+    let movingBlocks = 0;
+    if (config.movingBlockCounts && config.movingBlockCounts.length > 0) {
+      // Use individual moving block counts
+      movingBlocks = config.movingBlockCounts.reduce(
+        (sum, count) => sum + count,
+        0
+      );
+    } else {
+      // Use default calculation
+      const movingBlocksPerElement = config.movingBlockCount || 3;
+      movingBlocks = Math.floor(movingCount * movingBlocksPerElement);
+    }
+
     // Create varied color distribution while maintaining balance
     const baseBlocksPerColor =
       Math.floor(config.blockCount / colors.length / 3) * 3;
@@ -138,7 +159,8 @@ export class FallbackLevelGenerator {
         }
       }
     }
-    const adjustedBoardBlocks = config.blockCount - pipeBlocks - lockBlocks;
+    const adjustedBoardBlocks =
+      config.blockCount - pipeBlocks - lockBlocks - movingBlocks;
     // Create varied board color distribution
     const boardColorDistribution: string[] = [];
 
@@ -241,11 +263,14 @@ export class FallbackLevelGenerator {
       placedBlocks++;
     }
 
-    // Place special elements (without pipe contents first)
+    // Place special elements (without pipe/moving contents first)
     this.placeSpecialElements(board, config);
 
     // Calculate and assign balanced pipe contents after all pipes are placed
     this.assignBalancedPipeContents(board, config, finalTargetPerColor);
+
+    // Calculate and assign balanced moving contents after all moving elements are placed
+    this.assignBalancedMovingContents(board, config, finalTargetPerColor);
 
     return board;
   }
@@ -591,11 +616,14 @@ export class FallbackLevelGenerator {
       }
     }
 
-    // Place special elements symmetrically (without pipe contents first)
+    // Place special elements symmetrically (without pipe/moving contents first)
     this.placeSpecialElementsSymmetrically(board, config, centerX);
 
     // Calculate and assign balanced pipe contents after all pipes are placed
     this.assignBalancedPipeContents(board, config, finalTargetPerColor);
+
+    // Calculate and assign balanced moving contents after all moving elements are placed
+    this.assignBalancedMovingContents(board, config, finalTargetPerColor);
 
     // Final connectivity check and validation
 
@@ -914,7 +942,7 @@ export class FallbackLevelGenerator {
       return true;
     }
 
-    // If it's a Moving element, assign direction pointing to color blocks
+    // If it's a Moving element, assign direction and size (like Pipe)
     if (elementType === "Moving") {
       const validDirections = LevelGeneratorUtils.getValidMovingDirections(
         pos.x,
@@ -924,9 +952,30 @@ export class FallbackLevelGenerator {
       );
 
       if (validDirections.length > 0) {
+        // Moving block is a "dead block" - no color, just pushes colors
+        board[pos.y][pos.x].color = null;
         board[pos.y][pos.x].movingDirection =
           validDirections[Math.floor(Math.random() * validDirections.length)];
-        board[pos.y][pos.x].movingDistance = Math.floor(Math.random() * 3) + 3; // 3-5 cells
+
+        // Store moving size for later content assignment (like pipe)
+        // Use individual moving block counts if available
+        let movingSize: number;
+        if (
+          config.movingBlockCounts &&
+          config.movingBlockCounts[index] !== undefined
+        ) {
+          movingSize = config.movingBlockCounts[index];
+        } else if (config.movingBlockCount) {
+          movingSize = config.movingBlockCount;
+        } else {
+          movingSize = LevelGeneratorUtils.generatePipeSize(config.difficulty); // Use same logic as pipe
+        }
+
+        board[pos.y][pos.x].movingSize = movingSize;
+
+        // Generate random distance (1-3 cells)
+        board[pos.y][pos.x].movingDistance = Math.floor(Math.random() * 3) + 1;
+
         return true;
       } else {
         // If no valid direction, don't place moving element
@@ -980,6 +1029,310 @@ export class FallbackLevelGenerator {
   }
 
   /**
+   * Adjust level to meet color balance requirements (all colors divisible by 3)
+   */
+  private static adjustLevelToMeetStats(
+    level: GeneratedLevel
+  ): GeneratedLevel | null {
+    const board = level.board.map((row) => row.map((cell) => ({ ...cell })));
+
+    // Calculate current color statistics
+    const colors = level.config.selectedColors;
+    const colorCounts: Record<string, number> = Object.fromEntries(
+      colors.map((c) => [c, 0])
+    );
+    let coloredBlocksOnBoard = 0;
+    let totalPipeContents = 0;
+    let totalMovingContents = 0;
+
+    for (const row of board) {
+      for (const cell of row) {
+        if (cell.type === "block") {
+          if (cell.element === "Pipe") {
+            if (cell.pipeContents) {
+              for (const color of cell.pipeContents) {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                totalPipeContents++;
+              }
+            }
+          } else if (cell.element === "Moving") {
+            if (cell.movingContents) {
+              for (const color of cell.movingContents) {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                totalMovingContents++;
+              }
+            }
+          } else if (cell.color) {
+            colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+            coloredBlocksOnBoard++;
+          }
+        }
+      }
+    }
+
+    const targetTotal = level.config.blockCount;
+    let currentPlayable =
+      coloredBlocksOnBoard + totalPipeContents + totalMovingContents;
+
+    if (currentPlayable > targetTotal) {
+      // Cannot fix if we exceed target
+      return null;
+    }
+
+    // Calculate deficit for each color to be divisible by 3
+    const deficitPerColor: Array<{ color: string; needed: number }> = [];
+    for (const color of colors) {
+      const count = colorCounts[color] || 0;
+      const remainder = count % 3;
+      const needed = remainder === 0 ? 0 : 3 - remainder;
+      if (needed > 0) deficitPerColor.push({ color, needed });
+    }
+
+    // Helper function to get remaining capacity
+    const remainingCapacity = () => targetTotal - currentPlayable;
+
+    // Helper function to get next connected empty position
+    const takeNextConnectedEmpty = () => {
+      const connectedPositions = LevelGeneratorUtils.getConnectedPositions(
+        board,
+        level.config.width,
+        level.config.height
+      );
+
+      if (connectedPositions.length > 0) {
+        // Return first connected position
+        return connectedPositions[0];
+      }
+
+      // Fallback: find any empty position (should rarely happen)
+      for (let y = 0; y < level.config.height; y++) {
+        for (let x = 0; x < level.config.width; x++) {
+          if (board[y][x].type === "empty") {
+            return { x, y };
+          }
+        }
+      }
+      return null;
+    };
+
+    // First, fill deficits to make each color divisible by 3
+    for (const deficit of deficitPerColor) {
+      for (let i = 0; i < deficit.needed && remainingCapacity() > 0; i++) {
+        const pos = takeNextConnectedEmpty();
+        if (!pos) break;
+        board[pos.y][pos.x] = {
+          type: "block",
+          color: deficit.color,
+          element: null,
+        };
+        currentPlayable += 1;
+      }
+    }
+
+    // If still need more blocks, distribute evenly in multiples of 3
+    let colorIndex = 0;
+    while (remainingCapacity() >= 3) {
+      const color = colors[colorIndex % colors.length];
+      for (let i = 0; i < 3 && remainingCapacity() > 0; i++) {
+        const pos = takeNextConnectedEmpty();
+        if (!pos) break;
+        board[pos.y][pos.x] = {
+          type: "block",
+          color,
+          element: null,
+        };
+        currentPlayable += 1;
+      }
+      colorIndex++;
+    }
+
+    // Fill any remaining blocks with first color
+    while (remainingCapacity() > 0) {
+      const pos = takeNextConnectedEmpty();
+      if (!pos) break;
+      const color = colors[0];
+      board[pos.y][pos.x] = {
+        type: "block",
+        color,
+        element: null,
+      };
+      currentPlayable += 1;
+    }
+
+    const adjusted: GeneratedLevel = {
+      ...level,
+      board,
+    };
+
+    return this.isLevelValid(adjusted) ? adjusted : null;
+  }
+
+  /**
+   * Check if level meets all validation requirements
+   */
+  private static isLevelValid(level: GeneratedLevel): boolean {
+    // Check basic structure
+    if (!level.board || level.board.length !== level.config.height)
+      return false;
+    if (!level.board.every((row) => row.length === level.config.width))
+      return false;
+
+    // Count playable blocks: colored blocks on board + pipe contents + moving contents
+    let coloredBlocksOnBoard = 0;
+    let totalPipeContents = 0;
+    let totalMovingContents = 0;
+    const colorCounts: Record<string, number> = {};
+
+    for (const row of level.board) {
+      for (const cell of row) {
+        if (cell.type === "block") {
+          if (cell.element === "Pipe") {
+            if (cell.pipeContents) {
+              for (const color of cell.pipeContents) {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                totalPipeContents++;
+              }
+            }
+          } else if (cell.element === "Moving") {
+            if (cell.movingContents) {
+              for (const color of cell.movingContents) {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                totalMovingContents++;
+              }
+            }
+          } else if (cell.color) {
+            colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
+            coloredBlocksOnBoard++;
+          }
+        }
+      }
+    }
+
+    // Check total playable blocks matches target
+    const actualPlayableBlocks =
+      coloredBlocksOnBoard + totalPipeContents + totalMovingContents;
+
+    if (actualPlayableBlocks !== level.config.blockCount) {
+      return false;
+    }
+
+    // Check each color is divisible by 3
+    for (const count of Object.values(colorCounts)) {
+      if (count % 3 !== 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Assign balanced moving contents after all moving elements are placed
+   * This should work together with the overall color balance system
+   */
+  private static assignBalancedMovingContents(
+    board: BoardCell[][],
+    config: LevelConfig,
+    targetPerColor?: number[]
+  ): void {
+    const colors = config.selectedColors;
+
+    // Count current colors on board (excluding pipe and moving contents)
+    const currentColorCounts = new Map<string, number>();
+    let totalMovingBlocks = 0;
+    let totalPipeBlocks = 0;
+
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+
+        // Count regular blocks (not pipe or moving)
+        if (cell.type === "block" && cell.color && !cell.element) {
+          currentColorCounts.set(
+            cell.color,
+            (currentColorCounts.get(cell.color) || 0) + 1
+          );
+        }
+
+        // Count pipe contents
+        if (cell.element === "Pipe" && cell.pipeContents) {
+          totalPipeBlocks += cell.pipeContents.length;
+          for (const pipeColor of cell.pipeContents) {
+            currentColorCounts.set(
+              pipeColor,
+              (currentColorCounts.get(pipeColor) || 0) + 1
+            );
+          }
+        }
+
+        // Count moving blocks to fill
+        if (cell.element === "Moving" && cell.movingSize) {
+          totalMovingBlocks += cell.movingSize;
+        }
+      }
+    }
+
+    if (totalMovingBlocks === 0) {
+      return;
+    }
+
+    // Moving elements should always be filled completely
+    // The color balance will be handled by adjustLevelToMeetStats later
+    const actualMovingBlocks = totalMovingBlocks;
+
+    if (actualMovingBlocks <= 0) {
+      return;
+    }
+
+    // Create color pool for moving contents based on what's needed to balance colors
+    const movingColorPool: string[] = [];
+
+    // Simple approach: distribute moving blocks evenly among colors
+    // ensuring the total for each color (board + pipe + moving) is divisible by 3
+    const blocksPerColor = Math.floor(actualMovingBlocks / colors.length);
+    const extraBlocks = actualMovingBlocks % colors.length;
+
+    // Distribute evenly first
+    for (let i = 0; i < colors.length; i++) {
+      const color = colors[i];
+      const baseBlocks = blocksPerColor + (i < extraBlocks ? 1 : 0);
+
+      for (let j = 0; j < baseBlocks; j++) {
+        movingColorPool.push(color);
+      }
+    }
+
+    // Shuffle for randomness
+    for (let i = movingColorPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [movingColorPool[i], movingColorPool[j]] = [
+        movingColorPool[j],
+        movingColorPool[i],
+      ];
+    }
+
+    // Assign colors to moving elements
+    let colorIndex = 0;
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+        if (cell.element === "Moving" && cell.movingSize) {
+          const movingContents: string[] = [];
+          for (
+            let i = 0;
+            i < cell.movingSize && colorIndex < movingColorPool.length;
+            i++
+          ) {
+            movingContents.push(movingColorPool[colorIndex]);
+            colorIndex++;
+          }
+          cell.movingContents = movingContents;
+        }
+      }
+    }
+  }
+
+  /**
    * Assign balanced pipe contents after all pipes are placed
    */
   private static assignBalancedPipeContents(
@@ -1004,6 +1357,9 @@ export class FallbackLevelGenerator {
         }
         if (cell.element === "Pipe" && cell.pipeSize) {
           totalPipeBlocks += cell.pipeSize;
+        }
+        if (cell.element === "Moving" && cell.movingSize) {
+          totalPipeBlocks += cell.movingSize; // Count moving blocks as part of total special blocks
         }
       }
     }
@@ -1126,6 +1482,14 @@ export class FallbackLevelGenerator {
         if (cell.element === "Pipe" && cell.pipeContents) {
           for (const pipeColor of cell.pipeContents) {
             colorCounts.set(pipeColor, (colorCounts.get(pipeColor) || 0) + 1);
+          }
+        }
+        if (cell.element === "Moving" && cell.movingContents) {
+          for (const movingColor of cell.movingContents) {
+            colorCounts.set(
+              movingColor,
+              (colorCounts.get(movingColor) || 0) + 1
+            );
           }
         }
       }

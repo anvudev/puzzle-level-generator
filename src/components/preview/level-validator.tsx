@@ -22,6 +22,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
     const colorCounts: Record<string, number> = {};
     let totalBlocks = 0;
     let pipeBlocks = 0;
+    let movingBlocks = 0;
     let pullPinBlocks = 0;
     let coloredBlocksOnBoard = 0;
 
@@ -35,6 +36,14 @@ export function LevelValidator({ level }: LevelValidatorProps) {
             // Count pipe contents
             if (cell.pipeContents) {
               cell.pipeContents.forEach((color) => {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+              });
+            }
+          } else if (cell.element === "Moving") {
+            movingBlocks++;
+            // Count moving contents
+            if (cell.movingContents) {
+              cell.movingContents.forEach((color) => {
                 colorCounts[color] = (colorCounts[color] || 0) + 1;
               });
             }
@@ -79,22 +88,27 @@ export function LevelValidator({ level }: LevelValidatorProps) {
       });
     }
 
-    // Check block count (only colored blocks on board + pipe contents)
+    // Check block count (only colored blocks on board + pipe contents + moving contents)
     const expectedBlocks = level.config.blockCount;
     let totalPipeContents = 0;
+    let totalMovingContents = 0;
     level.board.forEach((row) => {
       row.forEach((cell) => {
         if (cell.element === "Pipe" && cell.pipeContents) {
           totalPipeContents += cell.pipeContents.length;
         }
+        if (cell.element === "Moving" && cell.movingContents) {
+          totalMovingContents += cell.movingContents.length;
+        }
       });
     });
-    const actualPlayableBlocks = coloredBlocksOnBoard + totalPipeContents;
+    const actualPlayableBlocks =
+      coloredBlocksOnBoard + totalPipeContents + totalMovingContents;
 
     if (actualPlayableBlocks !== expectedBlocks) {
       issues.push({
         type: "error",
-        message: `Block count mismatch: expected ${expectedBlocks}, got ${actualPlayableBlocks} (board colored: ${coloredBlocksOnBoard}, pipe: ${totalPipeContents})`,
+        message: `Block count mismatch: expected ${expectedBlocks}, got ${actualPlayableBlocks} (board colored: ${coloredBlocksOnBoard}, pipe: ${totalPipeContents}, moving: ${totalMovingContents})`,
       });
     }
 
@@ -155,6 +169,7 @@ export function LevelValidator({ level }: LevelValidatorProps) {
       colorCounts,
       totalBlocks,
       pipeBlocks,
+      movingBlocks,
       pullPinBlocks,
       isValid: issues.filter((i) => i.type === "error").length === 0,
     };

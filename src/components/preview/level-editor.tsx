@@ -516,6 +516,14 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                     (colorCounts[color] || 0) + 1;
                                 });
                               }
+                            } else if (cell.element === "Moving") {
+                              // Count moving contents
+                              if (cell.movingContents) {
+                                cell.movingContents.forEach((color) => {
+                                  colorCounts[color] =
+                                    (colorCounts[color] || 0) + 1;
+                                });
+                              }
                             } else if (cell.color) {
                               colorCounts[cell.color] =
                                 (colorCounts[cell.color] || 0) + 1;

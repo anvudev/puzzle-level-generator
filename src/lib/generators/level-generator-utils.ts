@@ -289,6 +289,35 @@ export class LevelGeneratorUtils {
   }
 
   /**
+   * Extract moving information from board for UI display
+   */
+  static extractMovingInfo(board: BoardCell[][], config: LevelConfig) {
+    const movingInfo = [];
+    let movingIndex = 1;
+
+    for (let y = 0; y < config.height; y++) {
+      for (let x = 0; x < config.width; x++) {
+        const cell = board[y][x];
+        if (
+          cell.element === "Moving" &&
+          cell.movingContents &&
+          cell.movingDirection
+        ) {
+          movingInfo.push({
+            id: `moving${movingIndex}`,
+            contents: cell.movingContents,
+            direction: cell.movingDirection,
+            distance: cell.movingDistance || 1, // Default to 1 if not set
+            position: { x, y },
+          });
+          movingIndex++;
+        }
+      }
+    }
+
+    return movingInfo.length > 0 ? movingInfo : undefined;
+  }
+  /**
    * Extract lock/key information from board for UI display
    */
   static extractLockInfo(board: BoardCell[][], config: LevelConfig) {

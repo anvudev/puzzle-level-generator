@@ -132,6 +132,29 @@ export function ElementsSection({
                 </div>
               </div>
 
+              {/* Moving Configuration */}
+              {elementKey === "Moving" &&
+                (config.elements[elementKey] || 0) > 0 && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <h5 className="text-sm font-semibold text-green-800 mb-3">
+                      Số block cho từng Moving:
+                    </h5>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={config.movingBlockCount || 3}
+                      onChange={(e) =>
+                        updateConfig({
+                          movingBlockCount:
+                            Number.parseInt(e.target.value) || 3,
+                        })
+                      }
+                      className="w-16 h-8 text-center text-sm border-green-300 focus:border-green-500"
+                    />
+                  </div>
+                )}
+
               {/* Pipe Configuration */}
               {elementKey === "Pipe" &&
                 (config.elements[elementKey] || 0) > 0 && (

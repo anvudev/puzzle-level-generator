@@ -23,6 +23,8 @@ export function styleDecorator({
         ? ""
         : element === "PullPin"
         ? ""
+        : element === "Moving"
+        ? ""
         : color
         ? COLOR_MAPPING[parseInt(color) as keyof typeof COLOR_MAPPING] ||
           "#f3f4f6"

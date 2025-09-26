@@ -279,6 +279,10 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
             if (cell.pipeContents) {
               cell.pipeContents.forEach((color) => colors.add(color));
             }
+          } else if (cell.element === "Moving") {
+            if (cell.movingContents) {
+              cell.movingContents.forEach((color) => colors.add(color));
+            }
           } else if (cell.color) {
             colors.add(cell.color);
           }

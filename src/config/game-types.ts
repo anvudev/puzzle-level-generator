@@ -19,6 +19,11 @@ export interface LevelConfig {
 
   // Ice configuration
   iceCounts?: number[]; // Individual counts for each ice block (1-3 hits each)
+
+  // Moving configuration
+  movingCount?: number; // Number of moving elements to generate
+  movingBlockCount?: number; // Default number of blocks inside each moving element
+  movingBlockCounts?: number[]; // Individual block counts for each moving element
 }
 
 export interface BoardCell {
@@ -48,7 +53,9 @@ export interface BoardCell {
 
   // For Moving element: direction and movement configuration
   movingDirection?: "up" | "down" | "left" | "right";
-  movingDistance?: number; // How many cells it can move
+  movingDistance?: number; // How many cells it can move (random 1-3)
+  movingContents?: string[]; // Colors inside the moving element
+  movingSize?: number; // Number of blocks inside the moving element
 }
 
 export interface Container {
@@ -73,6 +80,14 @@ export interface GeneratedLevel {
     id: string;
     contents: string[];
     direction: "up" | "down" | "left" | "right";
+    position: { x: number; y: number };
+  }>;
+  // Moving information for UI display
+  movingInfo?: Array<{
+    id: string;
+    contents: string[];
+    direction: "up" | "down" | "left" | "right";
+    distance: number;
     position: { x: number; y: number };
   }>;
   // Block Lock information for UI display

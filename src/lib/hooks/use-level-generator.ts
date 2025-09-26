@@ -23,6 +23,7 @@ export function useLevelGenerator() {
     // Thống kê số block chơi được: block có màu trên board + pipe contents
     let coloredBlocksOnBoard = 0;
     let totalPipeContents = 0;
+    let totalMovingContents = 0;
     const colorCounts: Record<string, number> = {};
 
     for (const row of level.board) {
@@ -35,6 +36,13 @@ export function useLevelGenerator() {
                 totalPipeContents++;
               }
             }
+          } else if (cell.element === "Moving") {
+            if (cell.movingContents) {
+              for (const color of cell.movingContents) {
+                colorCounts[color] = (colorCounts[color] || 0) + 1;
+                totalMovingContents++;
+              }
+            }
           } else if (cell.color) {
             colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
             coloredBlocksOnBoard++;
@@ -44,7 +52,8 @@ export function useLevelGenerator() {
     }
 
     // Điều kiện Stats: tổng block chơi được đúng và mỗi màu chia hết cho 3
-    const actualPlayableBlocks = coloredBlocksOnBoard + totalPipeContents;
+    const actualPlayableBlocks =
+      coloredBlocksOnBoard + totalPipeContents + totalMovingContents;
     if (actualPlayableBlocks !== level.config.blockCount) return false;
     for (const count of Object.values(colorCounts)) {
       if (count % 3 !== 0) return false;
@@ -79,6 +88,7 @@ export function useLevelGenerator() {
       );
       let coloredBlocksOnBoard = 0;
       let totalPipeContents = 0;
+      let totalMovingContents = 0;
 
       for (let y = 0; y < level.config.height; y++) {
         for (let x = 0; x < level.config.width; x++) {
@@ -93,6 +103,13 @@ export function useLevelGenerator() {
                   totalPipeContents++;
                 }
               }
+            } else if (cell.element === "Moving") {
+              if (cell.movingContents) {
+                for (const color of cell.movingContents) {
+                  colorCounts[color] = (colorCounts[color] || 0) + 1;
+                  totalMovingContents++;
+                }
+              }
             } else if (cell.color) {
               if (cell.color in colorCounts) {
                 colorCounts[cell.color] = (colorCounts[cell.color] || 0) + 1;
@@ -104,7 +121,8 @@ export function useLevelGenerator() {
       }
 
       const targetTotal = level.config.blockCount;
-      let currentPlayable = coloredBlocksOnBoard + totalPipeContents;
+      let currentPlayable =
+        coloredBlocksOnBoard + totalPipeContents + totalMovingContents;
       if (currentPlayable > targetTotal) {
         // Vượt quá mục tiêu thì không thể thêm để sửa
         return null;
@@ -222,17 +240,35 @@ export function useLevelGenerator() {
       }
 
       // Nếu vẫn còn thiếu tổng, phân đều theo danh sách màu đã chọn (vòng tròn)
+      // Đảm bảo thêm theo bội số 3 để mỗi màu chia hết cho 3
       let colorIndex = 0;
+      while (remainingCapacity() >= 3) {
+        // Chỉ thêm khi còn ít nhất 3 blocks
+        // Thêm 3 blocks cùng màu để đảm bảo chia hết cho 3
+        const color = colors[colorIndex % colors.length];
+        for (let i = 0; i < 3 && remainingCapacity() > 0; i++) {
+          const pos = takeNextEmpty();
+          if (!pos) break;
+          board[pos.y][pos.x] = {
+            type: "block",
+            color,
+            element: null,
+          } as any;
+          currentPlayable += 1;
+        }
+        colorIndex++;
+      }
+
+      // Nếu còn lẻ 1-2 blocks, thêm vào màu đầu tiên để đảm bảo tổng đúng
       while (remainingCapacity() > 0) {
         const pos = takeNextEmpty();
         if (!pos) break;
-        const color = colors[colorIndex % colors.length];
+        const color = colors[0]; // Luôn dùng màu đầu tiên
         board[pos.y][pos.x] = {
           type: "block",
           color,
           element: null,
         } as any;
-        colorIndex++;
         currentPlayable += 1;
       }
 

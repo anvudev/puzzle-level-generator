@@ -32,6 +32,13 @@ function analyzeColorsFromBoard(level: GeneratedLevel): ColorBarAnalysis {
               position++;
             });
           }
+        } else if (cell.element === "Moving") {
+          if (cell.movingContents) {
+            cell.movingContents.forEach((movingColor) => {
+              allBlocks.push({ color: movingColor, position });
+              position++;
+            });
+          }
         } else {
           // Regular block
           allBlocks.push({ color: cell.color, position });

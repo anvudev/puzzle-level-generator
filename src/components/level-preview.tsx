@@ -252,6 +252,63 @@ export function LevelPreview({
               </CardContent>
             </Card>
           )}
+          {/* Moving Contents */}
+          {level.movingInfo && level.movingInfo.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Nội dung Moving ({level.pipeInfo?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {level.movingInfo && level.movingInfo.length > 0 && (
+                  <div className="space-y-3">
+                    {level.movingInfo.map((moving) => (
+                      <div key={moving.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">
+                              {moving.id.toUpperCase()}
+                            </span>
+                            <div className="flex items-center gap-1 px-2 py-1 bg-muted rounded-md">
+                              <span className="text-sm font-bold text-blue-600">
+                                {moving.direction === "up" && "⬆️"}
+                                {moving.direction === "down" && "⬇️"}
+                                {moving.direction === "left" && "⬅️"}
+                                {moving.direction === "right" && "➡️"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {moving.direction === "up" && "UP"}
+                                {moving.direction === "down" && "DOWN"}
+                                {moving.direction === "left" && "LEFT"}
+                                {moving.direction === "right" && "RIGHT"}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            ({moving.position.x}, {moving.position.y})
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-8 gap-1">
+                          {moving.contents.map((color, index) => (
+                            <div
+                              key={index}
+                              className="w-4 h-4 rounded border border-border"
+                              style={{
+                                backgroundColor:
+                                  level.config.colorMapping[color] || "#f3f4f6",
+                              }}
+                              title={`${color} (${index + 1})`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Panel */}
