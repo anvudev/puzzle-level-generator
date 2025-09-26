@@ -8,10 +8,20 @@ import { Button } from "@/components/ui/button";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
-import { RotateCcw, Move } from "lucide-react";
+import {
+  RotateCcw,
+  Move,
+  Users,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
 import { LevelEditor } from "./level-editor";
 import { LevelHelp } from "./level-help";
 import { blockStyleDecorator } from "@/lib/utils/styleDecoration";
+import { useBlockGroupDrag } from "@/lib/hooks/use-block-group-drag";
+import { getConnectedBlocks } from "@/lib/utils/block-group-utils";
 
 interface BoardPreviewProps {
   level: GeneratedLevel;
@@ -25,6 +35,146 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     index: number;
   } | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [selectedBlockGroup, setSelectedBlockGroup] = useState<
+    { x: number; y: number }[] | null
+  >(null);
+
+  // Group drag functionality
+  const {
+    groupDragState,
+    toggleGroupMode,
+    handleCellHover,
+    handleCellLeave,
+    handleGroupDragStart,
+    handleGroupDragOver,
+    handleGroupDrop,
+    handleGroupDragEnd,
+    clearSelection,
+    isInSelectedGroup,
+    isInHoveredGroup,
+    isInDragPreview,
+    canDropAtPosition,
+  } = useBlockGroupDrag(level, onLevelUpdate);
+
+  // Block group movement functions
+  const handleBlockClick = (row: number, col: number) => {
+    if (!isDragMode) return;
+
+    const cell = level.board[row][col];
+    if (cell.type !== "block") return;
+
+    const connectedBlocks = getConnectedBlocks(level.board, col, row);
+    setSelectedBlockGroup(connectedBlocks);
+  };
+
+  // Helper function to check if a position is in selected group
+  const isInSelectedBlockGroup = (x: number, y: number): boolean => {
+    return (
+      selectedBlockGroup?.some((pos) => pos.x === x && pos.y === y) || false
+    );
+  };
+
+  const moveBlockGroup = (direction: "up" | "down" | "left" | "right") => {
+    if (!selectedBlockGroup || !onLevelUpdate) return;
+
+    console.log(`🚀 Moving block group ${direction}`, selectedBlockGroup);
+
+    const newBoard = level.board.map((row) => [...row]);
+    const width = level.config.width;
+    const height = level.config.height;
+
+    // Calculate movement delta
+    const deltaX = direction === "left" ? -1 : direction === "right" ? 1 : 0;
+    const deltaY = direction === "up" ? -1 : direction === "down" ? 1 : 0;
+
+    console.log(`📐 Delta: x=${deltaX}, y=${deltaY}`);
+
+    // Check if movement is valid
+    const canMove = selectedBlockGroup.every((pos) => {
+      const newX = pos.x + deltaX;
+      const newY = pos.y + deltaY;
+
+      // Check bounds
+      if (newX < 0 || newX >= width || newY < 0 || newY >= height) {
+        console.log(`❌ Out of bounds: (${newX}, ${newY})`);
+        return false;
+      }
+
+      // Check if target position is empty, wall, or part of the same group
+      const targetCell = newBoard[newY][newX];
+      const isValidTarget =
+        targetCell.type === "empty" ||
+        targetCell.type === "wall" ||
+        selectedBlockGroup.some(
+          (groupPos) => groupPos.x === newX && groupPos.y === newY
+        );
+
+      if (!isValidTarget) {
+        console.log(
+          `❌ Target occupied: (${newX}, ${newY}) = ${targetCell.type}`
+        );
+      } else if (targetCell.type === "wall") {
+        console.log(
+          `🧱 Moving over wall: (${newX}, ${newY}) - wall will be replaced`
+        );
+      }
+
+      return isValidTarget;
+    });
+
+    console.log(`✅ Can move: ${canMove}`);
+
+    if (!canMove) return;
+
+    // Store the blocks to move
+    const blocksToMove = selectedBlockGroup.map((pos) => ({
+      ...pos,
+      cell: newBoard[pos.y][pos.x],
+    }));
+
+    // Clear original positions (set to empty)
+    selectedBlockGroup.forEach((pos) => {
+      newBoard[pos.y][pos.x] = {
+        type: "empty",
+        color: null,
+        element: null,
+      };
+    });
+
+    // Place blocks in new positions
+    blocksToMove.forEach((block) => {
+      const newX = block.x + deltaX;
+      const newY = block.y + deltaY;
+      newBoard[newY][newX] = block.cell;
+    });
+
+    // Fill empty spaces with walls
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (newBoard[y][x].type === "empty") {
+          newBoard[y][x] = {
+            type: "wall",
+            color: null,
+            element: null,
+          };
+        }
+      }
+    }
+
+    // Update selected group positions
+    const newSelectedGroup = selectedBlockGroup.map((pos) => ({
+      x: pos.x + deltaX,
+      y: pos.y + deltaY,
+    }));
+    setSelectedBlockGroup(newSelectedGroup);
+
+    // Update level
+    const updatedLevel = {
+      ...level,
+      board: newBoard,
+    };
+    onLevelUpdate(updatedLevel);
+  };
 
   const handleCountClick = (row: number, col: number, type: "ice" | "bomb") => {
     const newCount = prompt(
@@ -263,23 +413,86 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
               {isDragMode ? "Hoàn thành" : "Sắp xếp lại"}
             </Button>
             {isDragMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetBoard}
-                className="flex items-center gap-2 bg-transparent"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </Button>
+              <>
+                <Button
+                  variant={groupDragState.isGroupMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleGroupMode}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  {groupDragState.isGroupMode ? "Kéo khối" : "Kéo đơn"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetBoard}
+                  className="flex items-center gap-2 bg-transparent"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset
+                </Button>
+              </>
             )}
           </div>
         </div>
         {isDragMode && (
-          <p className="text-sm text-muted-foreground">
-            Kéo thả các block để sắp xếp lại vị trí. Chỉ có thể di chuyển các
-            block có màu.
-          </p>
+          <>
+            <p className="text-sm text-muted-foreground">
+              {groupDragState.isGroupMode
+                ? "Click vào block để chọn khối, sau đó dùng nút mũi tên để di chuyển cả khối."
+                : "Kéo thả từng block để sắp xếp lại vị trí. Chỉ có thể di chuyển các block có màu."}
+            </p>
+            {selectedBlockGroup && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm font-medium">
+                  Di chuyển khối ({selectedBlockGroup.length} blocks):
+                </span>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => moveBlockGroup("up")}
+                    className="p-2"
+                  >
+                    <ArrowUp className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => moveBlockGroup("down")}
+                    className="p-2"
+                  >
+                    <ArrowDown className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => moveBlockGroup("left")}
+                    className="p-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => moveBlockGroup("right")}
+                    className="p-2"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedBlockGroup(null)}
+                    className="ml-2"
+                  >
+                    Bỏ chọn
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardHeader>
       <CardContent>
@@ -299,6 +512,12 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
               const row = Math.floor(index / level.config.width);
               const col = index % level.config.width;
 
+              // Group drag states
+              const isInSelected = isInSelectedGroup(index);
+              const isInHovered = isInHoveredGroup(index);
+              const isInPreview = isInDragPreview(index);
+              const canDropHere = canDropAtPosition(index);
+
               return (
                 <div
                   key={index}
@@ -315,14 +534,80 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                     !isDragMode
                       ? "cursor-pointer hover:ring-2 hover:ring-blue-400"
                       : ""
+                  } ${
+                    groupDragState.isGroupMode && isInSelected
+                      ? "ring-2 ring-blue-500 ring-offset-1"
+                      : ""
+                  } ${
+                    groupDragState.isGroupMode &&
+                    isInHovered &&
+                    !groupDragState.isDragging
+                      ? "ring-2 ring-green-400 ring-offset-1"
+                      : ""
+                  } ${
+                    groupDragState.isGroupMode &&
+                    isInPreview &&
+                    groupDragState.isDragging
+                      ? "ring-2 ring-yellow-400 ring-offset-1 opacity-70"
+                      : ""
+                  } ${
+                    groupDragState.isGroupMode &&
+                    canDropHere &&
+                    groupDragState.isDragging
+                      ? "bg-green-100 dark:bg-green-900"
+                      : ""
+                  } ${
+                    selectedBlockGroup && isInSelectedBlockGroup(col, row)
+                      ? "ring-2 ring-purple-500 ring-offset-1 bg-purple-100 dark:bg-purple-900"
+                      : ""
                   }`}
                   style={blockStyleDecorator(cell)}
                   draggable={canDrag}
-                  onDragStart={(e) => handleDragStart(e, cell, index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, index)}
-                  onDragEnd={handleDragEnd}
+                  onDragStart={(e) => {
+                    if (groupDragState.isGroupMode) {
+                      handleGroupDragStart(index);
+                    } else {
+                      handleDragStart(e, cell, index);
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    if (groupDragState.isGroupMode) {
+                      e.preventDefault();
+                      handleGroupDragOver(index);
+                    } else {
+                      handleDragOver(e, index);
+                    }
+                  }}
+                  onDragLeave={() => {
+                    if (!groupDragState.isGroupMode) {
+                      handleDragLeave();
+                    }
+                  }}
+                  onDrop={(e) => {
+                    if (groupDragState.isGroupMode) {
+                      e.preventDefault();
+                      handleGroupDrop(index);
+                    } else {
+                      handleDrop(e, index);
+                    }
+                  }}
+                  onDragEnd={() => {
+                    if (groupDragState.isGroupMode) {
+                      handleGroupDragEnd();
+                    } else {
+                      handleDragEnd();
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (groupDragState.isGroupMode) {
+                      handleCellHover(index);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (groupDragState.isGroupMode) {
+                      handleCellLeave();
+                    }
+                  }}
                   onClick={() => {
                     if (!isDragMode) {
                       if (cell.element === "PullPin") {
@@ -332,6 +617,13 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                       } else if (cell.element === "Moving") {
                         handleMovingClick(index);
                       }
+                    } else if (
+                      isDragMode &&
+                      groupDragState.isGroupMode &&
+                      cell.type === "block"
+                    ) {
+                      // Handle block selection for group movement
+                      handleBlockClick(row, col);
                     }
                   }}
                 >
