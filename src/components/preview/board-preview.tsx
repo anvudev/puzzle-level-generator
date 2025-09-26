@@ -406,7 +406,10 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
             <Button
               variant={isDragMode ? "default" : "outline"}
               size="sm"
-              onClick={() => setIsDragMode(!isDragMode)}
+              onClick={() => {
+                setIsDragMode(!isDragMode);
+                setSelectedBlockGroup(null);
+              }}
               className="flex items-center gap-2"
             >
               <Move className="w-4 h-4" />
@@ -673,7 +676,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         </div>
                       ) : cell.element === "IceBlock" ? (
                         // For Ice element, show ice icon with count
-                        <div className="relative">
+                        <div className="relative z-10">
                           <span className="text-blue-300 drop-shadow-md text-3xl">
                             🧊
                           </span>
@@ -692,13 +695,13 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                         </div>
                       ) : cell.element === "Bomb" ? (
                         // For Bomb element, show bomb icon with count
-                        <div className="relative">
+                        <div className="relative z-10">
                           <span className="text-red-500 drop-shadow-md text-3xl">
                             💣
                           </span>
                           {cell.bombCount && (
                             <span
-                              className=" -bottom-1 -right-1 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-red-700 transition-colors"
+                              className="absolute -bottom-1 -right-1 bg-red-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold cursor-pointer hover:bg-red-700 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleCountClick(row, col, "bomb");

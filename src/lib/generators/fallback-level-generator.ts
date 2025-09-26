@@ -1091,7 +1091,7 @@ export class FallbackLevelGenerator {
     // Helper function to get remaining capacity
     const remainingCapacity = () => targetTotal - currentPlayable;
 
-    // Helper function to get next connected empty position
+    // Helper function to get next connected empty position with better distribution
     const takeNextConnectedEmpty = () => {
       const connectedPositions = LevelGeneratorUtils.getConnectedPositions(
         board,
@@ -1100,8 +1100,33 @@ export class FallbackLevelGenerator {
       );
 
       if (connectedPositions.length > 0) {
-        // Return first connected position
-        return connectedPositions[0];
+        // Shuffle positions for better distribution
+        for (let i = connectedPositions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [connectedPositions[i], connectedPositions[j]] = [
+            connectedPositions[j],
+            connectedPositions[i],
+          ];
+        }
+
+        // Prefer positions that are more spread out
+        // Sort by distance from center to encourage spreading
+        const centerX = Math.floor(level.config.width / 2);
+        const centerY = Math.floor(level.config.height / 2);
+
+        connectedPositions.sort((a, b) => {
+          const distA = Math.abs(a.x - centerX) + Math.abs(a.y - centerY);
+          const distB = Math.abs(b.x - centerX) + Math.abs(b.y - centerY);
+          // Prefer positions further from center for better spread
+          return distB - distA;
+        });
+
+        // Return a random position from the top 3 furthest positions
+        const topPositions = connectedPositions.slice(
+          0,
+          Math.min(3, connectedPositions.length)
+        );
+        return topPositions[Math.floor(Math.random() * topPositions.length)];
       }
 
       // Fallback: find any empty position (should rarely happen)
