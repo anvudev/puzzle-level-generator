@@ -5,10 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useImageGenerator } from "@/lib/hooks/use-image-generator";
+import { kvGetAllImages } from "@/app/api/clients";
 import { Palette, Filter, X, Search, Grid3X3, RefreshCw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { COLOR_MAPPING, IMAGE_SIZE_OPTIONS } from "@/config/game-constants";
+import {
+  COLOR_MAPPING,
+  IMAGE_SIZE_OPTIONS,
+  REALM,
+} from "@/config/game-constants";
 import { orderBy } from "lodash-es";
 interface ImageData {
   _id: string;
@@ -32,7 +36,6 @@ interface FilterState {
 }
 
 export default function Favorite() {
-  const { getImages } = useImageGenerator();
   const [images, setImages] = useState<ImageData[]>([]);
   const [allImages, setAllImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +131,7 @@ export default function Favorite() {
     try {
       setLoading(true);
       setError(null);
-      const images = await getImages();
+      const images = await kvGetAllImages(REALM.COLL_IMAGE);
       console.log("Images:", images);
       console.log("Loaded images:", images);
       setAllImages(images || []); // Store original data
@@ -139,7 +142,7 @@ export default function Favorite() {
     } finally {
       setLoading(false);
     }
-  }, [getImages]);
+  }, []);
 
   useEffect(() => {
     loadImages();
