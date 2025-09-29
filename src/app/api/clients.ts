@@ -165,3 +165,39 @@ export async function kvDelAll(collection: string) {
   const coll = await getCollection(collection);
   await coll.deleteMany({});
 }
+
+//save image
+export async function kvSaveImage(collection: string, key: string, value: any) {
+  const coll = await getCollection(collection);
+  await coll.insertOne({
+    key,
+    value,
+    updatedAt: new Date(),
+    createdAt: new Date(),
+  });
+}
+
+export async function kvGetAllImages(collection: string) {
+  try {
+    const coll = await getCollection(collection);
+    const docs = await coll.find({});
+    // Convert ObjectId to string và format data
+    const formattedDocs = docs.map((doc: any) => ({
+      ...doc,
+      _id: doc._id?.toString() || doc._id, // Convert ObjectId to string
+      id: doc._id?.toString() || doc._id, // Thêm field id cho dễ sử dụng
+    }));
+
+    return formattedDocs;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function kvDeleteImage(collection: string, id: string) {
+  const coll = await getCollection(collection);
+  // Convert string id to ObjectId for MongoDB
+  const objectId = new Realm.BSON.ObjectId(id);
+  const result = await coll.deleteOne({ _id: objectId });
+  return result;
+}

@@ -98,4 +98,9 @@ export const REALM = {
   DB_NAME: "Puzzle",
   COLL_HISTORY: "history",
   COLL_IMPORT: "import",
+  COLL_IMAGE: "image",
 };
+
+export const IMAGE_GEN_BASE_URL = "https://image-gen.kiman.site";
+
+export const IMAGE_SIZE_OPTIONS = ["16x16", "30x30", "32x32", "30x40", "64x64"];
