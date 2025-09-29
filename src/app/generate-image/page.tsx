@@ -18,7 +18,6 @@ import {
 import { useState, useRef } from "react";
 import { kvSaveImage } from "../api/clients";
 import toast from "react-hot-toast";
-import { Label } from "@radix-ui/react-select";
 
 interface PixelData {
   meta: {

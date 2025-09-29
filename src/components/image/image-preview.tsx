@@ -1,17 +1,9 @@
 "use client";
 
-import {
-  Download,
-  FileJson,
-  Copy,
-  Palette,
-  Grid3X3,
-  Check,
-  Trash2,
-} from "lucide-react";
+import { Download, Copy, Palette, Check, Trash2 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { useEffect, useState } from "react";
 import { REALM } from "@/config/game-constants";
 import { kvDeleteImage } from "@/app/api/clients";

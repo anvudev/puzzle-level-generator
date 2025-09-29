@@ -2,8 +2,8 @@ import { kvGetAllImages } from "@/app/api/clients";
 import { IMAGE_GEN_BASE_URL, REALM } from "@/config/game-constants";
 
 export function useImageGenerator() {
-  const generateImage = async (image: any) => {
-    const response = await fetch(`${IMAGE_GEN_BASE_URL}/generate`, {
+  const generateImage = async (image: Record<string, unknown>) => {
+    await fetch(`${IMAGE_GEN_BASE_URL}/generate`, {
       method: "POST",
       body: JSON.stringify(image),
     });

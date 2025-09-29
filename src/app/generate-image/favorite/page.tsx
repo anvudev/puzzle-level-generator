@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useImageGenerator } from "@/lib/hooks/use-image-generator";
 import { Palette, Filter, X, Search, Grid3X3, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { COLOR_MAPPING, IMAGE_SIZE_OPTIONS } from "@/config/game-constants";
 import { orderBy } from "lodash-es";
 interface ImageData {
@@ -45,7 +45,7 @@ export default function Favorite() {
   });
 
   // Apply all filters
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...allImages];
 
     // Filter by color count
@@ -78,7 +78,7 @@ export default function Favorite() {
     );
 
     setImages(filtered);
-  };
+  }, [allImages, filters]);
 
   const filterBySize = (size: string) => {
     setLoading(true);
@@ -122,9 +122,9 @@ export default function Favorite() {
   // Apply filters whenever filters change
   useEffect(() => {
     applyFilters();
-  }, [filters, allImages]);
+  }, [filters, allImages, applyFilters]);
 
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -139,11 +139,11 @@ export default function Favorite() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getImages]);
 
   useEffect(() => {
     loadImages();
-  }, []);
+  }, [loadImages]);
   // Debug: Xem cấu trúc data
 
   if (loading) {
