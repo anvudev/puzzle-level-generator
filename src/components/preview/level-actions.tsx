@@ -63,23 +63,22 @@ export function LevelActions({
     return JSON.stringify(data, null, 2);
   };
 
-  const handleCopyBoardData = async () => {
+const handleCopyBoardData = async () => {
     const customBars = getCustomBars();
     const data = formatLevelForExport(level, customBars) as {
       board: BoardCell[][];
     };
-    console.log("Original data:", data);
-
-    // Function to format board data by rows (left to right, top to bottom)
+    // Function to transpose and format like rangeToString
     const rangeToString = (inputRange: BoardCell[][]) => {
       if (!inputRange || inputRange.length === 0) return "";
-
-      // Duyệt theo hàng từ trái qua phải, từ trên xuống dưới
-      // Convert each row: cells in row joined by "|", rows joined by ";"
-      const final = inputRange
-        .map((row) => row.map((cell) => JSON.stringify(cell)).join("|"))
+      // Transpose mảng để duyệt theo cột
+      const cols = inputRange[0].map((_, colIndex) =>
+        inputRange.map((row) => row[colIndex])
+      );
+      // Convert each column: cells in column joined by "|", columns joined by ";"
+      const final = cols
+        .map((col) => col.map((cell) => JSON.stringify(cell)).join("|"))
         .join(";");
-
       return "[" + final + "]";
     };
 
