@@ -8,6 +8,7 @@ import {
   kvDelAll,
   kvGetAll,
   kvSet,
+  kvSetName,
   kvUpdate,
 } from "@/app/api/clients";
 import { REALM } from "@/config/game-constants";
@@ -124,7 +125,7 @@ export function useLevelHistory() {
     id: string,
     updates: Partial<Pick<SavedLevel, "name" | "level">>
   ) => {
-    kvSet(REALM.COLL_HISTORY, id, updates);
+    kvSetName(REALM.COLL_HISTORY, id, updates);
     setSavedLevels((prev) =>
       prev.map((saved) =>
         saved.id === id

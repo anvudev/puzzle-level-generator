@@ -101,6 +101,24 @@ export async function kvSet(collection: string, key: string, value: any) {
   console.log("Update result:", result);
 }
 
+export async function kvSetName(collection: string, key: string, value: any) {
+  const app = await getApp();
+  const user = app.currentUser ?? (await loginAnonymous());
+  const coll = await getCollection(collection);
+  await coll.updateOne(
+    { "value.id": key },
+    {
+      $set: {
+        ownerId: user.id,
+        "value.id": key,
+        "value.name": value.name,
+        "value.updatedAt": new Date(),
+      },
+    },
+    { upsert: true }
+  );
+}
+
 export async function kvUpdate(collection: string, key: string, value: any) {
   const coll = await getCollection(collection);
 

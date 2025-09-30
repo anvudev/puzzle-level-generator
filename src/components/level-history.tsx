@@ -500,9 +500,8 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                         cell.type === "block"
                                           ? cell.color
                                             ? COLOR_MAPPING[
-                                                          cell.color as unknown as keyof typeof COLOR_MAPPING
-                                                        ] ||
-                                              "#f3f4f6"
+                                                cell.color as unknown as keyof typeof COLOR_MAPPING
+                                              ] || "#f3f4f6"
                                             : "#e5e7eb"
                                           : "#f9fafb",
                                       fontSize: "6px",
@@ -714,7 +713,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                               size="sm"
                               variant="outline"
                               onClick={() => handleRename(savedLevel)}
-                              disabled = {true}
+                              disabled={false}
                             >
                               <Edit3 className="w-4 h-4 mr-1" />
                               Đổi tên
