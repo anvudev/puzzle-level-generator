@@ -49,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { COLOR_MAPPING } from "@/config/game-constants";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -498,8 +499,9 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                       backgroundColor:
                                         cell.type === "block"
                                           ? cell.color
-                                            ? savedLevel.level.config
-                                                .colorMapping[cell.color] ||
+                                            ? COLOR_MAPPING[
+                                                          cell.color as unknown as keyof typeof COLOR_MAPPING
+                                                        ] ||
                                               "#f3f4f6"
                                             : "#e5e7eb"
                                           : "#f9fafb",
@@ -641,9 +643,8 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                                 backgroundColor:
                                                   cell.type === "block"
                                                     ? cell.color
-                                                      ? savedLevel.level.config
-                                                          .colorMapping[
-                                                          cell.color
+                                                      ? COLOR_MAPPING[
+                                                          cell.color as unknown as keyof typeof COLOR_MAPPING
                                                         ] || "#f3f4f6"
                                                       : ""
                                                     : "#f9fafb",
