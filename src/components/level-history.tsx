@@ -714,6 +714,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                               size="sm"
                               variant="outline"
                               onClick={() => handleRename(savedLevel)}
+                              disabled = {true}
                             >
                               <Edit3 className="w-4 h-4 mr-1" />
                               Đổi tên
