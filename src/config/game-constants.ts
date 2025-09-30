@@ -1,17 +1,17 @@
 // Color mapping system - colors are now referenced by index
 export const COLOR_MAPPING = {
-  1: "#ff0000", // Red
-  2: "#0000ff", // Blue
-  3: "#00ff00", // Green
-  4: "#ffff00", // Yellow
-  5: "#ff9900", // Orange
-  6: "#9900ff", // Purple
-  7: "#ff00ff", // Pink
-  8: "#00ffff", // Cyan
-  9: "#4a86e8", // Light Blue
-  10: "#876670", // Brown
-  11: "#b7b7b7", // Grey
-  12: "#ffffff", // White
+  1: "#664b55", // Red
+  2: "#1b4efc", // Blue
+  3: "#08cf62", // Green
+  4: "#18d1b0", // Yellow
+  5: "#5eb3ff", // Orange
+  6: "#ff9f19", // Purple
+  7: "#fd85e0", // Pink
+  8: "#ed4310", // Cyan
+  9: "#e600ee", // Light Blue
+  10: "#ffffff", // Brown
+  11: "#b8b8b8", // Grey
+  12: "#fef812", // White
 } as const;
 
 export const ELEMENT_TYPES = {
