@@ -1,0 +1,30 @@
+{
+  "version": "1.2.0",
+  "lastUpdate": "2025-10-01",
+  "updates": [
+    {
+      "version": "1.2.0",
+      "date": "2025-10-01",
+      "title": "Thêm Moving Element Editor",
+      "type": "feature",
+      "items": [
+        "✨ Thêm chức năng chỉnh sửa Moving element",
+        "🎯 Có thể điều chỉnh direction và distance của Moving",
+        "🎨 Thêm dialog để edit contents của Moving element",
+        "🔧 Cải thiện UI/UX cho level editor"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2025-09-28",
+      "title": "Wall System & Level Editor",
+      "type": "feature",
+      "items": [
+        "🧱 Thêm hệ thống Wall vào level editor",
+        "✏️ Cải thiện công cụ chỉnh sửa level",
+        "🎨 Thêm 12 màu sắc hỗ trợ",
+        "🔧 Fix các lỗi nhỏ trong generator"
+      ]
+    }
+  ]
+}

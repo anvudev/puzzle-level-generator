@@ -9,6 +9,7 @@ import {
   Link,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { ChangelogDialog } from "../changelog-dialog";
 
 export const Header = ({
   handleGenerateLevel,
@@ -52,6 +53,7 @@ export const Header = ({
                 <Grid3X3 className="w-4 h-4" />
                 <span className="text-sm font-medium">7 loại element</span>
               </div>
+              <ChangelogDialog />
             </div>
           </div>
           {isShowButton && (
