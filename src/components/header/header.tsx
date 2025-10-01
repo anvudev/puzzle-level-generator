@@ -76,14 +76,14 @@ export const Header = ({
                   </>
                 )}
               </Button>
-              <Button
+              {/* <Button
                 disabled={isGenerating}
                 size="lg"
                 className=" ml-4 bg-white text-orange-600 hover:bg-white/90 shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 rounded-2xl font-bold text-lg px-8 py-4 h-auto"
               >
                 <ImageIcon className="w-6 h-6 mr-3" />
                 <a href="/generate-image">Tạo ảnh</a>
-              </Button>
+              </Button> */}
             </div>
           )}
         </div>
