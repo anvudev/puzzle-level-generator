@@ -59,10 +59,22 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   >("up");
   // New pipe configuration states
   const [pipeBlockCount, setPipeBlockCount] = useState<number>(3);
+  // Moving configuration states
+  const [selectedMovingDirection, setSelectedMovingDirection] = useState<
+    "up" | "down" | "left" | "right"
+  >("up");
+  const [movingDistance, setMovingDistance] = useState<number>(2);
+  const [movingBlockCount, setMovingBlockCount] = useState<number>(3);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingPipe, setEditingPipe] = useState<{
     row: number;
     col: number;
+    contents: string[];
+  } | null>(null);
+  const [editingMoving, setEditingMoving] = useState<{
+    row: number;
+    col: number;
+    distance: number;
     contents: string[];
   } | null>(null);
 
@@ -207,6 +219,38 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
           };
         }
         break;
+
+      case "moving":
+        // Add/Edit Moving element
+        if (cell.type === "empty") {
+          // Tạo Moving mới với contents theo số lượng đã chọn
+          const defaultContents = Array(movingBlockCount).fill(selectedColor);
+          newBoard[rowIndex][colIndex] = {
+            type: "block",
+            color: null,
+            element: "Moving",
+            movingDirection: selectedMovingDirection,
+            movingDistance: movingDistance,
+            movingContents: defaultContents,
+            movingSize: movingBlockCount,
+          };
+        } else if (cell.element === "Moving") {
+          // Cập nhật direction và distance, GIỮ NGUYÊN movingContents và movingSize hiện có
+          newBoard[rowIndex][colIndex] = {
+            ...cell,
+            movingDirection: selectedMovingDirection,
+            movingDistance: movingDistance,
+            movingSize:
+              cell.movingSize ||
+              cell.movingContents?.length ||
+              movingBlockCount,
+            movingContents:
+              cell.movingContents && cell.movingContents.length > 0
+                ? cell.movingContents
+                : Array(movingBlockCount).fill(selectedColor),
+          };
+        }
+        break;
     }
 
     // Update level
@@ -218,6 +262,11 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
     // Update pipe info if needed
     if (selectedTool === "pipe" || selectedTool === "remove") {
       updatedLevel.pipeInfo = extractPipeInfo(newBoard);
+    }
+
+    // Update moving info if needed
+    if (selectedTool === "moving" || selectedTool === "remove") {
+      updatedLevel.movingInfo = extractMovingInfo(newBoard);
     }
 
     onLevelUpdate(updatedLevel);
@@ -252,6 +301,38 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
     return pipeInfo;
   };
 
+  const extractMovingInfo = (board: BoardCell[][]) => {
+    const movingInfo: Array<{
+      id: string;
+      contents: string[];
+      direction: "up" | "down" | "left" | "right";
+      distance: number;
+      position: { x: number; y: number };
+    }> = [];
+    let movingId = 1;
+
+    board.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (
+          cell.element === "Moving" &&
+          cell.movingContents &&
+          cell.movingDirection &&
+          cell.movingDistance !== undefined
+        ) {
+          movingInfo.push({
+            id: `moving${movingId++}`,
+            contents: cell.movingContents,
+            direction: cell.movingDirection,
+            distance: cell.movingDistance,
+            position: { x, y },
+          });
+        }
+      });
+    });
+
+    return movingInfo;
+  };
+
   const getDirectionIcon = (direction: string) => {
     switch (direction) {
       case "up":
@@ -264,6 +345,21 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
         return "➡️";
       default:
         return "⬆️";
+    }
+  };
+
+  const getMovingDirectionIcon = (direction: string) => {
+    switch (direction) {
+      case "up":
+        return "⏫";
+      case "down":
+        return "⏬";
+      case "left":
+        return "⏪";
+      case "right":
+        return "⏩";
+      default:
+        return "⏫";
     }
   };
 
@@ -323,8 +419,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     onClick={() => setSelectedTool("pipe")}
                     className="flex items-center gap-2"
                   >
-                    <RotateCw className="w-4 h-4" />
-                    Pipe
+                    ⬆️ Pipe
                   </Button>
                   <Button
                     variant={selectedTool === "pullpin" ? "default" : "outline"}
@@ -351,8 +446,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     <img
                       src="assets/images/wall-icon.png"
                       alt="wall"
-                      width={25}
-                      height={25}
+                      width={18}
+                      height={18}
                     />
                     Wall
                   </Button>
@@ -482,6 +577,80 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   </div>
                 )}
 
+                {/* Moving Configuration */}
+                {selectedTool === "moving" && (
+                  <div className="space-y-4">
+                    {/* Moving Block Count */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Số blocks trong moving:
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={movingBlockCount}
+                        onChange={(e) =>
+                          setMovingBlockCount(parseInt(e.target.value) || 1)
+                        }
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Số lượng blocks sẽ được đặt trong moving element (1-8)
+                      </p>
+                    </div>
+
+                    {/* Moving Direction Selection */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Hướng di chuyển:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["up", "down", "left", "right"] as const).map(
+                          (direction) => (
+                            <Button
+                              key={direction}
+                              variant={
+                                selectedMovingDirection === direction
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() =>
+                                setSelectedMovingDirection(direction)
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              {getDirectionIcon(direction)}
+                              {direction.toUpperCase()}
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Moving Distance */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Khoảng cách di chuyển:
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={movingDistance}
+                        onChange={(e) =>
+                          setMovingDistance(parseInt(e.target.value) || 1)
+                        }
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Số ô mà element có thể di chuyển (1-5)
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Instructions */}
                 <div className="text-sm text-muted-foreground space-y-1">
                   <p>
@@ -502,6 +671,10 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     </li>
                     <li>
                       <strong>Pull Pin:</strong> Click để thêm/sửa pull pin (🔱)
+                    </li>
+                    <li>
+                      <strong>Moving:</strong> Click để thêm/sửa moving element
+                      (⏫)
                     </li>
                   </ul>
                 </div>
@@ -580,6 +753,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                   {selectedTool === "color" && "Đổi màu"}
                   {selectedTool === "pipe" && "Sửa pipe"}
                   {selectedTool === "wall" && "Chỉnh sửa tường"}
+                  {selectedTool === "moving" && "Chỉnh sửa moving"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -663,6 +837,86 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                 </PopoverContent>
                               </Popover>
                             )}
+                            {cell.element === "Moving" &&
+                              cell.movingDirection && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div className="flex flex-col items-center w-full h-full justify-center">
+                                      <span className="text-4xl relative">
+                                        {getMovingDirectionIcon(
+                                          cell.movingDirection
+                                        )}
+                                      </span>
+                                      <span className="text-sm text-white absolute bottom-50% right-50% translate-x-1/2 translate-y-1/2 bg-blue-500 rounded-full w-5 h-5 flex items-center justify-center">
+                                        {cell.movingContents?.length || 0}
+                                      </span>
+                                      <span className="text-xs text-white absolute top-0 left-0 bg-purple-500 rounded-full w-4 h-4 flex items-center justify-center">
+                                        {cell.movingDistance || 1}
+                                      </span>
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
+                                    <div className="space-y-3">
+                                      <h4 className="font-medium">
+                                        Moving Contents
+                                      </h4>
+                                      <div className="space-y-2">
+                                        <div className="text-sm">
+                                          <span className="font-medium">
+                                            Hướng:{" "}
+                                          </span>
+                                          {cell.movingDirection?.toUpperCase()}
+                                        </div>
+                                        <div className="text-sm">
+                                          <span className="font-medium">
+                                            Khoảng cách:{" "}
+                                          </span>
+                                          {cell.movingDistance} ô
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {cell.movingContents?.map(
+                                            (color, index) => (
+                                              <div
+                                                key={index}
+                                                className="w-6 h-6 rounded border border-border flex items-center justify-center text-xs"
+                                                style={{
+                                                  backgroundColor:
+                                                    level.config.colorMapping[
+                                                      color
+                                                    ] || "#f3f4f6",
+                                                  color: [
+                                                    "color_4", // Yellow
+                                                    "color_12", // White
+                                                  ].includes(color)
+                                                    ? "#000"
+                                                    : "#fff",
+                                                }}
+                                              >
+                                                {index + 1}
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          onClick={() => {
+                                            setEditingMoving({
+                                              row: rowIndex,
+                                              col: colIndex,
+                                              contents:
+                                                cell.movingContents || [],
+                                              distance:
+                                                cell.movingDistance || 1,
+                                            });
+                                          }}
+                                        >
+                                          Edit Contents
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
                             {cell.type === "wall" && (
                               <span className="text-3xl opacity-30">
                                 <img
@@ -678,11 +932,13 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                                 {cell.color}
                               </span>
                             )}
-                            {cell.element && cell.element !== "Pipe" && (
-                              <span className="text-3xl">
-                                {getElementIcon(cell.element)}
-                              </span>
-                            )}
+                            {cell.element &&
+                              cell.element !== "Pipe" &&
+                              cell.element !== "Moving" && (
+                                <span className="text-3xl">
+                                  {getElementIcon(cell.element)}
+                                </span>
+                              )}
                           </div>
                         );
                       })
@@ -806,6 +1062,156 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                       }
                     }
                     setEditingPipe(null);
+                  }}
+                >
+                  Lưu
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Moving Contents Editor Dialog */}
+      {editingMoving && (
+        <Dialog
+          open={!!editingMoving}
+          onOpenChange={() => setEditingMoving(null)}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa nội dung Moving</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Khoảng cách di chuyển:
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="5"
+                  value={editingMoving.distance}
+                  onChange={(e) => {
+                    const newDistance = parseInt(e.target.value) || 1;
+                    setEditingMoving({
+                      ...editingMoving,
+                      distance: newDistance,
+                    });
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Số ô mà element có thể di chuyển (1-5)
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Số lượng blocks trong moving:
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="8"
+                  value={editingMoving.contents.length}
+                  onChange={(e) => {
+                    const newLength = parseInt(e.target.value) || 1;
+                    const newContents = [...editingMoving.contents];
+
+                    if (newLength > newContents.length) {
+                      // Add more blocks with default color
+                      while (newContents.length < newLength) {
+                        newContents.push(selectedColor);
+                      }
+                    } else {
+                      // Remove excess blocks
+                      newContents.splice(newLength);
+                    }
+
+                    setEditingMoving({
+                      ...editingMoving,
+                      contents: newContents,
+                    });
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Màu sắc từng block:
+                </label>
+                <div className="space-y-2">
+                  {editingMoving.contents.map((color, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="text-sm w-8">#{index + 1}</span>
+                      <Select
+                        value={color}
+                        onValueChange={(newColor) => {
+                          const newContents = [...editingMoving.contents];
+                          newContents[index] = newColor;
+                          setEditingMoving({
+                            ...editingMoving,
+                            contents: newContents,
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {level.config.selectedColors.map((colorOption) => (
+                            <SelectItem key={colorOption} value={colorOption}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-4 h-4 rounded border"
+                                  style={{
+                                    backgroundColor:
+                                      level.config.colorMapping[colorOption] ||
+                                      "#f3f4f6",
+                                  }}
+                                />
+                                {colorOption}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingMoving(null)}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (editingMoving) {
+                      const newBoard = [...level.board];
+                      const cell =
+                        newBoard[editingMoving.row][editingMoving.col];
+
+                      if (cell.element === "Moving") {
+                        newBoard[editingMoving.row][editingMoving.col] = {
+                          ...cell,
+                          movingContents: editingMoving.contents,
+                          movingSize: editingMoving.contents.length,
+                          movingDistance: editingMoving.distance,
+                        };
+
+                        const updatedLevel = {
+                          ...level,
+                          board: newBoard,
+                          movingInfo: extractMovingInfo(newBoard),
+                        };
+
+                        onLevelUpdate(updatedLevel);
+                      }
+                    }
+                    setEditingMoving(null);
                   }}
                 >
                   Lưu
