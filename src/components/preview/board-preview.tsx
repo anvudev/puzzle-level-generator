@@ -22,6 +22,7 @@ import { LevelHelp } from "./level-help";
 import { blockStyleDecorator } from "@/lib/utils/styleDecoration";
 import { useBlockGroupDrag } from "@/lib/hooks/use-block-group-drag";
 import { getConnectedBlocks } from "@/lib/utils/block-group-utils";
+import Image from "next/image";
 
 interface BoardPreviewProps {
   level: GeneratedLevel;
@@ -732,7 +733,14 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                     </div>
                   )}
                   {cell.type === "wall" ? (
-                    <span className="text-3xl text-white opacity-30">🧱</span>
+                    <span className="text-3xl text-white opacity-30">
+                      <img
+                        src="assets/images/wall-icon.png"
+                        alt="wall"
+                        width={32}
+                        height={32}
+                      />
+                    </span>
                   ) : (
                     <span className="text-white">{cell.color}</span>
                   )}

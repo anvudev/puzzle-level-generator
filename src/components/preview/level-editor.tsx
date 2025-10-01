@@ -48,7 +48,7 @@ interface LevelEditorProps {
 
 export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
   const [selectedTool, setSelectedTool] = useState<
-    "add" | "remove" | "color" | "pipe" | "pullpin" | "wall"
+    "add" | "remove" | "color" | "pipe" | "pullpin" | "wall" | "moving"
   >("add");
   const [selectedColor, setSelectedColor] = useState<string>("1");
   const [selectedPipeDirection, setSelectedPipeDirection] = useState<
@@ -335,12 +335,26 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     🔱 Pull Pin
                   </Button>
                   <Button
+                    variant={selectedTool === "moving" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedTool("moving")}
+                    className="flex items-center gap-2"
+                  >
+                    ⏫ Moving
+                  </Button>
+                  <Button
                     variant={selectedTool === "wall" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedTool("wall")}
                     className="flex items-center gap-2"
                   >
-                    🧱 Wall
+                    <img
+                      src="assets/images/wall-icon.png"
+                      alt="wall"
+                      width={25}
+                      height={25}
+                    />
+                    Wall
                   </Button>
                 </div>
 
@@ -650,7 +664,14 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                               </Popover>
                             )}
                             {cell.type === "wall" && (
-                              <span className="text-3xl opacity-30">🧱</span>
+                              <span className="text-3xl opacity-30">
+                                <img
+                                  src="assets/images/wall-icon.png"
+                                  alt="wall"
+                                  width={40}
+                                  height={40}
+                                />
+                              </span>
                             )}
                             {cell.type == "block" && !cell.element && (
                               <span className="text-sm font-medium text-white">

@@ -48,7 +48,16 @@ export const elementGenerate = ({
 }: StyleDecoratorProps) => {
   return (
     <>
-      {type == "wall" && <span className="opacity-50">🧱</span>}
+      {type == "wall" && (
+        <span className="opacity-50">
+          <img
+            src="assets/images/wall-icon.png"
+            alt="wall"
+            width={32}
+            height={32}
+          />
+        </span>
+      )}
       {type == "block" && !element && (
         <span className="text-sm font-medium text-white">
           {color?.replace("color_", "")}
