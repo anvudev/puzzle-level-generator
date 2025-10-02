@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
@@ -36,30 +37,25 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
 } {
   const allBlocks: Array<{ color: string; position: number }> = [];
   let position = 0;
-
   // Quét board từ trên xuống dưới, từ trái qua phải để thu thập tất cả blocks
   for (let row = 0; row < level.board.length; row++) {
     for (let col = 0; col < level.board[row].length; col++) {
       const cell = level.board[row][col];
-
-      if (cell.type === "block" && cell.color) {
-        if (cell.element === "Pipe") {
-          // Đối với Pipe, thêm nội dung bên trong
-          if (cell.pipeContents) {
-            cell.pipeContents.forEach((pipeColor) => {
-              allBlocks.push({ color: pipeColor, position });
-              position++;
-            });
-          }
-        } else {
-          // Block thường
-          allBlocks.push({ color: cell.color, position });
-          position++;
+      if (cell.element === "Pipe") {
+        // Đối với Pipe, thêm nội dung bên trong
+        if (cell.pipeContents) {
+          cell.pipeContents.forEach((pipeColor) => {
+            allBlocks.push({ color: pipeColor, position });
+            position++;
+          });
         }
+      } else if (cell.type === "block") {
+        // Block thường
+        allBlocks.push({ color: cell.color || "", position });
+        position++;
       }
     }
   }
-
   // Đếm tần suất xuất hiện của mỗi màu
   const colorCounts: Record<string, number> = {};
   const colorFirstAppearance: Record<string, number> = {};
@@ -141,12 +137,21 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
 }
 
 export function ColorBarChart({ level }: ColorBarChartProps) {
+  // State để force re-render
+  const [forceRenderKey, setForceRenderKey] = useState(0);
+  const [isReRendering, setIsReRendering] = useState(false);
+
   // Sử dụng useMemo để cache kết quả và tránh infinite loop
-  const analysisResult = useMemo(() => analyzeColorsFromBoard(level), [level]);
+  // Thêm forceRenderKey vào dependency để có thể force refresh
+  const analysisResult = useMemo(
+    () => analyzeColorsFromBoard(level),
+    [level, forceRenderKey]
+  );
   const { bars: initialBars } = analysisResult;
 
   // Color bar store để lưu thứ tự đã sắp xếp
-  const { setCustomBarOrder, getBarOrder } = useColorBarStore();
+  const { setCustomBarOrder, getBarOrder, clearCustomBarOrder } =
+    useColorBarStore();
 
   // State để quản lý thứ tự thanh có thể kéo thả
   const [bars, setBars] = useState<BarData[]>([]);
@@ -156,7 +161,7 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
   useEffect(() => {
     const orderedBars = getBarOrder(initialBars, level.id);
     setBars(orderedBars);
-  }, [initialBars, level.id, getBarOrder]);
+  }, [initialBars, level.id, getBarOrder, forceRenderKey]);
 
   // Xử lý drag & drop
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -210,6 +215,27 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
     setCustomBarOrder(initialBars, level.id);
   };
 
+  const handleReRender = () => {
+    setIsReRendering(true);
+
+    // Clear cache và force re-render
+    clearCustomBarOrder();
+
+    // Force re-analyze từ đầu
+    const freshAnalysis = analyzeColorsFromBoard(level);
+
+    // Set bars trực tiếp với kết quả mới
+    setBars([...freshAnalysis.bars]);
+
+    // Cập nhật forceRenderKey để trigger useMemo
+    setForceRenderKey((prev) => prev + 1);
+
+    // Reset sau một chút để user thấy feedback
+    setTimeout(() => {
+      setIsReRendering(false);
+    }, 500);
+  };
+
   if (bars.length === 0) {
     return (
       <Card>
@@ -237,6 +263,21 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
             <Badge variant="secondary" className="text-xs">
               🔄 Kéo thả để đổi chỗ
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReRender}
+              className="text-xs h-6 px-2"
+              title="Re-render lại bar chart để fix lỗi hiển thị"
+              disabled={isReRendering}
+            >
+              <RefreshCw
+                className={`w-3 h-3 mr-1 ${
+                  isReRendering ? "animate-spin" : ""
+                }`}
+              />
+              {isReRendering ? "Đang render..." : "Re-render"}
+            </Button>
             <Button
               variant="outline"
               size="sm"

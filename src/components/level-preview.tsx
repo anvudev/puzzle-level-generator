@@ -41,8 +41,6 @@ export function LevelPreview({
   const [showSaveInput, setShowSaveInput] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
-  console.log("level", level);
-  console.log("level.config.name", level.config.name);
   // Track level changes to reset save state
   const levelIdRef = React.useRef<string | null>(null);
   const currentLevelId = React.useMemo(() => {
