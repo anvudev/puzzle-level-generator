@@ -292,9 +292,12 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
     console.log("levelId", levelId);
     try {
       await deleteHistory(levelId);
-
+      setSavedLevels({
+        ...savedLevels,
+        items: savedLevels.items.filter((item) => item.id !== levelId),
+      });
       // Refresh data after deletion
-      await fetchHistories(currentPage, itemsPerPage, sortBy);
+      // await fetchHistories(currentPage, itemsPerPage, sortBy);
 
       // If current page is empty after deletion, go to previous page
       if (savedLevels.items.length === 1 && currentPage > 1) {
