@@ -5,28 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { kvGetAllImages } from "@/app/api/clients";
 import { Palette, Filter, X, Search, Grid3X3, RefreshCw } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import {
-  COLOR_MAPPING,
-  IMAGE_SIZE_OPTIONS,
-  REALM,
-} from "@/config/game-constants";
+import { COLOR_MAPPING, IMAGE_SIZE_OPTIONS } from "@/config/game-constants";
 import { orderBy } from "lodash-es";
-interface ImageData {
-  _id: string;
-  createdAt?: string;
-  updatedAt?: string;
-  value: {
-    meta: {
-      cols: number;
-      rows: number;
-      palette: Record<string, string>;
-    };
-    matrix: number[][];
-  };
-}
+import {
+  getFavoriteImages,
+  type ImageData,
+} from "@/app/api/services/imagesService";
 
 interface FilterState {
   colorCount: number | null;
@@ -131,11 +117,13 @@ export default function Favorite() {
     try {
       setLoading(true);
       setError(null);
-      const images = await kvGetAllImages(REALM.COLL_IMAGE);
-      console.log("Images:", images);
+      const response = await getFavoriteImages();
+      // Response format: { success, data: { items: [...] } }
+      const images = response.data?.items || [];
+      console.log("Response:", response);
       console.log("Loaded images:", images);
-      setAllImages(images || []); // Store original data
-      setImages(images || []); // Display data
+      setAllImages(images); // Store original data
+      setImages(images); // Display data
     } catch (err) {
       console.error("Error loading images:", err);
       setError(err instanceof Error ? err.message : "Unknown error");
