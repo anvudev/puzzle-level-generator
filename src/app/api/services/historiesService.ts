@@ -71,7 +71,12 @@ export const getHistories = async (
     const url = "/api/histories";
 
     // Build params object, only include search if provided
-    const params: Record<string, any> = { skip, limit, sort_by, sort_order };
+    const params: Record<string, string | number> = {
+      skip,
+      limit,
+      sort_by,
+      sort_order,
+    };
     if (search && search.trim()) {
       params.search = search.trim();
     }

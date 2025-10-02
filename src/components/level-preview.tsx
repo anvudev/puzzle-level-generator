@@ -14,11 +14,7 @@ import { ColorBarChart } from "@/components/preview/color-bar-chart";
 import type { GeneratedLevel } from "@/config/game-types";
 import { ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
-import { useLevelHistory } from "@/lib/hooks/use-level-history";
-import {
-  updateHistory,
-  updateHistoryName,
-} from "@/app/api/services/historiesService";
+import { updateHistory } from "@/app/api/services/historiesService";
 
 interface LevelPreviewProps {
   level: GeneratedLevel;

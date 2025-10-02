@@ -55,7 +55,6 @@ import {
   type SavedLevelList,
 } from "@/app/api/services/historiesService";
 import { Pagination } from "@/components/ui/pagination";
-import { useParams } from "next/navigation";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -90,7 +89,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   const [filterElements] = useState<string>("all");
   const [downloadFormat] = useState<"csv" | "json">("csv");
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [_downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
   // Pagination states
@@ -202,7 +201,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
     return filtered;
   }, [savedLevels, filterDifficulty, filterElements]);
 
-  const handleRename = (level: any) => {
+  const handleRename = (level: SavedLevel) => {
     setEditingName(level.id);
     setNewName(level.name);
   };
@@ -248,7 +247,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
 
   const selectAllLevels = () => {
     setSelectedLevels(
-      new Set(filteredAndSortedLevels?.map((level: any) => level.id))
+      new Set(filteredAndSortedLevels?.map((level: SavedLevel) => level.id))
     );
   };
 
@@ -480,7 +479,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                       variant="secondary"
                       className="bg-amber-100 text-amber-700"
                     >
-                      Tìm: "{searchQuery}"
+                      Tìm: &ldquo;{searchQuery}&rdquo;
                     </Badge>
                   )}
                 </div>
@@ -860,8 +859,8 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                               title="Xóa level này?"
                               description={savedLevel.name}
                               onConfirm={() => {
-                                console.log("savedLevel.id", savedLevel),
-                                  handleDeleteSingleLevel(savedLevel.id);
+                                console.log("savedLevel.id", savedLevel);
+                                handleDeleteSingleLevel(savedLevel.id);
                               }}
                             />
                           </div>

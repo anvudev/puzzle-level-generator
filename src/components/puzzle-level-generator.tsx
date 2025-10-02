@@ -19,7 +19,6 @@ import { LevelHistory } from "./level-history";
 import { BatchImport } from "./batch-import";
 import { DEFAULT_CONFIG } from "@/config/game-constants";
 import { useLevelGenerator } from "@/lib/hooks/use-level-generator";
-import { useLevelHistory } from "@/lib/hooks/use-level-history";
 import { refillLevel } from "@/lib/utils/level-utils";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 import { Header } from "./header/header";
