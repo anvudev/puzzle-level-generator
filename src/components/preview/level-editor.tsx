@@ -368,7 +368,7 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center gap-2">
           <Edit3 className="w-4 h-4" />
-          Chỉnh sửa Level
+          Edit
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] sm:max-w-[95vw] max-h-[90vh] overflow-y-auto">

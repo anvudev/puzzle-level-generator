@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,12 +28,9 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react";
-import {
-  useLevelHistory,
-  type SavedLevel,
-} from "@/lib/hooks/use-level-history";
-// Removed GAME_COLORS import - now using colorMapping from level config
-import type { GeneratedLevel } from "@/config/game-types";
+import { useLevelHistory } from "@/lib/hooks/use-level-history";
+
+import type { BoardCell, GeneratedLevel } from "@/config/game-types";
 import {
   getElementIcon,
   getPipeIcon,
@@ -50,6 +47,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COLOR_MAPPING } from "@/config/game-constants";
+import {
+  deleteHistory,
+  getHistories,
+  updateHistoryName,
+  type SavedLevel,
+  type SavedLevelList,
+} from "@/app/api/services/historiesService";
+import { Pagination } from "@/components/ui/pagination";
+import { useParams } from "next/navigation";
 
 interface LevelHistoryProps {
   onLoadLevel?: (level: GeneratedLevel) => void;
@@ -63,19 +69,22 @@ interface SortOption {
 }
 
 export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
-  const {
-    savedLevels,
-    isLoading,
-    updateLevelName,
-    deleteLevel,
-    duplicateLevel,
-    totalCount,
-  } = useLevelHistory();
-
+  const { duplicateLevel: duplicateLevelOriginal } = useLevelHistory();
   const [editingName, setEditingName] = useState<string | null>(null);
+  const [savedLevels, setSavedLevels] = useState<SavedLevelList>({
+    items: [],
+    pagination: {
+      skip: 0,
+      limit: 10,
+      total: 0,
+      has_more: false,
+    },
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [newName, setNewName] = useState("");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortOption["value"]>("name-asc");
+  const [searchInput, setSearchInput] = useState(""); // Input value
+  const [searchQuery, setSearchQuery] = useState(""); // Actual search query for API
+  const [sortBy, setSortBy] = useState<SortOption["value"]>("name-desc");
   const [selectedLevels, setSelectedLevels] = useState<Set<string>>(new Set());
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [filterElements] = useState<string>("all");
@@ -84,20 +93,101 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
-  // Filtered and sorted levels
-  const filteredAndSortedLevels = useMemo(() => {
-    const filtered = savedLevels.filter((savedLevel) => {
-      // Search filter
-      const matchesSearch = savedLevel.name
-        .toLowerCase()
-        .includes(search.toLowerCase());
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-      // Difficulty filter
+  // Helper function to convert sortBy to API params
+  const getSortParams = (sortByValue: SortOption["value"]) => {
+    switch (sortByValue) {
+      case "name-asc":
+        return { sort_by: "name", sort_order: "asc" };
+      case "name-desc":
+        return { sort_by: "name", sort_order: "desc" };
+      case "oldest":
+        return { sort_by: "updatedAt", sort_order: "asc" };
+      case "newest":
+      default:
+        return { sort_by: "updatedAt", sort_order: "desc" };
+    }
+  };
+
+  // Fetch histories with pagination, sorting, and search
+  const fetchHistories = async (
+    page: number,
+    limit: number,
+    sortByValue: SortOption["value"],
+    searchValue?: string
+  ) => {
+    setIsLoading(true);
+    try {
+      const skip = (page - 1) * limit;
+      const { sort_by, sort_order } = getSortParams(sortByValue);
+      const data = await getHistories(
+        skip,
+        limit,
+        sort_by,
+        sort_order,
+        searchValue
+      );
+      console.log("data histories", data);
+      setSavedLevels(data);
+    } catch (error) {
+      console.error("Error fetching histories:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch data when page, itemsPerPage, sortBy, or searchQuery changes
+  useEffect(() => {
+    fetchHistories(currentPage, itemsPerPage, sortBy, searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, itemsPerPage, sortBy, searchQuery]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchHistories(1, itemsPerPage, sortBy, searchQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterDifficulty, filterElements]);
+
+  // Handle search button click
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  };
+
+  // Handle clear search
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  };
+
+  // Handle Enter key in search input
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Filtered levels (sorting and search are handled by API)
+  const filteredAndSortedLevels = useMemo(() => {
+    const filtered = savedLevels.items.filter((savedLevel: SavedLevel) => {
+      // Difficulty filter (client-side for now)
       const matchesDifficulty =
         filterDifficulty === "all" ||
         savedLevel.level.config.difficulty === filterDifficulty;
 
-      // Elements filter
+      // Elements filter (client-side for now)
       const hasElements =
         Object.keys(savedLevel.level.config.elements).length > 0;
       const matchesElements =
@@ -105,47 +195,36 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         (filterElements === "with-elements" && hasElements) ||
         (filterElements === "no-elements" && !hasElements);
 
-      return matchesSearch && matchesDifficulty && matchesElements;
+      return matchesDifficulty && matchesElements;
     });
 
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "name-asc":
-          // Convert to numbers if possible, fallback to string comparison
-          const aNum = parseFloat(a.name) || 0;
-          const bNum = parseFloat(b.name) || 0;
-          if (!isNaN(aNum) && !isNaN(bNum)) {
-            return aNum - bNum;
-          }
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          // Convert to numbers if possible, fallback to string comparison
-          const aNumDesc = parseFloat(a.name) || 0;
-          const bNumDesc = parseFloat(b.name) || 0;
-          if (!isNaN(aNumDesc) && !isNaN(bNumDesc)) {
-            return bNumDesc - aNumDesc;
-          }
-          return b.name.localeCompare(a.name);
-        case "oldest":
-          return a.createdAt.localeCompare(b.createdAt);
-        case "newest":
-        default:
-          return b.createdAt.localeCompare(a.createdAt);
-      }
-    });
-
+    // Note: Sorting and search are now handled by the API
     return filtered;
-  }, [savedLevels, search, filterDifficulty, filterElements, sortBy]);
+  }, [savedLevels, filterDifficulty, filterElements]);
 
-  const handleRename = (level: SavedLevel) => {
+  const handleRename = (level: any) => {
     setEditingName(level.id);
     setNewName(level.name);
   };
 
-  const handleSaveRename = (id: string) => {
+  const handleSaveRename = async (id: string) => {
     if (newName.trim()) {
-      updateLevelName(id, { name: newName.trim() });
+      try {
+        await updateHistoryName(id, newName.trim());
+        // Refresh data after rename
+        // await fetchHistories(currentPage, itemsPerPage, sortBy, searchQuery);
+        setSavedLevels({
+          ...savedLevels,
+          items: savedLevels.items.map((item) => {
+            if (item.id === id) {
+              return { ...item, name: newName.trim() } as SavedLevel;
+            }
+            return item;
+          }),
+        });
+      } catch (error) {
+        console.error("Error renaming level:", error);
+      }
     }
     setEditingName(null);
     setNewName("");
@@ -169,7 +248,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
 
   const selectAllLevels = () => {
     setSelectedLevels(
-      new Set(filteredAndSortedLevels.map((level) => level.id))
+      new Set(filteredAndSortedLevels?.map((level: any) => level.id))
     );
   };
 
@@ -190,40 +269,85 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
     downloadSelectedLevels();
   };
 
-  const deleteSelectedLevels = () => {
-    selectedLevels.forEach((levelId) => deleteLevel(levelId));
-    setSelectedLevels(new Set());
+  const deleteSelectedLevels = async () => {
+    try {
+      // Delete all selected levels
+      await Promise.all(
+        Array.from(selectedLevels).map((levelId) => deleteHistory(levelId))
+      );
+      setSelectedLevels(new Set());
+
+      // Refresh data after deletion
+      await fetchHistories(currentPage, itemsPerPage, sortBy);
+
+      // If current page is empty after deletion, go to previous page
+      if (savedLevels.items.length === selectedLevels.size && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    } catch (error) {
+      console.error("Error deleting levels:", error);
+    }
+  };
+
+  const handleDeleteSingleLevel = async (levelId: string) => {
+    console.log("levelId", levelId);
+    try {
+      await deleteHistory(levelId);
+
+      // Refresh data after deletion
+      await fetchHistories(currentPage, itemsPerPage, sortBy);
+
+      // If current page is empty after deletion, go to previous page
+      if (savedLevels.items.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    } catch (error) {
+      console.error("Error deleting level:", error);
+    }
+  };
+
+  const duplicateLevel = async (levelId: string) => {
+    try {
+      duplicateLevelOriginal(levelId);
+      // Refresh data after duplication
+      await fetchHistories(currentPage, itemsPerPage, sortBy);
+    } catch (error) {
+      console.error("Error duplicating level:", error);
+    }
   };
 
   // Enhanced bulk download function with progress tracking
   const downloadSelectedLevels = async () => {
-    const selectedLevelData = filteredAndSortedLevels.filter((level) =>
-      selectedLevels.has(level.id)
+    const selectedLevelData = filteredAndSortedLevels.filter(
+      (level: SavedLevel) => selectedLevels.has(level.id)
     );
 
-    if (selectedLevelData.length === 0) return;
+    if (selectedLevelData?.length === 0) return;
 
     setIsDownloading(true);
     setDownloadProgress(0);
 
     try {
       // Download each level as separate file
-      for (let i = 0; i < selectedLevelData.length; i++) {
-        const savedLevel = selectedLevelData[i];
-        const level = savedLevel.level;
+      for (let i = 0; i < selectedLevelData?.length; i++) {
+        const savedLevel = selectedLevelData?.[i];
+        const level = savedLevel?.level;
         const customBars: never[] = []; // Empty array for now
 
         let content: string;
         let mimeType: string;
 
         if (downloadFormat === "csv") {
-          content = generateCSVMatrix(level, customBars);
+          content = generateCSVMatrix(level as GeneratedLevel, customBars);
           mimeType = "text/csv";
         } else {
           const { formatLevelForExport } = await import(
             "@/lib/utils/level-utils"
           );
-          const data = formatLevelForExport(level, customBars);
+          const data = formatLevelForExport(
+            level as GeneratedLevel,
+            customBars
+          );
           content = JSON.stringify(data, null, 2);
           mimeType = "application/json";
         }
@@ -232,7 +356,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `WoolSoft_level_${savedLevel.name.replace(
+        a.download = `WoolSoft_level_${savedLevel?.name.replace(
           /[^a-zA-Z0-9]/g,
           "_"
         )}`;
@@ -242,10 +366,10 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         URL.revokeObjectURL(url);
 
         // Update progress
-        setDownloadProgress(((i + 1) / selectedLevelData.length) * 100);
+        setDownloadProgress(((i + 1) / selectedLevelData?.length) * 100);
 
         // Add delay to prevent browser blocking
-        if (i < selectedLevelData.length - 1) {
+        if (i < selectedLevelData!.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, 150));
         }
       }
@@ -313,127 +437,129 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   return (
     <div className="space-y-6">
       <div className="p-3 space-y-4">
-        <div className="flex gap-3 justify-center">
-          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm mb-4">
-            <CardContent className="p-4 flex">
-              <div className="flex items-center gap-3 mr-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
-                  <Search className="w-4 h-4" />
-                  <span>Tìm kiếm:</span>
-                </div>
-                <div className="relative flex-1">
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Nhập tên level để tìm kiếm..."
-                    className="pl-10 pr-20 bg-white border-amber-300 focus-visible:ring-amber-500 focus-visible:ring-2 border-2 shadow-sm transition-all duration-200 focus:shadow-md"
-                  />
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
-                  {search && (
+        <div className="w-full">
+          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm mb-4 w-full">
+            <CardContent className="p-4 flex flex-col gap-5 w-full">
+              <div className="flex items-center flex-col gap-2">
+                <div className="flex items-center gap-3 mr-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+                    <Search className="w-4 h-4" />
+                    <span>Tìm kiếm:</span>
+                  </div>
+                  <div className="relative flex-1">
+                    <Input
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      placeholder="Nhập tên level và nhấn Enter hoặc click Tìm..."
+                      className="pl-10 pr-4 bg-white border-amber-300 focus-visible:ring-amber-500 focus-visible:ring-2 border-2 shadow-sm transition-all duration-200 focus:shadow-md"
+                    />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleSearch}
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    <Search className="w-4 h-4 mr-1" />
+                    Tìm
+                  </Button>
+                  {searchQuery && (
                     <Button
-                      type="button"
-                      variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-                      onClick={() => setSearch("")}
+                      variant="outline"
+                      onClick={handleClearSearch}
+                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300"
                     >
                       <span className="mr-1">✕</span>
-                      Xóa
+                      Xóa tìm kiếm
                     </Button>
                   )}
+                  {searchQuery && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-amber-100 text-amber-700"
+                    >
+                      Tìm: "{searchQuery}"
+                    </Badge>
+                  )}
                 </div>
-                {search && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-amber-100 text-amber-700"
-                  >
-                    {filteredAndSortedLevels.length} kết quả
-                  </Badge>
-                )}
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 justify-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={selectAllLevels}
+                  disabled={filteredAndSortedLevels.length === 0}
+                  className="bg-white hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
+                >
+                  <CheckSquare className="w-4 h-4 mr-1" />(
+                  {filteredAndSortedLevels.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={clearSelection}
+                  disabled={selectedLevels.size === 0}
+                  className="bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+                >
+                  <Square className="w-4 h-4 mr-1" />
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleDownloadClick}
+                  disabled={isDownloading}
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  {isDownloading
+                    ? "Đang tải..."
+                    : `Tải ${downloadFormat.toUpperCase()}`}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={deleteSelectedLevels}
+                  disabled={isDownloading}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Xóa
+                </Button>
                 <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={selectAllLevels}
-                    disabled={filteredAndSortedLevels.length === 0}
-                    className="bg-white hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors"
+                  <Select
+                    value={sortBy}
+                    onValueChange={(value: string) =>
+                      setSortBy(
+                        value as "name-asc" | "name-desc" | "newest" | "oldest"
+                      )
+                    }
                   >
-                    <CheckSquare className="w-4 h-4 mr-1" />(
-                    {filteredAndSortedLevels.length})
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={clearSelection}
-                    disabled={selectedLevels.size === 0}
-                    className="bg-white hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
-                  >
-                    <Square className="w-4 h-4 mr-1" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleDownloadClick}
-                    disabled={isDownloading}
-                    className="bg-green-600 hover:bg-green-700 text-white shadow-md"
-                  >
-                    <Download className="w-4 h-4 mr-1" />
-                    {isDownloading
-                      ? "Đang tải..."
-                      : `Tải ${downloadFormat.toUpperCase()}`}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={deleteSelectedLevels}
-                    disabled={isDownloading}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Xóa
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={sortBy}
-                      onValueChange={(value: string) =>
-                        setSortBy(
-                          value as
-                            | "name-asc"
-                            | "name-desc"
-                            | "newest"
-                            | "oldest"
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Sắp xếp" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Mới nhất</SelectItem>
-                        <SelectItem value="oldest">Cũ nhất</SelectItem>
-                        <SelectItem value="name-asc">ASC</SelectItem>
-                        <SelectItem value="name-desc">DESC</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Sắp xếp" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Mới nhất</SelectItem>
+                      <SelectItem value="oldest">Cũ nhất</SelectItem>
+                      <SelectItem value="name-asc">ASC</SelectItem>
+                      <SelectItem value="name-desc">DESC</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                    <Select
-                      value={filterDifficulty}
-                      onValueChange={setFilterDifficulty}
-                    >
-                      <SelectTrigger className="w-36">
-                        <SelectValue placeholder="Độ khó" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả</SelectItem>
-                        <SelectItem value="Normal">🟢 Normal</SelectItem>
-                        <SelectItem value="Hard">🟡 Hard</SelectItem>
-                        <SelectItem value="Super Hard">
-                          🔴 Super Hard
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={filterDifficulty}
+                    onValueChange={setFilterDifficulty}
+                  >
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Độ khó" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="Normal">🟢 Normal</SelectItem>
+                      <SelectItem value="Hard">🟡 Hard</SelectItem>
+                      <SelectItem value="Super Hard">🔴 Super Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
@@ -442,7 +568,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
       </div>
 
       {/* Level List */}
-      {totalCount === 0 ? (
+      {savedLevels?.pagination?.total === 0 ? (
         <Card className="border-2 border-dashed border-gray-300">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -460,7 +586,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
         <div className="grid gap-4">
           <Card>
             <CardContent>
-              {filteredAndSortedLevels.map((savedLevel) => {
+              {filteredAndSortedLevels.map((savedLevel: SavedLevel) => {
                 const stats = getLevelStats(savedLevel.level);
                 return (
                   <Card
@@ -491,7 +617,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                             >
                               {savedLevel.level.board
                                 .flat()
-                                .map((cell, index) => (
+                                .map((cell: BoardCell, index: number) => (
                                   <div
                                     key={index}
                                     className="rounded-sm border border-gray-100"
@@ -633,26 +759,28 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                                     >
                                       {savedLevel.level.board
                                         .flat()
-                                        .map((cell, index) => {
-                                          return (
-                                            <div
-                                              key={index}
-                                              className="rounded text-3xl border border-gray-200 flex items-center justify-center"
-                                              style={{
-                                                backgroundColor:
-                                                  cell.type === "block"
-                                                    ? cell.color
-                                                      ? COLOR_MAPPING[
-                                                          cell.color as unknown as keyof typeof COLOR_MAPPING
-                                                        ] || "#f3f4f6"
-                                                      : ""
-                                                    : "#f9fafb",
-                                              }}
-                                            >
-                                              {elementGenerate(cell)}
-                                            </div>
-                                          );
-                                        })}
+                                        .map(
+                                          (cell: BoardCell, index: number) => {
+                                            return (
+                                              <div
+                                                key={index}
+                                                className="rounded text-3xl border border-gray-200 flex items-center justify-center"
+                                                style={{
+                                                  backgroundColor:
+                                                    cell.type === "block"
+                                                      ? cell.color
+                                                        ? COLOR_MAPPING[
+                                                            cell.color as unknown as keyof typeof COLOR_MAPPING
+                                                          ] || "#f3f4f6"
+                                                        : ""
+                                                      : "#f9fafb",
+                                                }}
+                                              >
+                                                {elementGenerate(cell)}
+                                              </div>
+                                            );
+                                          }
+                                        )}
                                     </div>
                                   </div>
                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -731,7 +859,10 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
                             <AlertDialogUI
                               title="Xóa level này?"
                               description={savedLevel.name}
-                              onConfirm={() => deleteLevel(savedLevel.id)}
+                              onConfirm={() => {
+                                console.log("savedLevel.id", savedLevel),
+                                  handleDeleteSingleLevel(savedLevel.id);
+                              }}
                             />
                           </div>
                         </div>
@@ -742,6 +873,22 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
               })}
             </CardContent>
           </Card>
+
+          {/* Pagination */}
+          {savedLevels?.pagination?.total > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(
+                savedLevels.pagination.total / itemsPerPage
+              )}
+              totalItems={savedLevels.pagination.total}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+              showItemsPerPage={true}
+              className="mt-4"
+            />
+          )}
         </div>
       )}
 

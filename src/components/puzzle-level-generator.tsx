@@ -24,6 +24,8 @@ import { refillLevel } from "@/lib/utils/level-utils";
 import type { LevelConfig, GeneratedLevel } from "@/config/game-types";
 import { Header } from "./header/header";
 import { BlankPreview } from "./preview/blankPreview";
+import { createHistory } from "@/app/api/services/historiesService";
+import toast from "react-hot-toast";
 
 export function PuzzleLevelGenerator() {
   const [config, setConfig] = useState<LevelConfig>(DEFAULT_CONFIG);
@@ -62,8 +64,6 @@ export function PuzzleLevelGenerator() {
   const { generatedLevel, isGenerating, generateLevel, setGeneratedLevel } =
     useLevelGenerator();
 
-  const { saveLevel } = useLevelHistory();
-
   const handleLevelUpdate = (updatedLevel: GeneratedLevel) => {
     setGeneratedLevel(updatedLevel);
   };
@@ -81,9 +81,30 @@ export function PuzzleLevelGenerator() {
     }
   };
 
-  const handleSaveLevel = (level: GeneratedLevel, name?: string) => {
-    const savedId = saveLevel(level, name);
-    return savedId;
+  const handleSaveLevel = async (
+    level: GeneratedLevel,
+    name?: string
+  ): Promise<string> => {
+    try {
+      // Generate default name if not provided
+      const levelName = name || `Level ${Date.now()}`;
+
+      // Call API to create history
+      const response = await createHistory(level, levelName);
+
+      if (response.success) {
+        toast.success(`Đã lưu level "${levelName}" thành công!`);
+        // Return the saved level ID
+        return response.data?.id || "";
+      } else {
+        toast.error(response.message || "Lưu level thất bại!");
+        return "";
+      }
+    } catch (error) {
+      console.error("Error saving level:", error);
+      toast.error("Có lỗi xảy ra khi lưu level!");
+      return "";
+    }
   };
 
   const handleLoadLevel = (level: GeneratedLevel) => {

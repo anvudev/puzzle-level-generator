@@ -64,8 +64,11 @@ import {
 import { getDifficultyColor, getElementIcon } from "@/lib/utils/level-utils";
 
 interface BatchImportProps {
-  onSaveLevel?: (level: GeneratedLevel, name?: string) => string;
-  onEditLevel?: (level: GeneratedLevel) => void;
+  onSaveLevel?: (
+    level: GeneratedLevel,
+    name?: string
+  ) => string | Promise<string>;
+  onEditLevel?: (level: GeneratedLevel, id: string) => void;
 }
 
 // CSV constants and types are now imported from csv-utils and storage hook
@@ -220,11 +223,15 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     }
   };
 
-  const saveLevel = (configId: string) => {
+  const saveLevel = async (configId: string) => {
     const config = importedConfigs.find((c) => c.id === configId);
     if (!config || !onSaveLevel) return;
 
-    onSaveLevel(config.generatedLevel!, config.name);
+    // Handle both sync and async onSaveLevel
+    const result = onSaveLevel(config.generatedLevel!, config.name);
+    if (result instanceof Promise) {
+      await result;
+    }
 
     // Mark as saved with visual feedback
     setSavedLevels((prev) => new Set(prev).add(configId));
@@ -239,7 +246,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     }, 2000);
   };
 
-  const saveAllLevels = () => {
+  const saveAllLevels = async () => {
     const generatedConfigs = importedConfigs.filter(
       (c) => c.status === "generated" && c.generatedLevel
     );
@@ -248,14 +255,18 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
 
     setIsSavingAll(true);
 
-    generatedConfigs.forEach((config) => {
+    // Save all levels sequentially to avoid overwhelming the API
+    for (const config of generatedConfigs) {
       if (config.generatedLevel && onSaveLevel) {
-        onSaveLevel(config.generatedLevel, config.name);
+        const result = onSaveLevel(config.generatedLevel, config.name);
+        if (result instanceof Promise) {
+          await result;
+        }
 
         // Mark as saved with visual feedback
         setSavedLevels((prev) => new Set(prev).add(config.id));
       }
-    });
+    }
 
     // Remove all saved states after 2 seconds
     setTimeout(() => {
@@ -805,7 +816,10 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
                                     size="sm"
                                     variant="outline"
                                     onClick={() =>
-                                      onEditLevel(config.generatedLevel!)
+                                      onEditLevel(
+                                        config.generatedLevel!,
+                                        config.id
+                                      )
                                     }
                                   >
                                     <Edit3 className="w-4 h-4 mr-1" />

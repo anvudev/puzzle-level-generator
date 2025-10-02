@@ -150,9 +150,18 @@ export function formatLevelForExport(
   // Use custom bars if provided, otherwise use default
   const barsToExport = customBars || colorBarAnalysis.bars;
 
+  // Handle timestamp - convert to ISO string if it's a Date, otherwise use as-is
+  const timestamp = level.timestamp
+    ? typeof level.timestamp === "string"
+      ? level.timestamp
+      : level.timestamp instanceof Date
+      ? level.timestamp.toISOString()
+      : new Date().toISOString()
+    : new Date().toISOString();
+
   const exportData = {
     id: level.id,
-    timestamp: level.timestamp.toISOString(),
+    timestamp: timestamp,
     config: level.config,
     board: level.board,
     containers: level.containers,

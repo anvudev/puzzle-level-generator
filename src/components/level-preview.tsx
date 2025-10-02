@@ -15,12 +15,16 @@ import type { GeneratedLevel } from "@/config/game-types";
 import { ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
 import { useLevelHistory } from "@/lib/hooks/use-level-history";
+import {
+  updateHistory,
+  updateHistoryName,
+} from "@/app/api/services/historiesService";
 
 interface LevelPreviewProps {
   level: GeneratedLevel;
   onLevelUpdate?: (updatedLevel: GeneratedLevel) => void;
   onRegenerate?: () => void;
-  onSave?: (level: GeneratedLevel, name?: string) => string;
+  onSave?: (level: GeneratedLevel, name?: string) => string | Promise<string>;
   onReFill?: () => void;
   isEditMode?: boolean; // New prop to indicate if this is editing an existing level
   onEditModeChange?: (isEditMode: boolean) => void; // Callback to reset edit mode
@@ -41,7 +45,8 @@ export function LevelPreview({
   const [showSaveInput, setShowSaveInput] = React.useState(false);
   const [isSaved, setIsSaved] = React.useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
-
+  console.log("level", level);
+  console.log("level.config.name", level.config.name);
   // Track level changes to reset save state
   const levelIdRef = React.useRef<string | null>(null);
   const currentLevelId = React.useMemo(() => {
@@ -64,11 +69,15 @@ export function LevelPreview({
     }
   }, [currentLevelId]);
 
-  const { updateLevel } = useLevelHistory();
-  const handleSave = () => {
+  const handleSave = async () => {
     if (onSave && !isSaved) {
       const name = saveName.trim() || `Level ${new Date().toLocaleString()}`;
-      onSave(level, name);
+
+      // Handle both sync and async onSave
+      const result = onSave(level, name);
+      if (result instanceof Promise) {
+        await result;
+      }
 
       // Update save state
       setIsSaved(true);
@@ -142,9 +151,11 @@ export function LevelPreview({
                   if (isEditMode) {
                     // Update existing level with saved level ID context
                     if (editingSavedLevelId) {
-                      updateLevel(level, editingSavedLevelId);
+                      updateHistory(editingSavedLevelId, level);
+                      console.log("editingSavedLevelId", level.config.name);
                     } else {
-                      updateLevel(level);
+                      updateHistory(level.id, level);
+                      console.log("not editingSavedLevelId", level.config.name);
                     }
 
                     // Show success feedback
