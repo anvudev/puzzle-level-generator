@@ -1,12 +1,9 @@
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  IMAGE_GEN_BASE_URL,
-  IMAGE_SIZE_OPTIONS,
-  REALM,
-} from "@/config/game-constants";
+import { IMAGE_SIZE_OPTIONS, REALM } from "@/config/game-constants";
 import {
   Upload,
   Download,
@@ -18,8 +15,9 @@ import {
 import { useState, useRef } from "react";
 import { kvSaveImage } from "../api/clients";
 import toast from "react-hot-toast";
+import { convertImage } from "../api/services/imagesService";
 
-interface PixelData {
+export interface PixelData {
   meta: {
     cols: number;
     rows: number;
@@ -43,9 +41,22 @@ export default function GenerateImage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setError("Vui lòng chọn file ảnh hợp lệ");
+    // Validate file type - chỉ hỗ trợ PNG, JPEG, WebP
+    const supportedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/webp",
+    ];
+    if (!supportedTypes.includes(file.type.toLowerCase())) {
+      setError("Chỉ hỗ trợ file PNG, JPEG, WebP. File bạn chọn: " + file.type);
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setError("File quá lớn. Vui lòng chọn file nhỏ hơn 10MB");
       return;
     }
 
@@ -56,26 +67,25 @@ export default function GenerateImage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Replace with your actual API endpoint
-      const response = await fetch(
-        `${IMAGE_GEN_BASE_URL}/convert?cols=${size.split("x")[0]}&rows=${
-          size.split("x")[1]
-        }`,
-        {
-          method: "POST",
-          body: formData,
-        }
+      const data: PixelData = await convertImage(
+        formData,
+        size.split("x")[0],
+        size.split("x")[1]
       );
+      setPixelData(data);
+    } catch (err: any) {
+      console.error("Upload error:", err);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Hiển thị lỗi chi tiết từ backend
+      let errorMessage = "Có lỗi xảy ra khi xử lý ảnh. Vui lòng thử lại.";
+
+      if (err?.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err?.message) {
+        errorMessage = err.message;
       }
 
-      const data: PixelData = await response.json();
-      setPixelData(data);
-    } catch (err) {
-      console.error("Upload error:", err);
-      setError("Có lỗi xảy ra khi xử lý ảnh. Vui lòng thử lại.");
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +197,7 @@ export default function GenerateImage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -214,7 +224,7 @@ export default function GenerateImage() {
                 <Upload className="w-12 h-12 text-orange-400 mx-auto mb-4" />
                 <p className="text-orange-600 font-medium">Click để chọn ảnh</p>
                 <p className="text-orange-500 text-sm mt-1">
-                  Hỗ trợ PNG, JPG, GIF
+                  Hỗ trợ PNG, JPEG, WebP (tối đa 10MB)
                 </p>
               </div>
             </div>
