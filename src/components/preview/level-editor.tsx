@@ -24,17 +24,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import {
-  Edit3,
-  Plus,
-  Trash2,
-  Palette,
-  RotateCw,
-  ArrowUp,
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react";
+import { Edit3, Plus, Trash2, Palette } from "lucide-react";
+import Image from "next/image";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
 import { getElementIcon } from "@/lib/utils/level-utils";
@@ -443,8 +434,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                     onClick={() => setSelectedTool("wall")}
                     className="flex items-center gap-2"
                   >
-                    <img
-                      src="assets/images/wall-icon.png"
+                    <Image
+                      src="/assets/images/wall-icon.png"
                       alt="wall"
                       width={18}
                       height={18}
@@ -919,8 +910,8 @@ export function LevelEditor({ level, onLevelUpdate }: LevelEditorProps) {
                               )}
                             {cell.type === "wall" && (
                               <span className="text-3xl opacity-30">
-                                <img
-                                  src="assets/images/wall-icon.png"
+                                <Image
+                                  src="/assets/images/wall-icon.png"
                                   alt="wall"
                                   width={40}
                                   height={40}

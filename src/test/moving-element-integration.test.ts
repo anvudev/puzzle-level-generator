@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import type { BoardCell, LevelConfig, GeneratedLevel } from "@/config/game-types";
+import type { GeneratedLevel } from "@/config/game-types";
 
 describe("Moving Element Integration Test", () => {
   // Mock the handleMovingClick function logic
@@ -65,7 +65,13 @@ describe("Moving Element Integration Test", () => {
       board: [
         [
           { type: "block", color: "1", element: null },
-          { type: "block", color: "2", element: "Moving", movingDirection: "up", movingDistance: 3 },
+          {
+            type: "block",
+            color: "2",
+            element: "Moving",
+            movingDirection: "up",
+            movingDistance: 3,
+          },
           { type: "block", color: "3", element: null },
           { type: "empty", color: null, element: null },
         ],
@@ -109,7 +115,7 @@ describe("Moving Element Integration Test", () => {
 
     // Verify the callback was called
     expect(mockOnLevelUpdate).toHaveBeenCalledTimes(1);
-    
+
     // Get the updated level from the callback
     const firstUpdate = mockOnLevelUpdate.mock.calls[0][0] as GeneratedLevel;
     expect(firstUpdate.board[0][1].movingDirection).toBe("right");
@@ -119,21 +125,21 @@ describe("Moving Element Integration Test", () => {
     // Simulate second click (right -> down)
     simulateMovingClick(firstUpdate, movingElementIndex, mockOnLevelUpdate);
     expect(mockOnLevelUpdate).toHaveBeenCalledTimes(2);
-    
+
     const secondUpdate = mockOnLevelUpdate.mock.calls[1][0] as GeneratedLevel;
     expect(secondUpdate.board[0][1].movingDirection).toBe("down");
 
     // Simulate third click (down -> left)
     simulateMovingClick(secondUpdate, movingElementIndex, mockOnLevelUpdate);
     expect(mockOnLevelUpdate).toHaveBeenCalledTimes(3);
-    
+
     const thirdUpdate = mockOnLevelUpdate.mock.calls[2][0] as GeneratedLevel;
     expect(thirdUpdate.board[0][1].movingDirection).toBe("left");
 
     // Simulate fourth click (left -> up, completing the cycle)
     simulateMovingClick(thirdUpdate, movingElementIndex, mockOnLevelUpdate);
     expect(mockOnLevelUpdate).toHaveBeenCalledTimes(4);
-    
+
     const fourthUpdate = mockOnLevelUpdate.mock.calls[3][0] as GeneratedLevel;
     expect(fourthUpdate.board[0][1].movingDirection).toBe("up");
   });
@@ -156,7 +162,13 @@ describe("Moving Element Integration Test", () => {
       board: [
         [
           { type: "block", color: "1", element: null },
-          { type: "block", color: "2", element: "Moving", movingDirection: "up", movingDistance: 4 },
+          {
+            type: "block",
+            color: "2",
+            element: "Moving",
+            movingDirection: "up",
+            movingDistance: 4,
+          },
           { type: "block", color: "1", element: null },
         ],
         [

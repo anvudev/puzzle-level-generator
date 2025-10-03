@@ -22,7 +22,7 @@ describe("CSV Matrix Export", () => {
   });
 
   // Helper function to parse JSON from CSV cell
-  const parseCellJson = (cellString: string) => {
+  const _parseCellJson = (cellString: string) => {
     const cleanJson = cellString.replace(/^"|"$/g, "").replace(/""/g, '"');
     return JSON.parse(cleanJson);
   };

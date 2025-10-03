@@ -73,16 +73,27 @@ export default function GenerateImage() {
         size.split("x")[1]
       );
       setPixelData(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Upload error:", err);
 
       // Hiển thị lỗi chi tiết từ backend
       let errorMessage = "Có lỗi xảy ra khi xử lý ảnh. Vui lòng thử lại.";
 
-      if (err?.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      } else if (err?.message) {
-        errorMessage = err.message;
+      if (err && typeof err === "object") {
+        if (
+          "response" in err &&
+          err.response &&
+          typeof err.response === "object" &&
+          "data" in err.response &&
+          err.response.data &&
+          typeof err.response.data === "object" &&
+          "detail" in err.response.data &&
+          typeof err.response.data.detail === "string"
+        ) {
+          errorMessage = err.response.data.detail;
+        } else if ("message" in err && typeof err.message === "string") {
+          errorMessage = err.message;
+        }
       }
 
       setError(errorMessage);

@@ -3,7 +3,7 @@
 import type React from "react";
 // removed unused import 'ring'
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import type { GeneratedLevel, BoardCell } from "@/config/game-types";
@@ -50,7 +50,7 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
     handleGroupDragOver,
     handleGroupDrop,
     handleGroupDragEnd,
-    clearSelection,
+
     isInSelectedGroup,
     isInHoveredGroup,
     isInDragPreview,
@@ -733,8 +733,8 @@ export function BoardPreview({ level, onLevelUpdate }: BoardPreviewProps) {
                   )}
                   {cell.type === "wall" ? (
                     <span className="text-3xl text-white opacity-30">
-                      <img
-                        src="assets/images/wall-icon.png"
+                      <Image
+                        src="/assets/images/wall-icon.png"
                         alt="wall"
                         width={32}
                         height={32}

@@ -1,15 +1,11 @@
 import { useState, useCallback, useMemo, useRef } from "react";
-import type { BoardCell, GeneratedLevel } from "@/config/game-types";
+import type { GeneratedLevel } from "@/config/game-types";
 import {
   getConnectedBlocks,
-  canMoveGroup,
   moveBlockGroup,
   findClosestValidPosition,
   indexToPosition,
-  positionToIndex,
   type Position,
-  type BlockGroup,
-  getGroupBounds,
 } from "@/lib/utils/block-group-utils";
 
 export interface GroupDragState {
@@ -55,7 +51,7 @@ export function useBlockGroupDrag(
 
   const board = level.board;
   const width = level.config.width;
-  const height = level.config.height;
+  const _height = level.config.height;
 
   // Cache for connected blocks to avoid recalculation
   const connectedBlocksCache = useRef<Map<string, Position[]>>(new Map());
@@ -91,7 +87,7 @@ export function useBlockGroupDrag(
   // Clear cache when board changes
   useMemo(() => {
     connectedBlocksCache.current.clear();
-  }, [board]);
+  }, []);
 
   // Handle cell hover to show connected group
   const handleCellHover = useCallback(
@@ -118,6 +114,7 @@ export function useBlockGroupDrag(
       }
     },
     [
+      board,
       width,
       groupDragState.isGroupMode,
       groupDragState.isDragging,
@@ -157,7 +154,7 @@ export function useBlockGroupDrag(
         }));
       }
     },
-    [width, groupDragState.isGroupMode, getConnectedBlocksCached]
+    [board, width, groupDragState.isGroupMode, getConnectedBlocksCached]
   );
 
   // Handle drag over

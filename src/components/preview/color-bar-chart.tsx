@@ -8,7 +8,6 @@ import { RefreshCw } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
-import { analyzeColorsFromBoard as analyzeColorsFromBoardUtil } from "@/lib/utils/level-utils";
 
 interface ColorBarChartProps {
   level: GeneratedLevel;
@@ -179,10 +178,7 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
 
   // Sử dụng useMemo để cache kết quả và tránh infinite loop
   // Thêm forceRenderKey vào dependency để có thể force refresh
-  const analysisResult = useMemo(
-    () => analyzeColorsFromBoard(level),
-    [level, forceRenderKey]
-  );
+  const analysisResult = useMemo(() => analyzeColorsFromBoard(level), [level]);
   const { bars: initialBars } = analysisResult;
 
   // Color bar store để lưu thứ tự đã sắp xếp

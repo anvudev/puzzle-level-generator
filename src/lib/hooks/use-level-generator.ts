@@ -348,7 +348,7 @@ export function useLevelGenerator() {
         setIsGenerating(false);
       }
     },
-    [apiKey, adjustLevelToMeetStats, isLevelValid]
+    [apiKey, adjustLevelToMeetStats, isLevelValid, convertEmptyToWall]
   );
 
   const clearLevel = useCallback(() => {

@@ -89,7 +89,7 @@ export function LevelHistory({ onLoadLevel, onEditLevel }: LevelHistoryProps) {
   const [filterElements] = useState<string>("all");
   const [downloadFormat] = useState<"csv" | "json">("csv");
   const [isDownloading, setIsDownloading] = useState(false);
-  const [_downloadProgress, setDownloadProgress] = useState(0);
+  const [, setDownloadProgress] = useState(0);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
   // Pagination states

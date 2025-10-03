@@ -5,8 +5,6 @@ import {
   Palette,
   Grid3X3,
   RefreshCw,
-  ImageIcon,
-  Link,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { ChangelogDialog } from "../changelog-dialog";

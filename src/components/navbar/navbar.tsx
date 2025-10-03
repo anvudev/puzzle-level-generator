@@ -8,15 +8,11 @@ import { cn } from "@/lib/utils";
 import {
   Home,
   ImageIcon,
-  Grid3X3,
   Heart,
-  Settings,
   Palette,
   Sparkles,
   ChevronLeft,
   ChevronRight,
-  User,
-  Bell,
   Search,
 } from "lucide-react";
 

@@ -1,5 +1,5 @@
 import { BoardCell } from "@/config/game-types";
-import { getElementIcon, getPipeIcon } from "./level-utils";
+
 import { COLOR_MAPPING } from "@/config/game-constants";
 import { elementGenerate, styleDecorator } from "./styleDecoration";
 

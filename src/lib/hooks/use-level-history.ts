@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import type { GeneratedLevel } from "@/config/game-types";
-
-import { REALM } from "@/config/game-constants";
 
 export interface SavedLevel {
   id: string;
@@ -22,7 +20,7 @@ export interface SavedLevelList {
 export function useLevelHistory() {
   const [savedLevels, setSavedLevels] = useState<SavedLevel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const hasLoadedRef = useRef(false);
+  const _hasLoadedRef = useRef(false);
 
   const clearHistory = () => {
     // kvDelAll(REALM.COLL_HISTORY);

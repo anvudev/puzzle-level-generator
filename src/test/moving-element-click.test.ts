@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
-import type { BoardCell, LevelConfig, GeneratedLevel } from "@/config/game-types";
+import type { BoardCell, GeneratedLevel } from "@/config/game-types";
 
 describe("Moving Element Click Functionality", () => {
   describe("Moving element direction cycling", () => {
@@ -9,7 +9,7 @@ describe("Moving Element Click Functionality", () => {
       // Test direction cycling logic similar to PullPin and Pipe
       const directions: Array<"up" | "down" | "left" | "right"> = [
         "up",
-        "right", 
+        "right",
         "down",
         "left",
       ];
@@ -43,7 +43,7 @@ describe("Moving Element Click Functionality", () => {
       const directions: Array<"up" | "down" | "left" | "right"> = [
         "up",
         "right",
-        "down", 
+        "down",
         "left",
       ];
 
@@ -51,7 +51,7 @@ describe("Moving Element Click Functionality", () => {
       const currentDirection = undefined;
       const currentIndex = directions.indexOf(currentDirection || "up");
       const nextDirection = directions[(currentIndex + 1) % directions.length];
-      
+
       expect(currentIndex).toBe(0); // "up" is at index 0
       expect(nextDirection).toBe("right");
     });
@@ -63,7 +63,13 @@ describe("Moving Element Click Functionality", () => {
       const mockBoard: BoardCell[][] = [
         [
           { type: "empty", color: null, element: null },
-          { type: "block", color: "1", element: "Moving", movingDirection: "up", movingDistance: 3 },
+          {
+            type: "block",
+            color: "1",
+            element: "Moving",
+            movingDirection: "up",
+            movingDistance: 3,
+          },
           { type: "empty", color: null, element: null },
         ],
         [
@@ -143,7 +149,9 @@ describe("Moving Element Click Functionality", () => {
       expect(ELEMENT_TYPES.Moving).toBeDefined();
       expect(ELEMENT_TYPES.Moving.name).toBe("Moving");
       expect(ELEMENT_TYPES.Moving.points).toBe(1.5);
-      expect(ELEMENT_TYPES.Moving.description).toContain("kích hoạt khi pick block liên quan");
+      expect(ELEMENT_TYPES.Moving.description).toContain(
+        "kích hoạt khi pick block liên quan"
+      );
     });
 
     it("should have correct icon", () => {
@@ -170,7 +178,7 @@ describe("Moving Element Click Functionality", () => {
     it("should support all valid directions", () => {
       const validDirections: Array<"up" | "down" | "left" | "right"> = [
         "up",
-        "down", 
+        "down",
         "left",
         "right",
       ];
@@ -178,7 +186,7 @@ describe("Moving Element Click Functionality", () => {
       validDirections.forEach((direction) => {
         const movingCell: BoardCell = {
           type: "block",
-          color: "1", 
+          color: "1",
           element: "Moving",
           movingDirection: direction,
           movingDistance: 3,

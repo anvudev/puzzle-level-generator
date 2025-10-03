@@ -4,7 +4,7 @@ import type {
   Container,
   GeneratedLevel,
 } from "@/config/game-types";
-import { AI_GENERATION_CONFIG } from "@/config/game-constants";
+
 import { LevelGeneratorUtils } from "./level-generator-utils";
 
 /**
@@ -17,12 +17,6 @@ export class FallbackLevelGenerator {
    */
   static generateLevel(config: LevelConfig): GeneratedLevel {
     const board = this.generateBoard(config);
-
-    const reason = !AI_GENERATION_CONFIG.ENABLE_AI_GENERATION
-      ? "Generated level - AI generation bị tắt"
-      : AI_GENERATION_CONFIG.FORCE_USE_FALLBACK
-      ? "Generated level - Bắt buộc sử dụng thuật toán"
-      : "Generated level - Gemini API không khả dụng";
 
     // Extract pipe, moving, and lock information for UI
     const pipeInfo = LevelGeneratorUtils.extractPipeInfo(board, config);
@@ -1258,14 +1252,14 @@ export class FallbackLevelGenerator {
   private static assignBalancedMovingContents(
     board: BoardCell[][],
     config: LevelConfig,
-    targetPerColor?: number[]
+    _targetPerColor?: number[] // eslint-disable-line @typescript-eslint/no-unused-vars
   ): void {
     const colors = config.selectedColors;
 
     // Count current colors on board (excluding pipe and moving contents)
     const currentColorCounts = new Map<string, number>();
     let totalMovingBlocks = 0;
-    let totalPipeBlocks = 0;
+    let _totalPipeBlocks = 0; // eslint-disable-line @typescript-eslint/no-unused-vars
 
     for (let y = 0; y < config.height; y++) {
       for (let x = 0; x < config.width; x++) {
@@ -1281,7 +1275,7 @@ export class FallbackLevelGenerator {
 
         // Count pipe contents
         if (cell.element === "Pipe" && cell.pipeContents) {
-          totalPipeBlocks += cell.pipeContents.length;
+          _totalPipeBlocks += cell.pipeContents.length;
           for (const pipeColor of cell.pipeContents) {
             currentColorCounts.set(
               pipeColor,

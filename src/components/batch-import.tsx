@@ -109,7 +109,7 @@ export function BatchImport({ onSaveLevel, onEditLevel }: BatchImportProps) {
     return () => {
       // Cleanup on unmount
     };
-  }, [importedConfigs.length, addConfigs]);
+  }, [importedConfigs.length, addConfigs, setImportedConfigs]);
 
   const validateFile = (file: File) => {
     if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {

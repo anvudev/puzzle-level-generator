@@ -1,6 +1,7 @@
 import { COLOR_MAPPING } from "@/config/game-constants";
 import { getElementIcon, getPipeIcon } from "./level-utils";
 import { BoardCell } from "@/config/game-types";
+import Image from "next/image";
 
 interface StyleDecoratorProps {
   type: BoardCell["type"];
@@ -13,7 +14,7 @@ export function styleDecorator({
   type,
   color,
   element,
-  pipeDirection,
+  pipeDirection: _pipeDirection,
 }: StyleDecoratorProps) {
   return {
     backgroundColor:
@@ -50,8 +51,8 @@ export const elementGenerate = ({
     <>
       {type == "wall" && (
         <span className="opacity-50">
-          <img
-            src="assets/images/wall-icon.png"
+          <Image
+            src="/assets/images/wall-icon.png"
             alt="wall"
             width={32}
             height={32}
