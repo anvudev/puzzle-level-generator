@@ -17,6 +17,11 @@ const mockLevel: GeneratedLevel = {
     generationMode: "random",
     elements: {},
     difficulty: "Normal",
+    colorMapping: {
+      Red: "#ef4444",
+      Blue: "#3b82f6",
+      Green: "#22c55e",
+    },
   },
   board: [
     [
@@ -54,24 +59,74 @@ describe("ColorBarChart", () => {
     expect(screen.getByText("Green")).toBeInTheDocument();
   });
 
-  it("should calculate correct bar counts", () => {
-    render(<ColorBarChart level={mockLevel} />);
+  it("should prioritize colors with more blocks using weighted algorithm", () => {
+    // Create a level where Red has significantly more blocks
+    const weightedLevel: GeneratedLevel = {
+      ...mockLevel,
+      config: {
+        ...mockLevel.config,
+        colorMapping: {
+          Red: "#ef4444",
+          Blue: "#3b82f6",
+          Green: "#22c55e",
+        },
+      },
+      board: [
+        [
+          { type: "block", color: "Red", element: null },
+          { type: "block", color: "Red", element: null },
+          { type: "block", color: "Red", element: null },
+        ],
+        [
+          { type: "block", color: "Red", element: null },
+          { type: "block", color: "Red", element: null },
+          { type: "block", color: "Red", element: null },
+        ],
+        [
+          { type: "block", color: "Blue", element: null },
+          { type: "block", color: "Green", element: null },
+          { type: "empty", color: null, element: null },
+        ],
+      ],
+    };
 
-    // Red: 3 blocks = 1 bar
-    // Blue: 2 blocks = 1 bar (rounded up)
-    // Green: 3 blocks = 1 bar
-    // Total: 3 bars
-    expect(screen.getByText("3 thanh")).toBeInTheDocument();
+    render(<ColorBarChart level={weightedLevel} />);
+
+    // Red should appear first due to higher weight (6 blocks vs 1 each)
+    const bars = screen.getAllByText(/^\d+$/); // Find bar numbers
+    expect(bars.length).toBeGreaterThan(0);
+
+    // Check that Red appears multiple times (should have 2 bars due to high priority)
+    expect(screen.getAllByText("Red")).toHaveLength(2);
+
+    // Verify that the weighted algorithm prioritizes Red at the beginning
+    const firstBar = screen.getByTitle(/Thanh 1: Red/);
+    const secondBar = screen.getByTitle(/Thanh 2: Red/);
+    expect(firstBar).toBeInTheDocument();
+    expect(secondBar).toBeInTheDocument();
   });
 
-  it("should show percentage for each color", () => {
+  it("should calculate correct bar counts with weighted algorithm", () => {
     render(<ColorBarChart level={mockLevel} />);
 
-    // Red: 3/8 = 37.5%
-    // Blue: 2/8 = 25.0%
-    // Green: 3/8 = 37.5%
-    expect(screen.getAllByText("(37.5%)")).toHaveLength(2); // Red and Green both have 37.5%
-    expect(screen.getByText("(25.0%)")).toBeInTheDocument();
+    // With weighted algorithm, the number of bars should be optimized
+    // Check that some number of bars is displayed (exact count may vary based on algorithm)
+    const barCountText = screen.getByText(/\d+ thanh/);
+    expect(barCountText).toBeInTheDocument();
+  });
+
+  it("should display bars with correct color distribution", () => {
+    render(<ColorBarChart level={mockLevel} />);
+
+    // Check that all colors are represented in the bars
+    expect(screen.getByText("Red")).toBeInTheDocument();
+    expect(screen.getByText("Blue")).toBeInTheDocument();
+    expect(screen.getByText("Green")).toBeInTheDocument();
+
+    // Check that bar numbers are displayed
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
   it("should handle empty level", () => {

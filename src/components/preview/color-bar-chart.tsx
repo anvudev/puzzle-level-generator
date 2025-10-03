@@ -74,7 +74,7 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
       colorFirstAppearance[block.color] = index;
     }
   });
-
+  console.log("allBlocks", allBlocks);
   // Tạo các nhóm màu
   const colorGroups: Record<
     string,
@@ -87,39 +87,67 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
     colorGroups[block.color].push(block);
   });
 
-  // Sắp xếp màu theo thứ tự xuất hiện đầu tiên
+  // Sắp xếp màu theo thứ tự xuất hiện đầu tiên (giữ nguyên để tham khảo)
   const colors = Object.keys(colorGroups).sort((a, b) => {
     return colorFirstAppearance[a] - colorFirstAppearance[b];
   });
 
-  // Tạo các thanh xen kẽ - mỗi thanh 1 màu, thanh liên tiếp khác màu
+  // 🎯 THUẬT TOÁN MỚI: Weighted Priority Scheduling
+  // Tạo các thanh xen kẽ thông minh dựa trên trọng số và ưu tiên
   const bars: BarData[] = [];
   let barIndex = 1;
-  let colorIndex = 0;
+
+  // Tính trọng số ban đầu cho mỗi màu (số lượng block / tổng số block)
+  const colorWeights: Record<string, number> = {};
+  const totalBlocks = allBlocks.length;
+
+  colors.forEach((color) => {
+    colorWeights[color] = colorCounts[color] / totalBlocks;
+  });
+
+  // Theo dõi số thanh đã tạo cho mỗi màu
+  const colorBarCounts: Record<string, number> = {};
+  colors.forEach((color) => {
+    colorBarCounts[color] = 0;
+  });
 
   while (colors.some((color) => colorGroups[color].length > 0)) {
-    // Lấy màu tiếp theo theo vòng tròn
-    const currentColor = colors[colorIndex % colors.length];
-    const colorGroup = colorGroups[currentColor];
+    // 🧠 Tính toán điểm ưu tiên động cho mỗi màu
+    const colorPriorities: Array<{ color: string; priority: number }> = [];
 
-    if (colorGroup.length > 0) {
+    colors.forEach((color) => {
+      const remainingBlocks = colorGroups[color].length;
+      if (remainingBlocks > 0) {
+        // Công thức ưu tiên thông minh:
+        // priority = (trọng số gốc) * (blocks còn lại) / (số thanh đã tạo + 1)
+        // Màu có nhiều block hơn và ít thanh hơn sẽ được ưu tiên
+        const basePriority = colorWeights[color] * remainingBlocks;
+        const balanceFactor = 1 / (colorBarCounts[color] + 1);
+        const priority = basePriority * balanceFactor;
+
+        colorPriorities.push({ color, priority });
+      }
+    });
+
+    // Sắp xếp theo độ ưu tiên giảm dần
+    colorPriorities.sort((a, b) => b.priority - a.priority);
+
+    // Chọn màu có độ ưu tiên cao nhất
+    if (colorPriorities.length > 0) {
+      const selectedColor = colorPriorities[0].color;
+      const colorGroup = colorGroups[selectedColor];
+
       // Lấy tối đa 3 blocks cùng màu cho thanh này
       colorGroup.splice(0, 3);
 
       bars.push({
         barIndex: barIndex,
-        color: currentColor,
+        color: selectedColor,
       });
 
+      // Cập nhật số lượng thanh đã tạo
+      colorBarCounts[selectedColor]++;
       barIndex++;
-    }
-
-    // Chuyển sang màu tiếp theo
-    colorIndex++;
-
-    // Nếu đã duyệt hết tất cả màu, reset về màu đầu tiên
-    if (colorIndex >= colors.length) {
-      colorIndex = 0;
     }
   }
 

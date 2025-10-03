@@ -6,14 +6,47 @@ Component **ColorBarChart** hiển thị bảng thanh màu cho puzzle level, gi�
 
 ## II. Tính năng chính
 
-### 🎯 **Logic phân tích màu sắc (Thanh xen kẽ + Drag & Drop)**
+### 🎯 **Logic phân tích màu sắc (Weighted Priority Scheduling + Drag & Drop)**
 
 - **Quét board từ trên xuống dưới, từ trái qua phải** (theo yêu cầu)
 - **Đếm tất cả block có màu** (bao gồm cả nội dung trong Pipe)
 - **Mỗi thanh 1 màu duy nhất**: Không trộn màu trong cùng 1 thanh
-- **Thanh liên tiếp khác màu**: Sử dụng round-robin để xen kẽ màu sắc
-- **Thứ tự ưu tiên**: Theo thứ tự xuất hiện đầu tiên của màu trên board
+- **🧠 Thuật toán thông minh**: Sử dụng **Weighted Priority Scheduling** thay vì round-robin
+- **Ưu tiên động**: Màu có nhiều block hơn và ít thanh hơn sẽ được ưu tiên
+- **Cân bằng phân bố**: Tránh tập trung quá nhiều thanh cùng màu liên tiếp
 - **🔄 Kéo thả để sắp xếp**: Có thể thay đổi vị trí thanh bằng drag & drop
+
+### 🧮 **Thuật toán Weighted Priority Scheduling**
+
+#### **Công thức ưu tiên thông minh:**
+
+```typescript
+priority = (trọng số gốc) × (blocks còn lại) ÷ (số thanh đã tạo + 1)
+
+Trong đó:
+- trọng số gốc = số lượng block của màu / tổng số block
+- blocks còn lại = số block chưa được xếp vào thanh
+- số thanh đã tạo = số thanh đã tạo cho màu này
+```
+
+#### **Ví dụ minh hoạ:**
+
+**Giả sử có:**
+
+- 🔴 Red: 12 blocks (40%)
+- 🔵 Blue: 9 blocks (30%)
+- 🟢 Green: 9 blocks (30%)
+
+**Lượt 1:** Red có priority cao nhất → Tạo thanh Red đầu tiên
+**Lượt 2:** Blue và Green có priority bằng nhau, chọn theo thứ tự xuất hiện
+**Lượt 3:** Red vẫn có nhiều block nhưng đã có 1 thanh → priority giảm
+**Lượt 4:** Blue/Green được ưu tiên vì chưa có thanh nào
+
+#### **Kết quả:**
+
+- ✅ **Màu có nhiều block được ưu tiên ở đầu**
+- ✅ **Phân bố cân bằng, không tập trung quá nhiều**
+- ✅ **Xen kẽ thông minh dựa trên trọng số thực tế**
 
 ### 📊 **Tính toán thanh màu**
 
