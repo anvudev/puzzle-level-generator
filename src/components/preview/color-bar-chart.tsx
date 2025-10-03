@@ -8,6 +8,7 @@ import { RefreshCw } from "lucide-react";
 import type { GeneratedLevel } from "@/config/game-types";
 // Removed GAME_COLORS import - now using colorMapping from level config
 import { useColorBarStore } from "@/lib/stores/color-bar-store";
+import { analyzeColorsFromBoard as analyzeColorsFromBoardUtil } from "@/lib/utils/level-utils";
 
 interface ColorBarChartProps {
   level: GeneratedLevel;
@@ -46,6 +47,13 @@ function analyzeColorsFromBoard(level: GeneratedLevel): {
         if (cell.pipeContents) {
           cell.pipeContents.forEach((pipeColor) => {
             allBlocks.push({ color: pipeColor, position });
+            position++;
+          });
+        }
+      } else if (cell.element === "Moving") {
+        if (cell.movingContents) {
+          cell.movingContents.forEach((movingColor) => {
+            allBlocks.push({ color: movingColor, position });
             position++;
           });
         }
@@ -157,6 +165,12 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
   const [bars, setBars] = useState<BarData[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
+  // Tự động cập nhật store khi có level mới (lần đầu generate)
+  useEffect(() => {
+    // Luôn cập nhật store với data mới nhất để đồng bộ với export functions
+    setCustomBarOrder([...initialBars], level.id);
+  }, [initialBars, level.id, setCustomBarOrder]);
+
   // Cập nhật bars khi initialBars thay đổi - sử dụng custom order nếu có
   useEffect(() => {
     const orderedBars = getBarOrder(initialBars, level.id);
@@ -221,13 +235,7 @@ export function ColorBarChart({ level }: ColorBarChartProps) {
     // Clear cache và force re-render
     clearCustomBarOrder();
 
-    // Force re-analyze từ đầu
-    const freshAnalysis = analyzeColorsFromBoard(level);
-
-    // Set bars trực tiếp với kết quả mới
-    setBars([...freshAnalysis.bars]);
-
-    // Cập nhật forceRenderKey để trigger useMemo
+    // Cập nhật forceRenderKey để trigger useMemo và useEffect tự động cập nhật store
     setForceRenderKey((prev) => prev + 1);
 
     // Reset sau một chút để user thấy feedback

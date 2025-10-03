@@ -12,7 +12,7 @@ import { LevelValidator } from "./preview/level-validator";
 import { LevelActions } from "./preview/level-actions";
 import { ColorBarChart } from "@/components/preview/color-bar-chart";
 import type { GeneratedLevel } from "@/config/game-types";
-import { ELEMENT_TYPES } from "@/config/game-constants";
+import { COLOR_MAPPING, ELEMENT_TYPES } from "@/config/game-constants";
 import { getElementIcon } from "@/lib/utils/level-utils";
 import { updateHistory } from "@/app/api/services/historiesService";
 
@@ -151,7 +151,6 @@ export function LevelPreview({
                       updateHistory(level.id, level);
                       console.log("not editingSavedLevelId", level.config.name);
                     }
-
                     // Show success feedback
                     setIsSaved(true);
                     setShowSuccessMessage(true);
@@ -244,7 +243,9 @@ export function LevelPreview({
                               className="w-4 h-4 rounded border border-border"
                               style={{
                                 backgroundColor:
-                                  level.config.colorMapping[color] || "#f3f4f6",
+                                  COLOR_MAPPING[
+                                    color as unknown as keyof typeof COLOR_MAPPING
+                                  ] || "#f3f4f6",
                               }}
                               title={`${color} (${index + 1})`}
                             />
@@ -335,7 +336,7 @@ export function LevelPreview({
               <CardTitle>Màu sử dụng</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-8 gap-2">
                 {level.config.selectedColors.map((colorName) => (
                   <div key={colorName} className="flex items-center gap-2">
                     <div
@@ -386,7 +387,7 @@ export function LevelPreview({
           )}
 
           {/* Containers */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Container ({level.containers.length})</CardTitle>
             </CardHeader>
@@ -405,7 +406,7 @@ export function LevelPreview({
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>

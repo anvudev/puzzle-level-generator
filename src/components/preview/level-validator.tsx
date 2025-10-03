@@ -244,16 +244,11 @@ export function LevelValidator({ level }: LevelValidatorProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Validation & Stats</CardTitle>
-        </div>
-      </CardHeader>
       <CardContent className="space-y-4">
         {/* Color Statistics */}
         <div>
           <h4 className="font-medium mb-2">Color Distribution</h4>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-8 gap-2">
             {Object.entries(validation.colorCounts).map(([color, count]) => (
               <div
                 key={color}

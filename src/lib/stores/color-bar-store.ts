@@ -23,6 +23,12 @@ export const colorBarStore = {
   },
 
   getBarOrder: (defaultBars: BarData[], id: string): BarData[] => {
+    // If level ID changed, clear old custom order
+    if (levelId && levelId !== id) {
+      customBarOrder = null;
+      levelId = null;
+    }
+
     // If we have custom order for this specific level, use it
     if (customBarOrder && levelId === id) {
       return customBarOrder;

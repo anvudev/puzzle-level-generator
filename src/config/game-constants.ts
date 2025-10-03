@@ -106,3 +106,4 @@ export const IMAGE_GEN_BASE_URL = "https://image-gen.kiman.site";
 export const IMAGE_SIZE_OPTIONS = ["16x16", "30x30", "32x32", "30x40", "64x64"];
 
 export const BACKEND_URL = "https://image-gen.kiman.site";
+// export const BACKEND_URL = "http://localhost:8000";

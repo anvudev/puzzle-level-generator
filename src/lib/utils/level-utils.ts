@@ -6,44 +6,54 @@ export interface BarData {
   color: string;
 }
 
+export interface ColorSummary {
+  color: string;
+  totalCount: number;
+  percentage: number;
+}
+
 interface ColorBarAnalysis {
   bars: BarData[];
+  colorSummary: ColorSummary[];
+  totalBlocks: number;
 }
 
 /**
  * Analyze colors from board and generate color bar data
  * This function replicates the logic from ColorBarChart component
+ * Export để sử dụng ở các component khác
  */
-function analyzeColorsFromBoard(level: GeneratedLevel): ColorBarAnalysis {
+export function analyzeColorsFromBoard(
+  level: GeneratedLevel
+): ColorBarAnalysis {
   const allBlocks: Array<{ color: string; position: number }> = [];
   let position = 0;
 
   // Scan board from top to bottom, left to right to collect all blocks
+  // Logic đồng bộ với color-bar-chart.tsx
   for (let row = 0; row < level.board.length; row++) {
     for (let col = 0; col < level.board[row].length; col++) {
       const cell = level.board[row][col];
 
-      if (cell.type === "block" && cell.color) {
-        if (cell.element === "Pipe") {
-          // For Pipe, add contents inside
-          if (cell.pipeContents) {
-            cell.pipeContents.forEach((pipeColor) => {
-              allBlocks.push({ color: pipeColor, position });
-              position++;
-            });
-          }
-        } else if (cell.element === "Moving") {
-          if (cell.movingContents) {
-            cell.movingContents.forEach((movingColor) => {
-              allBlocks.push({ color: movingColor, position });
-              position++;
-            });
-          }
-        } else {
-          // Regular block
-          allBlocks.push({ color: cell.color, position });
-          position++;
+      if (cell.element === "Pipe") {
+        // Đối với Pipe, thêm nội dung bên trong
+        if (cell.pipeContents) {
+          cell.pipeContents.forEach((pipeColor) => {
+            allBlocks.push({ color: pipeColor, position });
+            position++;
+          });
         }
+      } else if (cell.element === "Moving") {
+        if (cell.movingContents) {
+          cell.movingContents.forEach((movingColor) => {
+            allBlocks.push({ color: movingColor, position });
+            position++;
+          });
+        }
+      } else if (cell.type === "block") {
+        // Block thường
+        allBlocks.push({ color: cell.color || "", position });
+        position++;
       }
     }
   }
@@ -107,8 +117,24 @@ function analyzeColorsFromBoard(level: GeneratedLevel): ColorBarAnalysis {
     }
   }
 
+  // Tạo thống kê màu
+  const colorSummary: ColorSummary[] = Object.entries(colorCounts)
+    .map(([color, count]) => ({
+      color,
+      totalCount: count,
+      percentage: (count / allBlocks.length) * 100,
+    }))
+    .sort((a, b) => {
+      if (a.totalCount !== b.totalCount) {
+        return b.totalCount - a.totalCount;
+      }
+      return colorFirstAppearance[a.color] - colorFirstAppearance[b.color];
+    });
+
   return {
     bars,
+    colorSummary,
+    totalBlocks: allBlocks.length,
   };
 }
 
