@@ -25,6 +25,7 @@ interface ExportPanelProps {
 export function ExportPanel({ level }: ExportPanelProps) {
   const [copiedBoard, setCopiedBoard] = useState(false);
   const [copiedTray, setCopiedTray] = useState(false);
+  const [copiedMetaData, setCopiedMetaData] = useState(false);
   // Get custom bar order from store
   const { getBarOrder } = useColorBarStore();
 
@@ -108,6 +109,15 @@ export function ExportPanel({ level }: ExportPanelProps) {
     }
   };
 
+  const handleCopyMetaData = async () => {
+    const data = { difficulty: level.config.difficulty };
+    const success = await copyToClipboard(JSON.stringify(data, null, 2));
+    if (success) {
+      setCopiedMetaData(true);
+      setTimeout(() => setCopiedMetaData(false), 2000);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Export Options */}
@@ -144,6 +154,14 @@ export function ExportPanel({ level }: ExportPanelProps) {
             >
               <Copy className="w-4 h-4" />
               {copiedTray ? "Đã copy!" : "Copy Tray Data"}
+            </Button>
+            <Button
+              onClick={handleCopyMetaData}
+              variant="outline"
+              className="flex items-center gap-2 bg-transparent"
+            >
+              <Copy className="w-4 h-4" />
+              {copiedMetaData ? "Đã copy!" : "Copy Meta Data"}
             </Button>
           </div>
         </CardContent>

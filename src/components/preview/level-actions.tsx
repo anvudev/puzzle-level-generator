@@ -41,7 +41,7 @@ export function LevelActions({
 }: LevelActionsProps) {
   const [copiedBoard, setCopiedBoard] = useState(false);
   const [copiedTray, setCopiedTray] = useState(false);
-
+  const [copiedMetaData, setCopiedMetaData] = useState(false);
   // Get custom bar order from store
   const { getBarOrder } = useColorBarStore();
 
@@ -63,7 +63,7 @@ export function LevelActions({
     return JSON.stringify(data, null, 2);
   };
 
-const handleCopyBoardData = async () => {
+  const handleCopyBoardData = async () => {
     const customBars = getCustomBars();
     const data = formatLevelForExport(level, customBars) as {
       board: BoardCell[][];
@@ -118,6 +118,15 @@ const handleCopyBoardData = async () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleCopyMetaData = async () => {
+    const data = { difficulty: level.config.difficulty };
+    const success = await copyToClipboard(JSON.stringify(data, null, 2));
+    if (success) {
+      setCopiedMetaData(true);
+      setTimeout(() => setCopiedMetaData(false), 2000);
+    }
   };
 
   return (
@@ -182,6 +191,16 @@ const handleCopyBoardData = async () => {
             {copiedBoard ? "Copied!" : "Copy Board Data"}
           </Button>
 
+          <Button variant="outline" size="sm" onClick={handleCopyMetaData}>
+            {copiedMetaData ? (
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+            {copiedMetaData ? "Copied!" : "Copy Meta Data"}
+          </Button>
+        </div>
+        <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"

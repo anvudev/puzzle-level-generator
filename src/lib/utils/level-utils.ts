@@ -323,6 +323,7 @@ export function generateCSVMatrix(
   }
 
   rows.push(colorBarRow.join(","));
+  rows.push(JSON.stringify({ difficulty: level.config.difficulty }));
 
   return rows.join("\n");
 }
